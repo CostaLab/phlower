@@ -1,5 +1,6 @@
 import itertools
 import numpy as np
+import pandas as pd
 from scipy.stats import gaussian_kde
 
 def tuple_increase(a,b):
@@ -60,7 +61,7 @@ def kde_eastimate(trajectorys, layouts, sample_n=4000, seeds=2022):
     run gaussian_kde on trajectory nodes
     """
 
-    xy = [layouts[a] for t in trajs_groups[i] for a in t]
+    xy = [layouts[a] for t in trajectorys for a in t]
     x = np.array([x for x, y in xy])
     y = np.array([y for x, y in xy])
 
@@ -73,11 +74,18 @@ def kde_eastimate(trajectorys, layouts, sample_n=4000, seeds=2022):
     x = x[sub_idx]
     y = y[sub_idx]
     z = gaussian_kde(xy)(xy)
+    index = np.array([a for t in trajectorys for a in t])[sub_idx]
 
     # Sort the points by density, so that the densest points are plotted last
     idx = z.argsort()
     x, y, z = x[idx], y[idx], z[idx]
-    idx = [a for t in d_traj[key] for a in t]
+    index = index[idx]
 
-    return {'idx':idx, 'x':x, 'y':y, 'z':z}
+    return {'idx':index, 'x':x, 'y':y, 'z':z}
+#endf
+
+def intersect_kde(traj_dicts, ratio=0.8):
+    df_list = [(pd.DataFrame(traj)).drop_duplicates() for traj in traj_dicts.values()]
+    set_list = [set((df.nlargest(int(len(df) *ratio), 'z'))['idx']) for df in df_list]
+    return set.intersection(*set_list)
 #endf
