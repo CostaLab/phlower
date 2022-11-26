@@ -1,0 +1,9 @@
+numpy
+networkx
+igraph
+matplotlib
+seaborn
+sklearn
+scipy
+random
+pandas

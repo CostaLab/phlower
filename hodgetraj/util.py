@@ -1,0 +1,83 @@
+import itertools
+import numpy as np
+from scipy.stats import gaussian_kde
+
+def tuple_increase(a,b):
+    if a < b:
+        return (a,b)
+    return(b,a)
+#endf tuple_increase
+
+def norm01(a):
+    maxx= max(a)
+    minn = min(a)
+    a = [maxx if np.isnan(i) else i for i in a]
+    a = [(i - minn)/(maxx-minn) for i in a]
+    return a
+#endf norm01
+
+def pairwise(iterable):
+    "s -> (s0, s1), (s1, s2), (s2, s3), ..."
+    a, b = itertools.tee(iterable)
+    next(b, None)
+    return zip(a, b)
+#endf pairwise
+
+def top_n_from(node_arr, score_dict, n, largest=True):
+    assert(n > 0)
+    if isinstance(node_arr, list):
+        node_arr = np.array(node_arr)
+    score_arr = np.array([*score_dict.values()])[node_arr]
+    if largest:
+        node_idx = node_arr[np.argpartition(score_arr, -n)[-n:]]
+        return node_idx
+    else:
+        node_idx = node_arr[np.argpartition(score_arr, n)[:n]]
+        return node_idx
+
+#endf top_n_from
+
+def is_in_2sets(a,b, set_list):
+    """
+    if a, b pair in different set_list return True
+    else return False
+    """
+    idx_as = [i for i in range(len(set_list)) if a in set_list[i]]
+    idx_bs = [i for i in range(len(set_list)) if b in set_list[i]]
+    if (not idx_as) or (not idx_bs):
+        return False
+    idx_a = idx_as[0]
+    idx_b = idx_bs[0]
+
+    if idx_a == idx_b:
+        return False
+    return True
+#endf is_in_2sets
+
+
+def kde_eastimate(trajectorys, layouts, sample_n=4000, seeds=2022):
+    """
+    run gaussian_kde on trajectory nodes
+    """
+
+    xy = [layouts[a] for t in trajs_groups[i] for a in t]
+    x = np.array([x for x, y in xy])
+    y = np.array([y for x, y in xy])
+
+    # Calculate the point density
+    xy = np.vstack([x,y])
+
+    np.random.seed(seeds)
+    sub_idx = np.random.choice(range(xy.shape[1]), min(sample_n, len(x)), replace=False)
+    xy = xy[:, sub_idx]
+    x = x[sub_idx]
+    y = y[sub_idx]
+    z = gaussian_kde(xy)(xy)
+
+    # Sort the points by density, so that the densest points are plotted last
+    idx = z.argsort()
+    x, y, z = x[idx], y[idx], z[idx]
+    idx = [a for t in d_traj[key] for a in t]
+
+    return {'idx':idx, 'x':x, 'y':y, 'z':z}
+#endf
