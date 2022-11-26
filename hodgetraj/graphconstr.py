@@ -205,37 +205,3 @@ def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None):
 
 
 
-def connect_start_ends_ratio(G, v_attr, quant=0.05):
-  """
-  Parameter
-  --------------
-  G: network graph
-  v_attr: attributes of the vertices
-  quant: number of top and lower nodes with highest/lowest values to conect
-  """
-  np.random.seed(2022)
-  # select the early / late nodes to connet regarding values
-  g = copy.deepcopy(G)
-
-  ratio = (len(g.edges())*1.0)/len(g.nodes())
-  values = np.fromiter(nx.get_node_attributes(g, v_attr).values(), dtype=np.float)
-
-  n=len(g.nodes())
-  o=np.sort(values)
-  early=np.where(values<=o[round(n*quant)])[0]
-  later=np.where(values>=o[round(n*(1-quant))])[0]
-  nedges = int(ratio*(len(np.concatenate((early, later), axis=None))))
-  new_edges = []
-  a=np.random.choice(early, nedges, replace=True)
-  e=np.random.choice(later, nedges, replace=True)
-  for i in range(nedges):
-    if(a[i] == e[i]):
-        continue
-    if g.has_edge(a[i], e[i]) or g.has_edge(e[i], a[i]) :
-      continue
-    else:
-      new_edges += [(a[i], e[i])]
-      g.add_edge(a[i], e[i])
-  return g, new_edges
-#endf connect_start_ends_ratio
-
