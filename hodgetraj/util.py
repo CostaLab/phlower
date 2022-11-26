@@ -25,6 +25,16 @@ def pairwise(iterable):
 #endf pairwise
 
 def top_n_from(node_arr, score_dict, n, largest=True):
+    """
+    Select top n largest or smallest nodes from node_arr according the score_dict
+
+    Parameters
+    -------
+    node_arr: nodes candidates
+    score_dict: score dictionary for all nodes
+    n: top n
+    largest: largest n if True else smallest
+    """
     assert(n > 0)
     if isinstance(node_arr, list):
         node_arr = np.array(node_arr)
@@ -56,12 +66,19 @@ def is_in_2sets(a,b, set_list):
 #endf is_in_2sets
 
 
-def kde_eastimate(trajectorys, layouts, sample_n=4000, seeds=2022):
+def kde_eastimate(trajectories, layouts, sample_n=4000, seeds=2022):
     """
     run gaussian_kde on trajectory nodes
+
+    Parameters
+    -----------
+    trajectories: trajectories list
+    layouts: x,y coordinate of each point
+    sample_n: sample to reduce the computing time
+    seeds: seeds for sampling
     """
 
-    xy = [layouts[a] for t in trajectorys for a in t]
+    xy = [layouts[a] for t in trajectories for a in t]
     x = np.array([x for x, y in xy])
     y = np.array([y for x, y in xy])
 
@@ -74,7 +91,7 @@ def kde_eastimate(trajectorys, layouts, sample_n=4000, seeds=2022):
     x = x[sub_idx]
     y = y[sub_idx]
     z = gaussian_kde(xy)(xy)
-    index = np.array([a for t in trajectorys for a in t])[sub_idx]
+    index = np.array([a for t in trajectories for a in t])[sub_idx]
 
     # Sort the points by density, so that the densest points are plotted last
     idx = z.argsort()
@@ -85,6 +102,18 @@ def kde_eastimate(trajectorys, layouts, sample_n=4000, seeds=2022):
 #endf
 
 def intersect_kde(traj_dicts, ratio=0.8):
+    """
+    use the density information to get the insert branching points
+
+    Parameters
+    ----------
+    traj_dicts: trajectory density dictionary, key is each trajectory class, value is the density(x,y,z,idx)
+    ratio: ratio to keep for the intersection
+
+    Return
+    ----------
+    intersection of all nodes.
+    """
     df_list = [(pd.DataFrame(traj)).drop_duplicates() for traj in traj_dicts.values()]
     set_list = [set((df.nlargest(int(len(df) *ratio), 'z'))['idx']) for df in df_list]
     return set.intersection(*set_list)
