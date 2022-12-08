@@ -7,3 +7,4 @@ sklearn
 scipy
 random
 pandas
+typing
