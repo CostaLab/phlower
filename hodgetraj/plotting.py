@@ -16,8 +16,9 @@ def nxdraw_group_legend(g,
                         show_edges:bool=True,
                         show_legend:bool=True,
                         color_palette = sns.color_palette('tab10').as_hex(),
-                        legend_loc="upper left",
+                        legend_loc="center left",
                         legend_size=6,
+                        bbox_to_anchor=(1, 0.5),
                         ax = None,
                         **args):
     """
@@ -45,11 +46,11 @@ def nxdraw_group_legend(g,
         nx.draw_networkx_nodes(g, pos=layouts, nodelist=nodes, ax=ax,
                                node_color=color_palette[i], label=rev_mapping[name], **args)
         if ax and show_legend:
-            ax.legend(loc=legend_loc)
+            ax.legend(loc=legend_loc,  bbox_to_anchor=bbox_to_anchor)
 
     if not ax and show_legend:
         #plt.legend(catterpoints = 1, markerscale=1, loc=legend_loc, prop={'size': legend_size})
-        plt.legend(loc=legend_loc)
+        plt.legend(loc=legend_loc,  bbox_to_anchor=bbox_to_anchor)
         plt.show()
 
 

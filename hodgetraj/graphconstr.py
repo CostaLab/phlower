@@ -4,6 +4,8 @@ import igraph
 import networkx as nx
 import numpy as np
 import pandas as pd
+from itertools import chain
+from typing import Iterable, List, Tuple, TypeVar
 from numpy.linalg import solve
 from scipy.spatial import distance_matrix
 from scipy.sparse import csc_matrix, csr_matrix
@@ -11,6 +13,12 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from .diffusionmap import diffusionMaps, affinity, affinity, logsumexp
 from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl
+
+V = TypeVar('V')
+
+def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
+    return zip(path, path[1:])
+
 
 def gscale(X:np.ndarray) -> np.ndarray:
     assert(X.all()>=0)

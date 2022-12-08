@@ -2,7 +2,7 @@ __version__ = "0.1.1"
 __author__ = 'Mingbo Cheng'
 __credits__ = 'Institute for Computational Genomics'
 
-from .graphconstr import diffusionGraph, diffusionGraphDM, adjedges, randomdata
+from .graphconstr import diffusionGraph, diffusionGraphDM, adjedges, randomdata, edges_on_path
 from .diffusionmap import diffusionMaps, affinity
 from .hodgedecomp import laplacian0,laplacian1
 from .hodgedecomp import triangle_list,gradop,divop,curlop,potential,grad,div,curl

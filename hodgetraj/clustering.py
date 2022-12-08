@@ -3,7 +3,10 @@ import numpy as np
 from sklearn.metrics import pairwise_distances
 
 def get_igraph_from_adjacency(adjacency, directed=None):
-    """Get igraph graph from adjacency matrix."""
+    """
+    adjust from https://github.com/scverse/scanpy.git
+    Get igraph graph from adjacency matrix.
+    """
 
     sources, targets = adjacency.nonzero()
     weights = adjacency[sources, targets]
@@ -23,11 +26,11 @@ def get_igraph_from_adjacency(adjacency, directed=None):
     return g
 
 
-def leiden(embedding, n_iterations=-1, resolution=1.0,  seed_state=0, **partition_kwargs):
+def leiden(embedding, distance='euclidean',n_iterations=-1, resolution=1.0,  seed_state=0, **partition_kwargs):
     import leidenalg as la
 
     print("calcaulating distances...")
-    _distances = pairwise_distances(embedding, metric='euclidean')
+    _distances = pairwise_distances(embedding, metric=distance)
     connectivities = 1/(1+_distances)
 
     gclust = get_igraph_from_adjacency(connectivities, directed=False)
@@ -45,11 +48,11 @@ def leiden(embedding, n_iterations=-1, resolution=1.0,  seed_state=0, **partitio
 
 
 
-def louvain(embedding, resolution=1.0,  seed_state=0, **partition_kwargs):
+def louvain(embedding, distance='euclidean', resolution=1.0,  seed_state=0, **partition_kwargs):
     import louvain as lv
 
     print("calcaulating distances...")
-    _distances = pairwise_distances(embedding, metric='euclidean')
+    _distances = pairwise_distances(embedding, metric=distance)
     connectivities = 1/(1+_distances)
 
     gclust = get_igraph_from_adjacency(connectivities, directed=False)
