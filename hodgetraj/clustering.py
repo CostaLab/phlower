@@ -1,6 +1,7 @@
 import igraph as ig
 import numpy as np
 from sklearn.metrics import pairwise_distances
+from sklearn.cluster import DBSCAN
 
 def get_igraph_from_adjacency(adjacency, directed=None):
     """
@@ -72,3 +73,13 @@ def louvain(embedding, distance='euclidean', resolution=1.0,  seed_state=0, **pa
     return groups
 
 
+def dbscan(embedding, distance='euclidean',  eps=0.5,min_samples=5,metric_params=None, algorithm='auto', leaf_size=30, p=None, n_jobs=None):
+    clustering = DBSCAN(eps=eps,
+                        min_samples=min_samples,
+                        metric=distance,
+                        metric_params=metric_params,
+                        algorithm=algorithm,
+                        leaf_size=leaf_size,
+                        p=p,
+                        n_jobs=n_jobs).fit(embedding)
+    return clustering.labels_

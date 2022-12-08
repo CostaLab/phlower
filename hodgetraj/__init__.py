@@ -13,4 +13,4 @@ from .plotting import nxdraw_group_legend, plot_traj
 from .trajectory import trajectory_class, random_climb, random_climb_knn, distribute_traj, flatten_trajectory_matrix, create_matrix_coordinates_trajectory_Hspace, full_trajectory_matrix
 from .aucc import kmeans, cluster_aupr, cluster_auc, cluster_silh, batch_kmeans_evaluate
 from .incidence import create_node_edge_incidence_matrix, create_edge_triangle_incidence_matrix, create_normalized_l1
-from .clustering import leiden, louvain
+from .clustering import leiden, louvain, dbscan
