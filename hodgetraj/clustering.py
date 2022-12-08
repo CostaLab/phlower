@@ -53,7 +53,7 @@ def louvain(embedding, resolution=1.0,  seed_state=0, **partition_kwargs):
     connectivities = 1/(1+_distances)
 
     gclust = get_igraph_from_adjacency(connectivities, directed=False)
-    partition_type = la.RBConfigurationVertexPartition
+    partition_type = lv.RBConfigurationVertexPartition
     partition_kwargs['weights'] = np.array(gclust.es['weight']).astype(np.float64)
     partition_kwargs['seed'] = seed_state
     if resolution is not None:

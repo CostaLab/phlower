@@ -18,6 +18,8 @@ setup(
                       "scipy",
                       "pandas",
                       "tqdm",
+                      "leidenalg",
+                      "louvain",
                       ],
 
     classifiers=[
