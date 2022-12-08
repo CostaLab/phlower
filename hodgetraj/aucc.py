@@ -39,6 +39,7 @@ def batch_kmeans_evaluate(mat_coor_flatten_trajectories, krange=range(2,20), ver
     for k in krange:
         clusters = kmeans(mat_coor_flatten_trajectories, k)
         cluster_dict[k] = clusters
+        #print(len(clusters))
         c  = cluster_auc(clusters, d_list)
         pr = cluster_aupr(clusters, d_list)
         sil = cluster_silh(clusters, d_list)

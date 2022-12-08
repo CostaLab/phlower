@@ -3,6 +3,10 @@ import numpy as np
 import pandas as pd
 from scipy.stats import gaussian_kde
 
+def lexsort_rows(array: np.ndarray) -> np.ndarray:
+    array = np.array(array)
+    return array[np.lexsort(np.rot90(array))]
+
 def tuple_increase(a,b):
     if a < b:
         return (a,b)

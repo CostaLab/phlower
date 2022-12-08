@@ -91,6 +91,19 @@ def adjedges(A, W, k=4):
 #" dm cells x dimensions
 def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None):
   """
+  transition matrix is calculate by eigen decomposition outcome
+
+  # M' = D^{1/2} P D^{-1/2}
+  # S is the eigen vectors of M'
+  psi = D^{-1/2} S
+  phi = S^T D^{1/2}
+    \begin{aligned}
+    M^s & = Q \Lambda Q^{-1}Q \Lambda Q^{-1}\cdots Q \Lambda Q^{-1}\\
+    & = Q \Lambda^s Q^{-1}\\
+    & = D^{-1/2} S \Lambda^s S^T D^{1/2} \\
+    & = \psi \cdot \Lambda^s \cdot \phi\\
+    \end{aligned}
+
   Parameter
   -------------
   ndc: number of diffusion components using

@@ -115,3 +115,17 @@ def distribute_traj(trajs, groups):
         d_trajs[c].append(trajs[i])
     return d_trajs
 #endf distribute_traj
+
+def flatten_trajectory_matrix(H_full) -> np.ndarray:
+    """
+    import from https://git.rwth-aachen.de/netsci/trajectory-outlier-detection-flow-embeddings/
+    """
+    flattened = map(lambda mat_tmp: mat_tmp.sum(axis=1), H_full)
+    return np.array(list(flattened)).squeeze()
+
+
+def create_matrix_coordinates_trajectory_Hspace(H, M_full):
+    """
+    import from https://git.rwth-aachen.de/netsci/trajectory-outlier-detection-flow-embeddings/
+    """
+    return [H @ mat for mat in M_full]

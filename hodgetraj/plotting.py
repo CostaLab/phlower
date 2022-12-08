@@ -63,6 +63,8 @@ def plot_traj(graph: nx.Graph,
               ax: Optional[plt.Axes] = None,
               node_size=5,
               edge_width=1,
+              plot_node=True,
+              alpha_nodes = 0.3,
               color_palette = sns.color_palette('tab10'),
               ) -> None:
 
@@ -81,9 +83,12 @@ def plot_traj(graph: nx.Graph,
     except RuntimeError:
         print('Error with graph')
 
-    nx.draw_networkx_nodes(graph, node_positions,
-                           ax=ax, node_size=node_size,
-                           node_color='#646567')
+    if plot_node:
+        nx.draw_networkx_nodes(graph, node_positions,
+                               ax=ax, node_size=node_size,
+                               node_color='#646567',
+                               alpha= alpha_nodes
+                               )
 
     if trajectory:
         if not colorid:
