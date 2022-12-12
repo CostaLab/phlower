@@ -10,3 +10,4 @@ pandas
 typing
 leidenalg
 louvain
+colorcet

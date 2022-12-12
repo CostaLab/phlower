@@ -20,6 +20,7 @@ setup(
                       "tqdm",
                       "leidenalg",
                       "louvain",
+                      "colorcet",
                       ],
 
     classifiers=[

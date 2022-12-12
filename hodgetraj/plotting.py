@@ -1,5 +1,6 @@
 import itertools
 import numpy as np
+import colorcet as cc
 import pandas as pd
 import networkx as nx
 import seaborn as sns
@@ -51,6 +52,11 @@ def nxdraw_group(g,
         d_colors[k] = d_colors[k] + [v]
         d_group[k] = groups[v]
 
+    if label:
+        labeldf = pd.DataFrame(layouts).T
+        labeldf.columns = ['x', 'y']
+        labeldf['label'] = groups
+
     if show_edges:
         nx.draw_networkx_edges(g, pos=layouts, ax=ax)
     for i, (k, v) in enumerate(d_colors.items()):
@@ -59,9 +65,6 @@ def nxdraw_group(g,
         nx.draw_networkx_nodes(g, pos=layouts, nodelist=nodes, ax=ax,
                                node_color=color_palette[i], label=rev_mapping[name], **args)
         if label:
-            labeldf = pd.DataFrame(layouts).T
-            labeldf.columns = ['x', 'y']
-            labeldf['label'] = groups
             if labelstyle=='text' or labelstyle == "color":
                 ax.annotate(d_group[k],
                         labeldf.loc[labeldf['label']==d_group[name],['x','y']].median(),
@@ -142,4 +145,59 @@ def plot_traj(graph: nx.Graph,
 
     if hole_centers is not None:
         ax.scatter(x=hole_centers[:, 0], y=hole_centers[:, 1], marker='x')
+
+
+
+
+def plot_embedding(cluster_list = [],
+                   embedding = None,
+                   color_palette = sns.color_palette(cc.glasbey, n_colors=40).as_hex(),
+                   label=True,
+                   labelsize=10,
+                   labelstyle='text',
+                   ax=None,
+                   legend_loc = "center left",
+                   bbox_to_anchor = (1,0.5),
+                   markerscale =5,
+                   facecolor='white',
+                   ):
+
+    if len(cluster_list)==0 or embedding is None:
+        print("Error: cluster_list and embedding should be not None!")
+        return
+    assert(len(cluster_list) == embedding.shape[0])
+
+    ax = ax or plt.gca()
+
+    if label:
+       labeldf = pd.DataFrame(embedding)
+       labeldf.columns = ['x', 'y']
+       labeldf['label'] = cluster_list
+
+    cluster_n = len(set(cluster_list))
+    ax.set_facecolor(facecolor)
+    for i, x in enumerate(set(cluster_list)):
+        idx = [i for i in np.where(cluster_list == x)[0]]
+        ax.scatter(x=embedding[idx, 0], y=embedding[idx, 1], c = color_palette[i], s=4)
+        if label:
+            if labelstyle=='text' or labelstyle == "color":
+                ax.annotate(x,
+                        labeldf.loc[labeldf['label']==x,['x','y']].median(),
+                        horizontalalignment='center',
+                        verticalalignment='center',
+                        size=labelsize, weight='bold',
+                        color="black" if labelstyle == "text" else color_palette[i])
+            elif labelstyle == "box":
+                ax.annotate(x,
+                        labeldf.loc[labeldf['label']==x,['x','y']].median(),
+                        horizontalalignment='center',
+                        verticalalignment='center',
+                        size=labelsize, weight='bold',
+                        color="white",
+                        backgroundcolor=color_palette[i])
+            else:
+                print("warning, labelstyle is not correct, options: color, text, box")
+
+    ax.legend(set(cluster_list),   loc=legend_loc, bbox_to_anchor=bbox_to_anchor, markerscale=markerscale)
+
 
