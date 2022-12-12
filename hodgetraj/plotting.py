@@ -22,6 +22,7 @@ def nxdraw_group(g,
                  markerscale=1,
                  label=True,
                  labelsize=10,
+                 labelstyle='text',
                  ax = None,
                  **args):
     """
@@ -37,6 +38,7 @@ def nxdraw_group(g,
     markerscale: legend marker scale to larger or smaller
     label: if show label
     labelsize: labelsize
+    labelstyle: options: color,text, box. same color as nodes if use `color`, black if use `text`, white color with box if use `box`
 
     """
     ax = ax or plt.gca()
@@ -60,12 +62,24 @@ def nxdraw_group(g,
             labeldf = pd.DataFrame(layouts).T
             labeldf.columns = ['x', 'y']
             labeldf['label'] = groups
-            ax.annotate(d_group[k],
+            if labelstyle=='text' or labelstyle == "color":
+                ax.annotate(d_group[k],
                         labeldf.loc[labeldf['label']==d_group[name],['x','y']].median(),
                         horizontalalignment='center',
                         verticalalignment='center',
                         size=labelsize, weight='bold',
-                        color="black")
+                        color="black" if labelstyle == "text" else color_palette[i])
+            elif labelstyle == "box":
+                ax.annotate(d_group[k],
+                        labeldf.loc[labeldf['label']==d_group[name],['x','y']].median(),
+                        horizontalalignment='center',
+                        verticalalignment='center',
+                        size=labelsize, weight='bold',
+                        color="white",
+                        backgroundcolor=color_palette[i])
+            else:
+                print("warning, labelstyle is not correct, options: color, text, box")
+
 
     if show_legend:
             ax.legend(loc=legend_loc,  bbox_to_anchor=bbox_to_anchor, markerscale=markerscale)
