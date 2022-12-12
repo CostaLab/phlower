@@ -17,7 +17,7 @@ def nxdraw_group(g,
                  groups,
                  show_edges:bool=True,
                  show_legend:bool=True,
-                 color_palette = sns.color_palette('tab10').as_hex(),
+                 color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                  legend_loc="center left",
                  bbox_to_anchor=(1, 0.5),
                  markerscale=1,
@@ -40,7 +40,6 @@ def nxdraw_group(g,
     label: if show label
     labelsize: labelsize
     labelstyle: options: color,text, box. same color as nodes if use `color`, black if use `text`, white color with box if use `box`
-
     """
     ax = ax or plt.gca()
     mapping = dict(zip(sorted(groups),itertools.count()))
@@ -148,24 +147,79 @@ def plot_traj(graph: nx.Graph,
 
 
 
+def plot_triangle_density(g:nx.Graph,
+                          layouts,
+                          node_size=10,
+                          ax=None,
+                          cmap = plt.get_cmap("jet"),
+                          show_colorbar = True,
+                          **args
+                          ):
+
+    """
+    Parameters
+    ---------
+    g: networkx graph
+    layouts: layouts dict or array
+    cmap: matplotlib.colors.LinearSegmentedColormap
+    show_colorbar: if show colorbar
+    **args: parameters of networkx.draw
+    """
+
+    ax = ax or plt.gca()
+    values = nx.triangles(g)
+    n_color = np.asarray([values[n] for n in g.nodes()])
+    nx.draw(g, layouts, node_color=n_color, node_size=node_size, ax=ax, cmap=cmap, **args)
+    if show_colorbar:
+        sm = plt.cm.ScalarMappable(cmap=plt.cm.jet, norm=plt.Normalize(vmin=min(n_color), vmax=max(n_color)))
+        sm.set_array([])
+        plt.colorbar(sm)
+#endf plot_triangle_density
+
+
 
 def plot_embedding(cluster_list = [],
                    embedding = None,
-                   color_palette = sns.color_palette(cc.glasbey, n_colors=40).as_hex(),
+                   color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                   retain_clusters=[],
+                   node_size= 4,
                    label=True,
                    labelsize=10,
                    labelstyle='text',
                    ax=None,
+                   show_legend=True,
                    legend_loc = "center left",
                    bbox_to_anchor = (1,0.5),
                    markerscale =5,
                    facecolor='white',
+                   **args
                    ):
 
+    """
+    Parameters
+    ---------
+    cluster_list: cluster labels for each point
+    layouts: embeddings, shape should be nx2
+    retain_clusters: which clusters to plot
+    node_size: node size
+    label: if add labels
+    labelsize: size of labels
+    labelstyle: options: color,text, box. same color as nodes if use `color`, black if use `text`, white color with box if use `box`
+    ax: matplotlib ax
+    show_legend: if show_legend
+    legend_loc: legend location
+    bbox_to_anchor: tune of legend position
+    markerscale: legend markerscale
+    facecolor: plt background
+    **args: parameters of ax.scatter
+    """
+    if len(retain_clusters) == 0:
+        retain_clusters = set(cluster_list)
     if len(cluster_list)==0 or embedding is None:
         print("Error: cluster_list and embedding should be not None!")
         return
     assert(len(cluster_list) == embedding.shape[0])
+    assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
 
     ax = ax or plt.gca()
 
@@ -178,7 +232,7 @@ def plot_embedding(cluster_list = [],
     ax.set_facecolor(facecolor)
     for i, x in enumerate(set(cluster_list)):
         idx = [i for i in np.where(cluster_list == x)[0]]
-        ax.scatter(x=embedding[idx, 0], y=embedding[idx, 1], c = color_palette[i], s=4)
+        ax.scatter(x=embedding[idx, 0], y=embedding[idx, 1], c = color_palette[i], s=node_size, **args)
         if label:
             if labelstyle=='text' or labelstyle == "color":
                 ax.annotate(x,
@@ -198,6 +252,7 @@ def plot_embedding(cluster_list = [],
             else:
                 print("warning, labelstyle is not correct, options: color, text, box")
 
-    ax.legend(set(cluster_list),   loc=legend_loc, bbox_to_anchor=bbox_to_anchor, markerscale=markerscale)
+    if show_legend:
+        ax.legend(set(cluster_list), loc=legend_loc, bbox_to_anchor=bbox_to_anchor, markerscale=markerscale)
 
 
