@@ -1,5 +1,6 @@
 import itertools
 import numpy as np
+import pandas as pd
 import networkx as nx
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -19,6 +20,9 @@ def nxdraw_group_legend(g,
                         legend_loc="center left",
                         legend_size=6,
                         bbox_to_anchor=(1, 0.5),
+                        markerscale =1,
+                        label=True,
+                        labelsize=10,
                         ax = None,
                         **args):
     """
@@ -31,12 +35,15 @@ def nxdraw_group_legend(g,
     color_palette: color palette for show groups
 
     """
+    ax = ax or plt.gca()
     mapping = dict(zip(sorted(groups),itertools.count()))
     rev_mapping = {v:k for k,v in mapping.items()}
     colors = [mapping[groups[n]] for n in range(len(groups))]
     d_colors = defaultdict(list)
+    d_group = {}
     for v, k in enumerate(colors):
         d_colors[k] = d_colors[k] + [v]
+        d_group[k] = groups[v]
 
     if show_edges:
         nx.draw_networkx_edges(g, pos=layouts, ax=ax)
@@ -45,13 +52,20 @@ def nxdraw_group_legend(g,
         nodes = v
         nx.draw_networkx_nodes(g, pos=layouts, nodelist=nodes, ax=ax,
                                node_color=color_palette[i], label=rev_mapping[name], **args)
-        if ax and show_legend:
-            ax.legend(loc=legend_loc,  bbox_to_anchor=bbox_to_anchor)
+        if label:
+            labeldf = pd.DataFrame(layouts).T
+            labeldf.columns = ['x', 'y']
+            labeldf['label'] = groups
+            ax.annotate(d_group[k],
+                        labeldf.loc[labeldf['label']==d_group[name],['x','y']].mean(),
+                        horizontalalignment='center',
+                        verticalalignment='center',
+                        size=labelsize, weight='bold',
+                        color="black")
 
-    if not ax and show_legend:
-        #plt.legend(catterpoints = 1, markerscale=1, loc=legend_loc, prop={'size': legend_size})
-        plt.legend(loc=legend_loc,  bbox_to_anchor=bbox_to_anchor)
-        plt.show()
+    if show_legend:
+            ax.legend(loc=legend_loc,  bbox_to_anchor=bbox_to_anchor, markerscale=markerscale)
+
 
 
 def plot_traj(graph: nx.Graph,
