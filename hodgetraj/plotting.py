@@ -11,20 +11,19 @@ V = TypeVar('V')
 def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
     return zip(path, path[1:])
 
-def nxdraw_group_legend(g,
-                        layouts,
-                        groups,
-                        show_edges:bool=True,
-                        show_legend:bool=True,
-                        color_palette = sns.color_palette('tab10').as_hex(),
-                        legend_loc="center left",
-                        legend_size=6,
-                        bbox_to_anchor=(1, 0.5),
-                        markerscale =1,
-                        label=True,
-                        labelsize=10,
-                        ax = None,
-                        **args):
+def nxdraw_group(g,
+                 layouts,
+                 groups,
+                 show_edges:bool=True,
+                 show_legend:bool=True,
+                 color_palette = sns.color_palette('tab10').as_hex(),
+                 legend_loc="center left",
+                 bbox_to_anchor=(1, 0.5),
+                 markerscale=1,
+                 label=True,
+                 labelsize=10,
+                 ax = None,
+                 **args):
     """
     Parameters
     ---------
@@ -33,6 +32,11 @@ def nxdraw_group_legend(g,
     groups: groups list
     show_edges: if show edges
     color_palette: color palette for show groups
+    legend_loc: legend location
+    bbox_to_anchor: for position of the legend
+    markerscale: legend marker scale to larger or smaller
+    label: if show label
+    labelsize: labelsize
 
     """
     ax = ax or plt.gca()
@@ -57,7 +61,7 @@ def nxdraw_group_legend(g,
             labeldf.columns = ['x', 'y']
             labeldf['label'] = groups
             ax.annotate(d_group[k],
-                        labeldf.loc[labeldf['label']==d_group[name],['x','y']].mean(),
+                        labeldf.loc[labeldf['label']==d_group[name],['x','y']].median(),
                         horizontalalignment='center',
                         verticalalignment='center',
                         size=labelsize, weight='bold',
