@@ -262,16 +262,16 @@ def plot_embedding(cluster_list = [],
 
 
 def plot_density_grid(G,
-                        layouts,
-                        cluster_list,
-                        traj_list,
-                        retain_clusters=[],
-                        sample_n=10000,
-                        figsize=(20,16),
-                        title_prefix='cluster_',
-                        node_size = 2,
-                        **args
-                        ):
+                      layouts,
+                      cluster_list,
+                      traj_list,
+                      retain_clusters=[],
+                      sample_n=10000,
+                      figsize=(20,16),
+                      title_prefix='cluster_',
+                      node_size = 2,
+                      **args
+                      ):
 
     if len(retain_clusters) == 0:
         retain_clusters = set(cluster_list)
