@@ -122,3 +122,15 @@ def intersect_kde(traj_dicts, ratio=0.8):
     set_list = [set((df.nlargest(int(len(df) *ratio), 'z'))['idx']) for df in df_list]
     return set.intersection(*set_list)
 #endf
+
+
+def get_uniform_multiplication(number):
+    assert(number>0)
+    sqrt_n = int(np.sqrt(number))
+    if np.power(sqrt_n, 2) == number:
+        return (sqrt_n, sqrt_n)
+    elif np.multiply(sqrt_n, sqrt_n+1) > number:
+        return (sqrt_n+1, sqrt_n)
+    else:
+        return (sqrt_n+1, sqrt_n+1)
+#endf

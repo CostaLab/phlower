@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 from typing import Iterable, List, Optional, Set, Tuple, TypeVar
 
+from .util import get_uniform_multiplication, kde_eastimate
+
 V = TypeVar('V')
 def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
     return zip(path, path[1:])
@@ -52,7 +54,7 @@ def nxdraw_group(g,
         d_group[k] = groups[v]
 
     if label:
-        labeldf = pd.DataFrame(layouts).T
+        labeldf = pd.DataFrame(layouts).T if isinstance(layouts, dict) else pd.DataFrame(layouts)
         labeldf.columns = ['x', 'y']
         labeldf['label'] = groups
 
@@ -137,7 +139,7 @@ def plot_traj(graph: nx.Graph,
                                ax=ax,
                                edgelist=list(edges_on_path(trajectory)),
                                node_size=10,
-                               width=2,
+                               width=edge_width,
                                edge_color=color,
                                arrows=True,
                                arrowstyle='->')
@@ -153,8 +155,7 @@ def plot_triangle_density(g:nx.Graph,
                           ax=None,
                           cmap = plt.get_cmap("jet"),
                           show_colorbar = True,
-                          **args
-                          ):
+                          **args):
 
     """
     Parameters
@@ -255,4 +256,176 @@ def plot_embedding(cluster_list = [],
     if show_legend:
         ax.legend(set(cluster_list), loc=legend_loc, bbox_to_anchor=bbox_to_anchor, markerscale=markerscale)
 
+
+
+def plot_density_grid(G,
+                        layouts,
+                        cluster_list,
+                        traj_list,
+                        retain_clusters=[],
+                        sample_n=10000,
+                        figsize=(20,16),
+                        title_prefix='cluster_',
+                        node_size = 2,
+                        ):
+
+    if len(retain_clusters) == 0:
+        retain_clusters = set(cluster_list)
+
+    assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
+    cluster_n = len(retain_clusters)
+
+    r,c = get_uniform_multiplication(cluster_n)
+    fig, axes = plt.subplots(r,c, sharex=False, sharey=False,)
+    fig.set_size_inches(figsize[0], figsize[1])
+    for a in range(cluster_n):
+        i = int(a/c)
+        j = a%c
+        idx = [i for i in np.where(cluster_list == a)[0]]
+        cdic = kde_eastimate(np.array(traj_list)[idx], layouts, sample_n)
+        x = cdic['x']
+        y = cdic['y']
+        z = cdic['z']
+        nx.draw_networkx_nodes(G, layouts, ax = axes[i,j], node_size=1, node_color='grey', alpha=0.2)
+        axes[i,j].scatter(x, y, c=z, s=node_size)
+        axes[i,j].set_title(f"{title_prefix}{a}")
+    return fig, axes
+
+def plot_trajectory_harmonic_lines(mat_coord_Hspace,
+                                   groups,
+                                   show_legend=True,
+                                   legend_loc="center left",
+                                   bbox_to_anchor=(1, 0.5),
+                                   markerscale=4,
+                                   ax = None,
+                                   color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                                   **args):
+    """
+    Parameters
+    ---------
+    mat_coord_Hspace:
+    groups: groups for each trajectory
+    ax: matplotlib axes
+    show_legend: if show legend
+    legend_loc: legend location
+    bbox_to_anchor: for position of the legend
+    markerscale: legend linewidth scale to larger or smaller
+    color_palette: color palette for show groups
+    """
+
+
+    ax = ax or plt.gca()
+    mapping = dict(zip(sorted(groups), itertools.count()))
+    rev_mapping = {v:k for k,v in mapping.items()}
+    colors = [mapping[groups[n]] for n in range(len(groups))]
+    d_colors = defaultdict(list)
+    d_group = {}
+    for v, k in enumerate(colors):
+        d_colors[k] = d_colors[k] + [v]
+        d_group[k] = groups[v]
+
+    cumsums = list(map(lambda i: [np.cumsum(i[0]), np.cumsum(i[1])], mat_coord_Hspace))
+    for i, (k,v) in enumerate(d_colors.items()):
+
+        idx = v[0] ## for legend
+        cumsum = cumsums[idx]
+        sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, label=d_group[k], **args)
+
+        for idx in v[1:]:
+            cumsum = cumsums[idx]
+            sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, **args)
+
+    if show_legend:
+
+        leg = ax.legend(loc=legend_loc, bbox_to_anchor=bbox_to_anchor)
+        for line in leg.get_lines():
+            line.set_linewidth(markerscale)
+
+
+#endf plot_trajectory_harmonic_lines
+
+def plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
+                                    groups,
+                                    label=True,
+                                    labelsize=10,
+                                    labelstyle='text',
+                                    node_size=2,
+                                    show_legend=False,
+                                    legend_loc="center left",
+                                    bbox_to_anchor=(1, 0.5),
+                                    markerscale=4,
+                                    ax = None,
+                                    color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                                    **args):
+    """
+    Parameters
+    ---------
+    mat_coor_flatten_trajectory:
+    groups: groups for each trajectory
+    label: if show label
+    labelsize: labelsize
+    labelstyle: options: color,text, box. same color as nodes if use `color`, black if use `text`, white color with box if use `box`
+    show_legend: if show legend
+    legend_loc: legend location
+    bbox_to_anchor: for position of the legend
+    markerscale: legend marker scale to larger or smaller
+    color_palette: color palette for show groups
+    """
+
+
+    ax = ax or plt.gca()
+
+    mapping = dict(zip(sorted(groups), itertools.count()))
+    rev_mapping = {v:k for k,v in mapping.items()}
+    colors = [mapping[groups[n]] for n in range(len(groups))]
+    d_colors = defaultdict(list)
+    d_group = {}
+    for v, k in enumerate(colors):
+        d_colors[k] = d_colors[k] + [v]
+        d_group[k] = groups[v]
+
+    if label:
+        labeldf = pd.DataFrame(mat_coor_flatten_trajectory)
+        labeldf.columns = ['x', 'y']
+        labeldf['label'] = groups
+
+    for i, (k,v) in enumerate(d_colors.items()):
+
+
+        idx = v[0]
+        ax.scatter(mat_coor_flatten_trajectory[idx][0],
+                       mat_coor_flatten_trajectory[idx][1],
+                       color=color_palette[i],
+                       s=node_size,
+                       label=d_group[k], ## for legend
+                       **args)
+        for idx in v[1:]:
+            ax.scatter(mat_coor_flatten_trajectory[idx][0],
+                       mat_coor_flatten_trajectory[idx][1],
+                       color=color_palette[i],
+                       s=node_size,
+                       **args)
+
+        if label:
+            if labelstyle=='text' or labelstyle == "color":
+                ax.annotate(d_group[k],
+                        labeldf.loc[labeldf['label']==d_group[k], ['x','y']].median(),
+                        horizontalalignment='center',
+                        verticalalignment='center',
+                        size=labelsize, weight='bold',
+                        color="black" if labelstyle == "text" else color_palette[i])
+            elif labelstyle == "box":
+                ax.annotate(d_group[k],
+                        labeldf.loc[labeldf['label']==d_group[k],['x','y']].median(),
+                        horizontalalignment='center',
+                        verticalalignment='center',
+                        size=labelsize, weight='bold',
+                        color="white",
+                        backgroundcolor=color_palette[i])
+            else:
+                print("warning, labelstyle is not correct, options: color, text, box")
+
+    if show_legend:
+        ax.legend(loc=legend_loc, bbox_to_anchor=bbox_to_anchor, markerscale=markerscale)
+#endf plot_trajectory_harmonic_points
 
