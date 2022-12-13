@@ -14,6 +14,8 @@ V = TypeVar('V')
 def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
     return zip(path, path[1:])
 
+
+
 def nxdraw_group(g,
                  layouts,
                  groups,
@@ -56,7 +58,8 @@ def nxdraw_group(g,
     if label:
         labeldf = pd.DataFrame(layouts).T if isinstance(layouts, dict) else pd.DataFrame(layouts)
         labeldf.columns = ['x', 'y']
-        labeldf['label'] = groups
+        labeldf['label'] = list(groups)
+        #print(labeldf)
 
     if show_edges:
         nx.draw_networkx_edges(g, pos=layouts, ax=ax)
@@ -227,7 +230,7 @@ def plot_embedding(cluster_list = [],
     if label:
        labeldf = pd.DataFrame(embedding)
        labeldf.columns = ['x', 'y']
-       labeldf['label'] = cluster_list
+       labeldf['label'] = list(cluster_list)
 
     cluster_n = len(set(cluster_list))
     ax.set_facecolor(facecolor)
@@ -267,6 +270,7 @@ def plot_density_grid(G,
                         figsize=(20,16),
                         title_prefix='cluster_',
                         node_size = 2,
+                        **args
                         ):
 
     if len(retain_clusters) == 0:
@@ -287,7 +291,7 @@ def plot_density_grid(G,
         y = cdic['y']
         z = cdic['z']
         nx.draw_networkx_nodes(G, layouts, ax = axes[i,j], node_size=1, node_color='grey', alpha=0.2)
-        axes[i,j].scatter(x, y, c=z, s=node_size)
+        axes[i,j].scatter(x, y, c=z, s=node_size, **args)
         axes[i,j].set_title(f"{title_prefix}{a}")
     return fig, axes
 
@@ -387,7 +391,7 @@ def plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
     if label:
         labeldf = pd.DataFrame(mat_coor_flatten_trajectory)
         labeldf.columns = ['x', 'y']
-        labeldf['label'] = groups
+        labeldf['label'] = list(groups)
 
     for i, (k,v) in enumerate(d_colors.items()):
 
@@ -428,4 +432,13 @@ def plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
     if show_legend:
         ax.legend(loc=legend_loc, bbox_to_anchor=bbox_to_anchor, markerscale=markerscale)
 #endf plot_trajectory_harmonic_points
+
+
+def plot_eigen_line(values, n_eig=10, step_size=1, ax=None, **args):
+    ax = ax or plt.gca()
+    n_eig = min(n_eig, len(values))
+    ax.plot(range(1,n_eig+1), values[0:n_eig], linestyle='--', marker='o', color='b', label='eigen value', **args)
+    ax.set_xticks(range(1,n_eig+1, step_size))
+    ax.legend()
+#endf plot_eigen_line
 

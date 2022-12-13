@@ -11,3 +11,4 @@ typing
 leidenalg
 louvain
 colorcet
+umap-learn

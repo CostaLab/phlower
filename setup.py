@@ -21,6 +21,7 @@ setup(
                       "leidenalg",
                       "louvain",
                       "colorcet",
+                      'umap-learn',
                       ],
 
     classifiers=[
