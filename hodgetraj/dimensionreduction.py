@@ -1,6 +1,7 @@
-import umap
+import umap.umap_ as umap
+import scipy
 from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, TruncatedSVD
 
 def run_umap(mtx, random_state=2022):
     reducer = umap.UMAP(random_state=random_state)
@@ -9,7 +10,13 @@ def run_umap(mtx, random_state=2022):
     return embedding
 
 def run_pca(mtx, n_components=2):
-    pca = PCA(n_components=n_components)
-    dm = pca.fit_transform(mtx)
+    dm = None
+    if scipy.sparse.issparse(mtx):
+        clf = TruncatedSVD(n_components)
+        dm = clf.fit_transform(mtx)
+        pass
+    else:
+        pca = PCA(n_components=n_components)
+        dm = pca.fit_transform(mtx)
     return dm
 

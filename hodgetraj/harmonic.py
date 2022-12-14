@@ -6,6 +6,9 @@ from scipy.sparse import linalg, csr_matrix
 from scipy.spatial import Delaunay,distance
 from .util import tuple_increase, top_n_from, is_in_2sets
 
+
+
+
 def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int) -> dict:
     """
     Coputes the harmonic projection matrix for the simplicial complex with the

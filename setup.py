@@ -4,7 +4,7 @@ setup(
     name='hodgetraj',
     version='0.1.1',
     description='hodge decomposition trajectory',
-    #url='https://github.com/shuds13/pyexample',
+    url='https://github.com/CostaLab/hodgeTrajectory',
     author='Mingbo Cheng',
     author_email='chengmingbo@gmail.com',
     license='BSD 2-clause',
