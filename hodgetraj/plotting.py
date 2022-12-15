@@ -305,11 +305,18 @@ def plot_density_grid(G,
         nx.draw_networkx_nodes(G, layouts, ax = axes[i,j], node_size=1, node_color='grey', alpha=0.2)
         axes[i,j].scatter(x, y, c=z, s=node_size, **args)
         axes[i,j].set_title(f"{title_prefix}{cluster}")
+
+    ## axis off
+    for a in range(cluster_n, r*c):
+        i = int(a/c)
+        j = a%c
+        axes[i,j].axis('off')
+
     return fig, axes
 
 def plot_trajectory_harmonic_lines(mat_coord_Hspace,
                                    cluster_list,
-                                   retain_clusters,
+                                   retain_clusters=[],
                                    show_legend=True,
                                    legend_loc="center left",
                                    bbox_to_anchor=(1, 0.5),
@@ -332,15 +339,15 @@ def plot_trajectory_harmonic_lines(mat_coord_Hspace,
 
     if len(retain_clusters) == 0:
         retain_clusters = set(cluster_list)
-
+    #print(retain_clusters)
     assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
 
 
     ax = ax or plt.gca()
     cumsums = list(map(lambda i: [np.cumsum(i[0]), np.cumsum(i[1])], mat_coord_Hspace))
     for i, cluster in enumerate(retain_clusters):
-
-        v = [i for i in np.where(cluster_list == cluster)[0]]
+        #print(i, cluster)
+        v = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
         idx = v[0] ## for legend
         cumsum = cumsums[idx]
         sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, label=cluster, **args)
@@ -401,7 +408,8 @@ def plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
         labeldf['label'] = list(cluster_list)
 
     for i, cluster in enumerate(retain_clusters):
-        v = [i for i in np.where(cluster_list == cluster)[0]]
+        #print(i, cluster)
+        v = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
         idx = v[0] # for legend
         ax.scatter(mat_coor_flatten_trajectory[idx][0],
                        mat_coor_flatten_trajectory[idx][1],

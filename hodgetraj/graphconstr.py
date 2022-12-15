@@ -37,8 +37,9 @@ def knn(x,k=2):
 
 #alt. mat. -> networkx graph
 def graph_altmat(A:np.ndarray, tol:float=1e-7) -> nx.DiGraph:
-  A[A<tol] = 0
-  G = nx.from_numpy_matrix(A, parallel_edges=False, create_using=nx.DiGraph)
+  nA = copy.deepcopy(A)
+  nA[nA<tol] = 0
+  G = nx.from_numpy_matrix(nA, parallel_edges=False, create_using=nx.DiGraph)
   return G
 
 
@@ -151,8 +152,8 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None):
   #A = P-t(P)
   # divergence of fully-connected diffusion graph
 
-  g_o = graph_altmat(A)
   OA = copy.deepcopy(A)
+  g_o = graph_altmat(A)
 
   #return(g_o)
   print("Rewiring: ")

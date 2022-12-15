@@ -11,7 +11,7 @@ from .util import tuple_increase, top_n_from, is_in_2sets
 
 def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int) -> dict:
     """
-    Coputes the harmonic projection matrix for the simplicial complex with the
+    Computes the harmonic projection matrix for the simplicial complex with the
     given Hodge-1 Laplacian.
 
     Parameters
