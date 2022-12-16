@@ -137,12 +137,12 @@ def connect_starts_ends_with_Delaunay(g,
 
     start_cts = list(set(group[starts]))
     end_cts = list(set(group[ends]))
-    start_nodes = np.concatenate([np.where(group == start_ct)[0] for start_ct in start_cts]).ravel()
+    start_nodes = np.concatenate([np.where(np.array(group) == start_ct)[0] for start_ct in start_cts]).ravel()
     n_start_nodes = top_n_from(start_nodes, u, min(start_n, len(start_nodes)), largest=False)
 
     end_nodes_arr = []
     for i in range(len(end_cts)):
-        end_nodes_arr.append([i for i in np.where(group == end_cts[i])[0] if i in set(ends)])
+        end_nodes_arr.append([i for i in np.where(np.array(group) == end_cts[i])[0] if i in set(ends)])
 
     end_nodes_sets = [set(x) for x in end_nodes_arr]
     #print(end_nodes_arr)

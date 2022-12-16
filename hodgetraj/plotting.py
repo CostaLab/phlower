@@ -235,7 +235,7 @@ def plot_embedding(cluster_list = [],
     cluster_n = len(set(cluster_list))
     ax.set_facecolor(facecolor)
     for i, x in enumerate(retain_clusters):
-        idx = [i for i in np.where(cluster_list == x)[0]]
+        idx = [i for i in np.where(np.array(cluster_list) == x)[0]]
         ax.scatter(x=embedding[idx, 0], y=embedding[idx, 1], c = color_palette[i], s=node_size, **args, label=x)
         if label:
             if labelstyle=='text' or labelstyle == "color":
@@ -297,7 +297,7 @@ def plot_density_grid(G,
     for a, cluster in enumerate(retain_clusters):
         i = int(a/c)
         j = a%c
-        idx = [i for i in np.where(cluster_list == cluster)[0]]
+        idx = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
         cdic = kde_eastimate(np.array(traj_list)[idx], layouts, sample_n)
         x = cdic['x']
         y = cdic['y']
