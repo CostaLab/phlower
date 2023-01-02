@@ -141,7 +141,7 @@ def full_trajectory_matrix(graph: nx.Graph, mat_traj, elist, elist_dict, edge_w=
                 idx = elist_dict[(x, y)]
                 row_ind.append(idx)
                 col_ind.append(i)
-                if edge_w is None:
+                if edge_w is not None:
                     data.append(edge_w[idx])
                 else:
                     data.append(1)
@@ -149,7 +149,7 @@ def full_trajectory_matrix(graph: nx.Graph, mat_traj, elist, elist_dict, edge_w=
                 idx = elist_dict[(y, x)]
                 row_ind.append(idx)
                 col_ind.append(i)
-                if edge_w is None:
+                if edge_w is not None:
                     data.append(-1 * edge_w[idx])
                 else:
                     data.append(-1)
