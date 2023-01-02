@@ -292,6 +292,7 @@ def plot_density_grid(G,
     cluster_n = len(retain_clusters)
 
     r,c = get_uniform_multiplication(cluster_n)
+    r = r - 1 if (r-1)*c == cluster_n else r
     fig, axes = plt.subplots(r,c, sharex=False, sharey=False,)
     fig.set_size_inches(figsize[0], figsize[1])
     for a, cluster in enumerate(retain_clusters):
@@ -302,15 +303,21 @@ def plot_density_grid(G,
         x = cdic['x']
         y = cdic['y']
         z = cdic['z']
-        nx.draw_networkx_nodes(G, layouts, ax = axes[i,j], node_size=1, node_color='grey', alpha=0.2)
-        axes[i,j].scatter(x, y, c=z, s=node_size, **args)
-        axes[i,j].set_title(f"{title_prefix}{cluster}")
+        if r == 1:
+            nx.draw_networkx_nodes(G, layouts, ax = axes[j], node_size=node_size, node_color='grey', alpha=0.5)
+            axes[j].scatter(x, y, c=z, s=node_size, **args)
+            axes[j].set_title(f"{title_prefix}{cluster}")
+
+        else:
+            nx.draw_networkx_nodes(G, layouts, ax = axes[i,j], node_size=node_size, node_color='grey', alpha=0.5)
+            axes[i,j].scatter(x, y, c=z, s=node_size, **args)
+            axes[i,j].set_title(f"{title_prefix}{cluster}")
 
     ## axis off
     for a in range(cluster_n, r*c):
         i = int(a/c)
         j = a%c
-        axes[i,j].axis('off')
+        axes[i,j].axis('off') if r > 1 else axes[j].axis('off')
 
     return fig, axes
 

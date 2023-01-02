@@ -119,7 +119,7 @@ def distribute_traj(trajs, groups):
     return d_trajs
 #endf distribute_traj
 
-def full_trajectory_matrix(graph: nx.Graph, mat_traj, elist, elist_dict) -> List[csr_matrix]:
+def full_trajectory_matrix(graph: nx.Graph, mat_traj, elist, elist_dict, edge_w=None) -> List[csr_matrix]:
     """
     import from https://git.rwth-aachen.de/netsci/trajectory-outlier-detection-flow-embeddings/
     """
@@ -134,24 +134,33 @@ def full_trajectory_matrix(graph: nx.Graph, mat_traj, elist, elist_dict) -> List
         col_ind = []
 
         for i, (x, y) in enumerate(j):
-            assert (x, y) in elist or (y, x) in elist  # TODO
+            assert (x, y) in elist_dict or (y, x) in elist_dict  # TODO
             assert graph.has_edge(x, y)
 
             if x < y:
                 idx = elist_dict[(x, y)]
                 row_ind.append(idx)
                 col_ind.append(i)
-                data.append(1)
+                if edge_w is None:
+                    data.append(edge_w[idx])
+                else:
+                    data.append(1)
             if y < x:
                 idx = elist_dict[(y, x)]
                 row_ind.append(idx)
                 col_ind.append(i)
-                data.append(-1)
+                if edge_w is None:
+                    data.append(-1 * edge_w[idx])
+                else:
+                    data.append(-1)
 
         mat_temp = csr_matrix((data, (row_ind, col_ind)), shape=(
             elist.shape[0], len(j)), dtype=np.int8)
         mat_vec_e.append(mat_temp)
     return mat_vec_e
+
+
+
 
 
 def flatten_trajectory_matrix(H_full) -> np.ndarray:
