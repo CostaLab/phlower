@@ -167,7 +167,7 @@ def full_trajectory_matrix(graph: nx.Graph, mat_traj, elist, elist_dict, edge_w=
                     data.append(-1)
 
         mat_temp = csr_matrix((data, (row_ind, col_ind)), shape=(
-            elist.shape[0], len(j)), dtype=np.int8)
+            elist.shape[0], len(j)), dtype=np.float32)# int8
         mat_vec_e.append(mat_temp)
     return mat_vec_e
 
