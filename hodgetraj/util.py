@@ -142,7 +142,7 @@ def find_knee(x,y, plot=False):
     find the knee point of the curve
     """
     allcoord = np.vstack((x, y)).T
-    npoints = len(cumsum[0])
+    npoints = len(x[0])
     firstpoint = allcoord[0]
     line_vec = allcoord[-1] - allcoord[0]
     line_vec_norm = line_vec / np.sqrt(np.sum(line_vec**2))
@@ -155,8 +155,8 @@ def find_knee(x,y, plot=False):
     if plot:
         import seaborn as sns
         fig, ax = plt.subplots(1,1)
-        sns.lineplot(x=cumsum[0], y=cumsum[1], ax=ax, sort=False)
-        ax.scatter(x=cumsum[0][idx_of_best_point], y=cumsum[1][idx_of_best_point], color='red')
+        sns.lineplot(x=x, y=y, ax=ax, sort=False)
+        ax.scatter(x=x[idx_of_best_point], y=y[idx_of_best_point], color='red')
 
     return idx_of_best_point
 
