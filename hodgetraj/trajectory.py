@@ -7,7 +7,7 @@ from typing import List
 from collections import Counter, defaultdict
 from scipy.sparse import csr_matrix
 
-from .util import pairwise
+from .util import pairwise, find_knee
 
 def random_climb(g:nx.Graph, attr:str='u', roots_ratio:float=0.1, n:int=10000, seeds:int=2022) -> list:
     """
@@ -118,6 +118,18 @@ def distribute_traj(trajs, groups):
         d_trajs[c].append(trajs[i])
     return d_trajs
 #endf distribute_traj
+
+
+def knee_points(mat_coord_Hspace, trajs):
+    assert(len(mat_coord_Hspace) == len(trajs))
+    d_branch = defaultdict(int)
+    cumsums = list(map(lambda i: [np.cumsum(i[0]), np.cumsum(i[1])], mat_coord_Hspace))
+    for i in range(len(trajs)):
+        idx = find_knee(cumsums[i][0], cumsums[i][1])
+        d_branch[trajs[i][idx]] += 1
+        d_branch[trajs[i][idx+1]] += 1
+    return d_branch
+
 
 def full_trajectory_matrix(graph: nx.Graph, mat_traj, elist, elist_dict, edge_w=None) -> List[csr_matrix]:
     """
