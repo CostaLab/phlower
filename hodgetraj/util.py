@@ -1,5 +1,6 @@
 import itertools
 import numpy as np
+import numpy.matlib
 import pandas as pd
 from scipy.stats import gaussian_kde
 
@@ -134,3 +135,28 @@ def get_uniform_multiplication(number):
     else:
         return (sqrt_n+1, sqrt_n+1)
 #endf
+
+
+def find_knee(x,y, plot=False):
+    """
+    find the knee point of the curve
+    """
+    allcoord = np.vstack((x, y)).T
+    npoints = len(cumsum[0])
+    firstpoint = allcoord[0]
+    line_vec = allcoord[-1] - allcoord[0]
+    line_vec_norm = line_vec / np.sqrt(np.sum(line_vec**2))
+    vec_from_first = allcoord - firstpoint
+    scalar_product = np.sum(vec_from_first * np.matlib.repmat(line_vec_norm, npoints, 1), axis=1)
+    vec_from_first_parallel = np.outer(scalar_product, line_vec_norm)
+    vec_to_line = vec_from_first - vec_from_first_parallel
+    distToLine = np.sqrt(np.sum(vec_to_line ** 2, axis=1))
+    idx_of_best_point = np.argmax(distToLine)
+    if plot:
+        import seaborn as sns
+        fig, ax = plt.subplots(1,1)
+        sns.lineplot(x=cumsum[0], y=cumsum[1], ax=ax, sort=False)
+        ax.scatter(x=cumsum[0][idx_of_best_point], y=cumsum[1][idx_of_best_point], color='red')
+
+    return idx_of_best_point
+
