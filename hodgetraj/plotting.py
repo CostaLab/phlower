@@ -290,6 +290,7 @@ def plot_density_grid(G,
 
     assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
     cluster_n = len(retain_clusters)
+    assert(cluster_n > 0)
 
     r,c = get_uniform_multiplication(cluster_n)
     r = r - 1 if (r-1)*c == cluster_n else r
@@ -303,11 +304,14 @@ def plot_density_grid(G,
         x = cdic['x']
         y = cdic['y']
         z = cdic['z']
-        if r == 1:
+        if r == 1 and c == 1:
+            nx.draw_networkx_nodes(G, layouts, ax = axes, node_size=node_size, node_color='grey', alpha=0.5)
+            axes.scatter(x, y, c=z, s=node_size, **args)
+            axes.set_title(f"{title_prefix}{cluster}")
+        elif r == 1:
             nx.draw_networkx_nodes(G, layouts, ax = axes[j], node_size=node_size, node_color='grey', alpha=0.5)
             axes[j].scatter(x, y, c=z, s=node_size, **args)
             axes[j].set_title(f"{title_prefix}{cluster}")
-
         else:
             nx.draw_networkx_nodes(G, layouts, ax = axes[i,j], node_size=node_size, node_color='grey', alpha=0.5)
             axes[i,j].scatter(x, y, c=z, s=node_size, **args)
@@ -317,7 +321,12 @@ def plot_density_grid(G,
     for a in range(cluster_n, r*c):
         i = int(a/c)
         j = a%c
-        axes[i,j].axis('off') if r > 1 else axes[j].axis('off')
+        if r == 1 and c == 1:
+            axes.axis('off')
+        elif r == 1:
+            axes[j].axis('off')
+        else:
+            axes[i,j].axis('off')
 
     return fig, axes
 
