@@ -141,8 +141,9 @@ def find_knee(x,y, plot=False):
     """
     find the knee point of the curve
     """
+    assert(len(x) == len(y))
     allcoord = np.vstack((x, y)).T
-    npoints = len(x[0])
+    npoints = len(x)
     firstpoint = allcoord[0]
     line_vec = allcoord[-1] - allcoord[0]
     line_vec_norm = line_vec / np.sqrt(np.sum(line_vec**2))
