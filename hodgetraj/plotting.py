@@ -370,6 +370,7 @@ def plot_trajectory_harmonic_lines(mat_coord_Hspace,
         sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, label=cluster, **args)
 
         if sample_ratio < 1:
+            np.random.seed(2022)
             v = np.random.choice(v, max(int(len(v)*sample_ratio), 1), replace=False)
         for idx in v[1:]:
             cumsum = cumsums[idx]
@@ -432,6 +433,7 @@ def plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
         v = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
         idx = v[0] # for legend
         if sample_ratio < 1: ## need at least 1
+            np.random.seed(2022)
             v = np.random.choice(v, max(int(len(v)*sample_ratio), 1), replace=False)
 
         ax.scatter(mat_coor_flatten_trajectory[idx][0],
