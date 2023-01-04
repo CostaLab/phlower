@@ -333,6 +333,7 @@ def plot_density_grid(G,
 def plot_trajectory_harmonic_lines(mat_coord_Hspace,
                                    cluster_list,
                                    retain_clusters=[],
+                                   dims = [0,1],
                                    show_legend=True,
                                    legend_loc="center left",
                                    bbox_to_anchor=(1, 0.5),
@@ -353,7 +354,8 @@ def plot_trajectory_harmonic_lines(mat_coord_Hspace,
     markerscale: legend linewidth scale to larger or smaller
     color_palette: color palette for show cluster_list
     """
-
+    assert(all(np.array(dims) < mat_coord_Hspace[0].shape[0])) ## dims is in the range of the dimension of the data
+    assert(len(dims) >=2)
     if len(retain_clusters) == 0:
         retain_clusters = set(cluster_list)
     #print(retain_clusters)
@@ -361,7 +363,7 @@ def plot_trajectory_harmonic_lines(mat_coord_Hspace,
 
 
     ax = ax or plt.gca()
-    cumsums = list(map(lambda i: [np.cumsum(i[0]), np.cumsum(i[1])], mat_coord_Hspace))
+    cumsums = list(map(lambda i: [np.cumsum(i[dims[0]]), np.cumsum(i[dims[1]])], mat_coord_Hspace))
     for i, cluster in enumerate(retain_clusters):
         #print(i, cluster)
         v = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
