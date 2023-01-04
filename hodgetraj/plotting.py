@@ -379,10 +379,11 @@ def plot_trajectory_harmonic_lines(mat_coord_Hspace,
             sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, **args)
 
     if show_legend:
-
         leg = ax.legend(loc=legend_loc, bbox_to_anchor=bbox_to_anchor)
         for line in leg.get_lines():
             line.set_linewidth(markerscale)
+    else:
+        ax.get_legend().remove()
 
 
 #endf plot_trajectory_harmonic_lines
