@@ -338,6 +338,7 @@ def plot_trajectory_harmonic_lines(mat_coord_Hspace,
                                    bbox_to_anchor=(1, 0.5),
                                    markerscale=4,
                                    ax = None,
+                                   sample_ratio = 1,
                                    color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                    **args):
     """
@@ -368,6 +369,8 @@ def plot_trajectory_harmonic_lines(mat_coord_Hspace,
         cumsum = cumsums[idx]
         sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, label=cluster, **args)
 
+        if sample_ratio < 1:
+            v = np.random.choice(v, max(int(len(v)*sample_ratio), 1), replace=False)
         for idx in v[1:]:
             cumsum = cumsums[idx]
             sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, **args)
@@ -394,6 +397,7 @@ def plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
                                     bbox_to_anchor=(1, 0.5),
                                     markerscale=4,
                                     ax = None,
+                                    sample_ratio = 1,
                                     color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                     **args):
     """
@@ -427,6 +431,9 @@ def plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
         #print(i, cluster)
         v = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
         idx = v[0] # for legend
+        if sample_ratio < 1: ## need at least 1
+            v = np.random.choice(v, max(int(len(v)*sample_ratio), 1), replace=False)
+
         ax.scatter(mat_coor_flatten_trajectory[idx][0],
                        mat_coor_flatten_trajectory[idx][1],
                        color=color_palette[i],
