@@ -2,6 +2,7 @@ import itertools
 import numpy as np
 import numpy.matlib
 import pandas as pd
+from collections import OrderedDict
 from scipy.stats import gaussian_kde
 
 def lexsort_rows(array: np.ndarray) -> np.ndarray:
@@ -100,10 +101,12 @@ def kde_eastimate(trajectories, layouts, sample_n=4000, seeds=2022):
 
     # Sort the points by density, so that the densest points are plotted last
     idx = z.argsort()
+
     x, y, z = x[idx], y[idx], z[idx]
     index = index[idx]
+    unique_index = [i for i in OrderedDict((x, index.tolist().index(x)) for x in index).values()]
 
-    return {'idx':index, 'x':x, 'y':y, 'z':z}
+    return {'idx':index[unique_index], 'x':x[unique_index], 'y':y[unique_index], 'z':z[unique_index]}
 #endf
 
 def intersect_kde(traj_dicts, ratio=0.8):
