@@ -167,7 +167,7 @@ def find_knee(x,y, plot=False):
 
 
 
-def make_node_df(G):
+def networkx_node_to_df(G):
     """
     https://stackoverflow.com/questions/62383699/converting-networkx-graph-to-data-frame-with-its-attributes
     """
@@ -186,7 +186,7 @@ def make_node_df(G):
 
     return pd.DataFrame(nodes)
 
-def make_edge_df(G):
+def networkx_edge_to_df(G):
     edges = {}
     for source, target, attribute in G.edges(data=True):
 
@@ -208,7 +208,7 @@ def make_edge_df(G):
     return pd.DataFrame(edges)
 
 
-def node_df_to_ebunch(df, nodename='node'):
+def networkx_node_df_to_ebunch(df, nodename='node'):
 
     attributes = [col for col in df.columns if not col==nodename]
 
