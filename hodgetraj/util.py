@@ -162,3 +162,56 @@ def find_knee(x,y, plot=False):
 
     return idx_of_best_point
 
+
+
+def make_node_df(G):
+    """
+    https://stackoverflow.com/questions/62383699/converting-networkx-graph-to-data-frame-with-its-attributes
+    """
+    nodes = {}
+    for node, attribute in G.nodes(data=True):
+        if not nodes.get('node'):
+            nodes['node'] = [node]
+        else:
+            nodes['node'].append(node)
+
+        for key, value in attribute.items():
+            if not nodes.get(key):
+                nodes[key] = [value]
+            else:
+                nodes[key].append(value)
+
+    return pd.DataFrame(nodes)
+
+def make_edge_df(G):
+    edges = {}
+    for source, target, attribute in G.edges(data=True):
+
+        if not edges.get('source'):
+            edges['source'] = [source]
+        else:
+            edges['source'].append(source)
+
+        if not edges.get('target'):
+            edges['target'] = [target]
+        else:
+            edges['target'].append(target)
+
+        for key, value in attribute.items():
+            if not edges.get(key):
+                edges[key] = [value]
+            else:
+                edges[key].append(value)
+    return pd.DataFrame(edges)
+
+
+def node_df_to_ebunch(df, nodename='node'):
+
+    attributes = [col for col in df.columns if not col==nodename]
+
+    ebunch = []
+
+    for ix, row in df.iterrows():
+        ebunch.append((row[nodename], {attribute:row[attribute] for attribute in attributes}))
+
+    return ebunch

@@ -269,6 +269,7 @@ def plot_density_grid(G,
                       sample_n=10000,
                       figsize=(20,16),
                       title_prefix='cluster_',
+                      bg_alpha = 0.5,
                       node_size = 2,
                       **args
                       ):
@@ -305,15 +306,15 @@ def plot_density_grid(G,
         y = cdic['y']
         z = cdic['z']
         if r == 1 and c == 1:
-            nx.draw_networkx_nodes(G, layouts, ax = axes, node_size=node_size, node_color='grey', alpha=0.5)
+            nx.draw_networkx_nodes(G, layouts, ax = axes, node_size=node_size, node_color='grey', alpha=bg_alpha)
             axes.scatter(x, y, c=z, s=node_size, **args)
             axes.set_title(f"{title_prefix}{cluster}")
         elif r == 1:
-            nx.draw_networkx_nodes(G, layouts, ax = axes[j], node_size=node_size, node_color='grey', alpha=0.5)
+            nx.draw_networkx_nodes(G, layouts, ax = axes[j], node_size=node_size, node_color='grey', alpha=bg_alpha)
             axes[j].scatter(x, y, c=z, s=node_size, **args)
             axes[j].set_title(f"{title_prefix}{cluster}")
         else:
-            nx.draw_networkx_nodes(G, layouts, ax = axes[i,j], node_size=node_size, node_color='grey', alpha=0.5)
+            nx.draw_networkx_nodes(G, layouts, ax = axes[i,j], node_size=node_size, node_color='grey', alpha=bg_alpha)
             axes[i,j].scatter(x, y, c=z, s=node_size, **args)
             axes[i,j].set_title(f"{title_prefix}{cluster}")
 
