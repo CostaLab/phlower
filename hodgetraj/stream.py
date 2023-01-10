@@ -5,6 +5,8 @@ import networkx as nx
 from tqdm import tqdm
 from .util import networkx_node_to_df, kde_eastimate, bfs_layers
 
+##TODO: use kde information to merge the buckets
+
 def trajectory_buckets(g=None,
                        layouts=None,
                        trajs=[],
@@ -50,7 +52,7 @@ def trajectory_buckets(g=None,
 
 
 
-def initial_a_tree(df_1, df_2, name_1, name_2, bucket_idx_name='buckets_idx',  intersect_ratio=0.4,  decay_ratio=1.05):
+def initialize_a_tree(df_1, df_2, name_1, name_2, bucket_idx_name='buckets_idx',  intersect_ratio=0.4,  decay_ratio=1.05):
     """
     Create a tree from two pseudotime buckets dataframe
     Two pseudotime buckets lists, move a step see if we need branching.
@@ -70,11 +72,12 @@ def initial_a_tree(df_1, df_2, name_1, name_2, bucket_idx_name='buckets_idx',  i
     cursor_1 = 0
     cursor_2 = 0
 
+    print("initializing a tree from {} and {}".format(name_1, name_2))
     bucket_max_1 = max(set(df_1[bucket_idx_name][pd.notna(df_1[bucket_idx_name])]))
     bucket_max_2 = max(set(df_2[bucket_idx_name][pd.notna(df_2[bucket_idx_name])]))
     a = set(df_1[df_1[bucket_idx_name] == cursor_1].idx)
     b = set(df_2[df_2[bucket_idx_name] == cursor_2].idx)
-    print(bucket_max_1,bucket_max_2)
+    #print(bucket_max_1,bucket_max_2)
     m_i = 0
     graph = nx.DiGraph()
     #print(a, b)
@@ -149,8 +152,15 @@ def initial_a_tree(df_1, df_2, name_1, name_2, bucket_idx_name='buckets_idx',  i
 
 
 
-def add_traj_to_graph(graph, df, name, bucket_idx_name='buckets_idx', intersect_ratio=0.4, ratio_decay=1.05):
-    graph_out = copy.deepcopy(graph)
+def add_traj_to_graph(graph, df, name, bucket_idx_name='buckets_idx', intersect_ratio=0.4, ratio_decay=1.05, iscopy=True):
+
+    assert(name not in graph.nodes[0]["who"])
+
+    print("adding: ", name)
+    if iscopy:
+        graph_out = copy.deepcopy(graph)
+    else:
+        graph_out = graph
     bucket_max_b = max(set(df[bucket_idx_name][pd.notna(df[bucket_idx_name])]))
     offset_b = 0
     layers = list(bfs_layers(graph_out, 0))
@@ -172,7 +182,7 @@ def add_traj_to_graph(graph, df, name, bucket_idx_name='buckets_idx', intersect_
             #    print('node', , len(a), len(b))
 
             a = a_nodes[max_idx]
-            print("branching", alist[max_idx])
+            #print("branching", alist[max_idx])
             intersect_ratio = intersect_ratio * ratio_decay
             min_len = min(len(a), len(b)) * intersect_ratio
 
@@ -185,12 +195,12 @@ def add_traj_to_graph(graph, df, name, bucket_idx_name='buckets_idx', intersect_
                     b = set(df[df[bucket_idx_name] == idx+offset_b+dfs_idx].idx)
                     #print("handling: ", idx+offset_b + dfs_idx)
                     if len(a & b) > min_len:
-                        print("add ", node, " ", idx+ offset_b+dfs_idx)
+                        #print("add ", node, " ", idx+ offset_b+dfs_idx)
                         graph_out.nodes[node]['cells'] = a | b
                         graph_out.nodes[node]['who'] = graph_out.nodes[node]['who'] | {name}
                     else:
-                        print("branching: ", idx+offset_b+dfs_idx)
-                        print(dfs_idx)
+                        #print("branching: ", idx+offset_b+dfs_idx)
+                        #print(dfs_idx)
                         branching_point = dfs_nodes[dfs_idx - 1]
                         break
                     intersect_ratio = intersect_ratio * ratio_decay
@@ -216,7 +226,7 @@ def add_traj_to_graph(graph, df, name, bucket_idx_name='buckets_idx', intersect_
             intersect_ratio = intersect_ratio * ratio_decay
             min_len = min(len(a), len(b)) * intersect_ratio
             if len(a & b) > min_len:
-                print("add ", node, " ", idx+ offset_b)
+                #print("add ", node, " ", idx+ offset_b)
                 graph_out.nodes[node]['cells'] = a | b
                 graph_out.nodes[node]['who'] = graph_out.nodes[node]['who'] | {name}
             else: ## start a new branch.
@@ -225,14 +235,14 @@ def add_traj_to_graph(graph, df, name, bucket_idx_name='buckets_idx', intersect_
 
             ## if next node is also likely merge into this node.
             if len(a & b1) > len(a & b):
-                print("add ", node, " ", idx+ offset_b + 1)
+                #print("add ", node, " ", idx+ offset_b + 1)
                 #print('offset + 1 =======================================================')
                 offset_b = offset_b + 1
                 graph_out.nodes[node]['cells'] = graph_out.nodes[node]['cells'] | b1
 
     if branching_point:
         for i in range(idx+offset_b, bucket_max_b+1):
-            print(i)
+            #print(i)
             graph_out.add_node(f"{name}_{i}", who={name}, cells=set(df[df[bucket_idx_name] == i].idx))
             #print(i)
             if i==idx+offset_b:
