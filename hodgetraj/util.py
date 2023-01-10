@@ -218,3 +218,42 @@ def networkx_node_df_to_ebunch(df, nodename='node'):
         ebunch.append((row[nodename], {attribute:row[attribute] for attribute in attributes}))
 
     return ebunch
+
+## copy from networkx to workaround lower version of networkx
+def bfs_layers(G, sources):
+    """Returns an iterator of all the layers in breadth-first search traversal.
+
+    Parameters
+    ----------
+    G : NetworkX graph
+        A graph over which to find the layers using breadth-first search.
+
+    sources : node in `G` or list of nodes in `G`
+        Specify starting nodes for single source or multiple sources breadth-first search
+
+    Yields
+    ------
+    layer: list of nodes
+        Yields list of nodes at the same distance from sources
+    """
+    if sources in G:
+        sources = [sources]
+
+    current_layer = list(sources)
+    visited = set(sources)
+
+    for source in current_layer:
+        if source not in G:
+            raise nx.NetworkXError(f"The node {source} is not in the graph.")
+
+    # this is basically BFS, except that the current layer only stores the nodes at
+    # same distance from sources at each iteration
+    while current_layer:
+        yield current_layer
+        next_layer = list()
+        for node in current_layer:
+            for child in G[node]:
+                if child not in visited:
+                    visited.add(child)
+                    next_layer.append(child)
+        current_layer = next_layer
