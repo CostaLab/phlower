@@ -16,4 +16,5 @@ from .incidence import *
 #create_node_edge_incidence_matrix, create_edge_triangle_incidence_matrix, create_normalized_l1, create_weighted_edge_triangle_incidence_matrix, assign_eweight
 from .clustering import leiden, louvain, dbscan
 from .dimensionreduction import run_umap, run_pca
-from .stream import trajectory_buckets, initialize_a_tree, add_traj_to_graph
+from .stream import trajectory_buckets, initialize_a_tree, add_traj_to_graph, plot_stream_sc, plot_stream
+from .stream_extra import *

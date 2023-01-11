@@ -12,7 +12,7 @@ setup(
     install_requires=['numpy',
                       'matplotlib',
                       'seaborn',
-                      'networkx',
+                      'networkx>=2.4',
                       'igraph',
                       "sklearn",
                       "scipy",
