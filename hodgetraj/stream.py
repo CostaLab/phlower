@@ -22,6 +22,7 @@ def trajectory_buckets(g=None,
                        node_attribute='u',
                        sample_n=10000,
                        min_kde_quant_rm=0.1,
+                       bucket_idx_name='buckets_idx',
                        bucket_number=10):
     """
     Bucket the trajectory clusters into a number of buckets.

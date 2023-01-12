@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import networkx as nx
+from scipy.signal import savgol_filter
 from scipy import interpolate
 from sklearn.metrics.pairwise import pairwise_distances_argmin_min
 from scipy.spatial import distance,cKDTree,KDTree
@@ -206,7 +207,7 @@ def calculate_pseudotime(adata):
     adata.obs = adata.obs[adata.obs.columns.drop(list(adata.obs.filter(regex='_pseudotime')))].copy()
     # dict_nodes_pseudotime = dict()
     for root_node in flat_tree.nodes():
-        df_pseudotime = pd.Series(index=adata.obs.index)
+        df_pseudotime = pd.Series(index=adata.obs.index, dtype='float64')
         list_bfs_edges = list(nx.bfs_edges(flat_tree,source=root_node))
         dict_bfs_predecessors = dict(nx.bfs_predecessors(flat_tree,source=root_node))
         for edge in list_bfs_edges:
@@ -497,6 +498,8 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
                                factor_num_win=10,factor_min_win=2.0,factor_width=2.5,
                                factor_nrow=200,factor_ncol=400,
                                log_scale=False,factor_zoomin=100.0):
+    from warnings import simplefilter
+    simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
     list_ann_numeric = [k for k,v in dict_ann.items() if is_numeric_dtype(v)]
 
     flat_tree = adata.uns['flat_tree']
@@ -969,6 +972,9 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
         for cellname in cell_list_sorted:
             x_top = df_top_x.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins_top))].tolist()
             y_top = df_top_y.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins_top))].tolist()
+            if len(x_top) ==0 or len(y_top)==0: #Mingbo add
+                continue
+            print("x_top, y_top: ", x_top, " ", y_top)
             f_top_linear = interpolate.interp1d(x_top, y_top, kind = 'linear')
             x_top_new = [x for x in x_smooth if (x>=x_top[0]) and (x<=x_top[-1])] + [x_top[-1]]
             x_top_new = np.unique(x_top_new).tolist()
@@ -1192,6 +1198,9 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
 def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scale=0.9,
                               factor_num_win=10,factor_min_win=2.0,factor_width=2.5,
                               log_scale=False,factor_zoomin=100.0):
+
+    from warnings import simplefilter
+    simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
     list_ann_string = [k for k,v in dict_ann.items() if is_string_dtype(v)]
 
     flat_tree = adata.uns['flat_tree']
@@ -1276,6 +1285,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
 
         #dataframe of bins
         df_bins = pd.DataFrame(index = list(df_stream['CELL_LABEL'].unique()) + ['boundary','center','edge'])
+        print("df_bins:", df_bins)
         list_paths = find_root_to_leaf_paths(flat_tree, root_node)
         max_path_len = find_longest_path(list_paths,len_ori)
         size_w = max_path_len/float(factor_num_win)
@@ -1593,6 +1603,9 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
             x_smooth[np.argmin(np.abs(np.array(x_smooth) - x))] = x
 
         dict_smooth_linear = {cellname:{'top':dict(),'base':dict()} for cellname in cell_list_sorted}
+
+        #print("df_top_x, ", df_top_x)
+        #print("df_top_y, ", df_top_y)
         #interpolation
         for edge_i_top in dict_paths_top.keys():
             path_i_top = dict_paths_top[edge_i_top]
@@ -1602,8 +1615,23 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
                 id_wins_top.insert(0,1)
                 id_wins_top.insert(0,0)
             for cellname in cell_list_sorted:
+                #print("id_wins_top", id_wins_top)
+                #return  ## Mingbo
                 x_top = df_top_x.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins_top))].tolist()
                 y_top = df_top_y.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins_top))].tolist()
+                #print("cellname: ", cellname, "x_top, y_top: ", x_top, y_top)
+                #print("df_top_x, df_top_y: ", df_top_x, df_top_y)
+                #if len(x_top) ==0 or len(y_top)==0: #Mingbo add
+                if len(x_top) ==0 or len(y_top)==0: #Mingbo add
+                    print(cellname)
+                    print("x", x)
+                    print("id_wins_top", id_wins_top)
+                    print("df_top_x_cellname ", df_top_x.loc[cellname, :])
+                    print("df_top_y_cellname ", df_top_y.loc[cellname, :])
+                    print("x_top, y_top: ", x_top, y_top)
+
+                #    continue
+
                 f_top_linear = interpolate.interp1d(x_top, y_top, kind = 'linear')
                 x_top_new = [x for x in x_smooth if (x>=x_top[0]) and (x<=x_top[-1])] + [x_top[-1]]
                 x_top_new = np.unique(x_top_new).tolist()
@@ -1639,7 +1667,10 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
         dict_edges_CE = {cellname:[] for cellname in cell_list_sorted}
         for cellname in cell_list_sorted:
             for edge_i in bfs_edges:
-                if(sum(abs(dict_smooth_linear[cellname]['top'][edge_i].loc['y'] - \
+                ## Mingbo
+                #print("dict_smooth_linear[cellname]['top'][edge_i] ", dict_smooth_linear[cellname]['top'][edge_i].loc['y']
+                #if(sum(abs(dict_smooth_linear[cellname]['top'][edge_i].loc['y'] - \
+                if(sum(abs(dict_smooth_linear[cellname]['top'].get(edge_i, dict_smooth_linear[cellname]['base'][edge_i]).loc['y'] - \
                        dict_smooth_linear[cellname]['base'][edge_i].loc['y']) > 1e-12)):
                     dict_edges_CE[cellname].append(edge_i)
 
@@ -1709,12 +1740,15 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
                     x_base = x_base + px.tolist()
                     y_base = y_base + py_base_linear.tolist()
                 x_base_new = x_base
-                y_base_new = savgol_filter(y_base,11,polyorder=1)
-                for id_node in range(len(path_i_base)-1):
-                    edge_i = (path_i_base[id_node],path_i_base[id_node+1])
-                    edge_i_bd = dict_edge_bd[edge_i]
-                    id_selected = [i_x for i_x,x in enumerate(x_base_new) if x>=edge_i_bd[0] and x<=edge_i_bd[1]]
-                    dict_smooth_new[cellname]['base'][edge_i] = pd.DataFrame([np.array(x_base_new)[id_selected],\
+                #print("y_base: ", y_base)
+                if len(y_base) > 0: ### Mingbo
+                    y_base_new = savgol_filter(y_base,11,polyorder=1)
+                    #print("y_base_new: ", y_base_new)
+                    for id_node in range(len(path_i_base)-1):
+                        edge_i = (path_i_base[id_node],path_i_base[id_node+1])
+                        edge_i_bd = dict_edge_bd[edge_i]
+                        id_selected = [i_x for i_x,x in enumerate(x_base_new) if x>=edge_i_bd[0] and x<=edge_i_bd[1]]
+                        dict_smooth_new[cellname]['base'][edge_i] = pd.DataFrame([np.array(x_base_new)[id_selected],\
                                                                           np.array(y_base_new)[id_selected]],index=['x','y'])
 
         #find all edges of polygon
