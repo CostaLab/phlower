@@ -323,6 +323,7 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
     stream_root: `dict` (`adata.uns['stream_root']`)
         Store the coordinates of nodes ('nodes') and edges ('edges') in subwaymap plot.
     """
+    print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03\nPlease cite STREAM https://doi.org/10.1038/s41467-019-09670-4 if you are using this plotting.")
 
     if(fig_path is None):
         fig_path = adata.uns['workdir']
@@ -413,6 +414,8 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
             fig = plt.figure(figsize=(fig_size[0],fig_size[1]))
             ax_i = fig.add_subplot(1,1,1)
             if(is_string_dtype(df_plot[ann])):
+                sns_palette = sns.color_palette(cc.glasbey, n_colors=len(set(df_plot_shuf[ann]))).as_hex()
+                adata.uns[ann+'_color'] = {y:sns_palette[idx]  for idx, y in enumerate(set(df_plot_shuf[ann]))}
                 sc_i=sns.scatterplot(ax=ax_i,
                                     x='pseudotime', y='dist',
                                     hue=ann,hue_order = legend_order[ann],
@@ -420,18 +423,14 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
                                     alpha=alpha,linewidth=0,
                                     palette= adata.uns[ann+'_color'] \
                                             if (ann+'_color' in adata.uns_keys()) and (set(adata.uns[ann+'_color'].keys()) >= set(np.unique(df_plot_shuf[ann]))) \
-                                            else None
+                                            else sns_palette
                                     )
                 legend_handles, legend_labels = ax_i.get_legend_handles_labels()
                 ax_i.legend(handles=legend_handles, labels=legend_labels,
                             bbox_to_anchor=(1, 0.5), loc='center left', ncol=fig_legend_ncol,
                             frameon=False,
                             )
-                if(ann+'_color' not in adata.uns_keys()):
-                    colors_sns = sc_i.get_children()[0].get_facecolors()
-                    colors_sns_scaled = (255*colors_sns).astype(int)
-                    adata.uns[ann+'_color'] = {df_plot_shuf[ann][i]:'#%02x%02x%02x' % (colors_sns_scaled[i][0], colors_sns_scaled[i][1], colors_sns_scaled[i][2])
-                                               for i in np.unique(df_plot_shuf[ann],return_index=True)[1]}
+
                 ### remove legend title
                 # ax_i.get_legend().texts[0].set_text("")
             else:
@@ -539,7 +538,7 @@ def plot_stream(adata,root='S0',color = None,preference=None,dist_scale=0.9,
     -------
     None
     """
-
+    print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03\nPlease cite STREAM https://doi.org/10.1038/s41467-019-09670-4 if you are using this plotting.")
     if(fig_path is None):
         fig_path = adata.uns['workdir']
     fig_size = mpl.rcParams['figure.figsize'] if fig_size is None else fig_size
@@ -610,9 +609,13 @@ def plot_stream(adata,root='S0',color = None,preference=None,dist_scale=0.9,
                 sc_i=sns.scatterplot(x=0,y=1,hue=ann,data=tmp,linewidth=0)
                 colors_sns = sc_i.get_children()[0].get_facecolors()
                 plt.close(fig)
-                colors_sns_scaled = (255*colors_sns).astype(int)
-                adata.uns[ann+'_color'] = {tmp[ann][i]:'#%02x%02x%02x' % (colors_sns_scaled[i][0], colors_sns_scaled[i][1], colors_sns_scaled[i][2])
-                                           for i in np.unique(tmp[ann],return_index=True)[1]}
+                #colors_sns_scaled = (255*colors_sns).astype(int)
+
+                #adata.uns[ann+'_color'] = {tmp[ann][i]:'#%02x%02x%02x' % (colors_sns_scaled[i][0], colors_sns_scaled[i][1], colors_sns_scaled[i][2])
+                #                           for i in np.unique(tmp[ann],return_index=True)[1]}
+                sns_palette = sns.color_palette(cc.glasbey, n_colors=len(set(tmp[ann]))).as_hex()
+                adata.uns[ann+'_color'] = {y:sns_palette[idx]  for idx, y in enumerate(set(tmp[ann]))}
+
             dict_palette = adata.uns[ann+'_color']
 
             verts = dict_plot['string'][0][ann]

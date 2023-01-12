@@ -73,36 +73,6 @@ def extract_branches(epg):
     # print('Number of branches: ' + str(len(clusters_to_merge)))
     return dict_branches
 
-#def extract_branches(graph):
-#    #record the original degree(before removing nodes) for each node
-#    if graph.is_directed:
-#        g = graph.to_undirected()
-#    else:
-#        g = graph.copy()
-#    degrees_of_nodes = g.degree()
-#    dict_branches = dict()
-#    clusters_to_merge=[]
-#    while g.order()>1: #the number of vertices
-#        leaves=[n for n,d in g.degree() if d==1]
-#        nodes_included=list(g.nodes())
-#        while leaves:
-#            leave=leaves.pop()
-#            nodes_included.remove(leave)
-#            nodes_to_merge=[leave]
-#            nodes_to_visit=list(g.nodes())
-#            dfs_from_leaf(g,leave,degrees_of_nodes,nodes_to_visit,nodes_to_merge)
-#            clusters_to_merge.append(nodes_to_merge)
-#            dict_branches[(nodes_to_merge[0],nodes_to_merge[-1])] = {}
-#            dict_branches[(nodes_to_merge[0],nodes_to_merge[-1])]['nodes'] = nodes_to_merge
-#            nodes_to_delete = nodes_to_merge[0:len(nodes_to_merge)-1]
-#            if g.degree()[nodes_to_merge[-1]] == 1: #avoid the single point
-#                nodes_to_delete = nodes_to_merge
-#                leaves = []
-#            g.remove_nodes_from(nodes_to_delete)
-#    dict_branches = add_branch_info(graph,dict_branches)
-#    #print('Number of branches: ' + str(len(clusters_to_merge)))
-#    return dict_branches
-#
 
 def construct_flat_tree(dict_branches, graph):
     flat_tree = nx.Graph()
@@ -1286,7 +1256,6 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
 
         #dataframe of bins
         df_bins = pd.DataFrame(index = list(df_stream['CELL_LABEL'].unique()) + ['boundary','center','edge'])
-        print("df_bins:", df_bins)
         list_paths = find_root_to_leaf_paths(flat_tree, root_node)
         max_path_len = find_longest_path(list_paths,len_ori)
         size_w = max_path_len/float(factor_num_win)
