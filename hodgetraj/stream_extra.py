@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import networkx as nx
+import colorcet as cc
 from scipy.signal import savgol_filter
 from scipy import interpolate
 from sklearn.metrics.pairwise import pairwise_distances_argmin_min
