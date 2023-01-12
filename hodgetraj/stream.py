@@ -6,6 +6,7 @@ import seaborn as sns
 import matplotlib as mpl
 import colorcet as cc
 from tqdm import tqdm
+from matplotlib.patches import Polygon
 from matplotlib import pyplot as plt
 from pandas.api.types import is_string_dtype,is_numeric_dtype
 from .util import networkx_node_to_df, kde_eastimate, bfs_layers

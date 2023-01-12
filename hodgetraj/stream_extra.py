@@ -501,6 +501,8 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
                                log_scale=False,factor_zoomin=100.0):
     from warnings import simplefilter
     simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
+    simplefilter("ignore", category=FutureWarning)
+
     list_ann_numeric = [k for k,v in dict_ann.items() if is_numeric_dtype(v)]
 
     flat_tree = adata.uns['flat_tree']
@@ -720,6 +722,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
                         dict_ann_df[ann]["win"+str(total_bins)] = 0
                         ann_values = df_edge_i[np.logical_and(df_edge_i.lam_ordered>=bd_bins[0],\
                                                         df_edge_i.lam_ordered<=bd_bins[1])].groupby(['CELL_LABEL'])[ann].mean()
+
                         dict_ann_df[ann].loc[ann_values.index,"win"+str(total_bins)] = ann_values
                         dict_ann_df[ann] = dict_ann_df[ann].copy() # avoid warning "DataFrame is highly fragmented."
                         dict_merge_num[ann].append(len(id_stack))
@@ -965,7 +968,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
     #interpolation
     for edge_i_top in dict_paths_top.keys():
         path_i_top = dict_paths_top[edge_i_top]
-        id_wins_top = [i_x for i_x, x in enumerate(df_top_x.loc['edge']) if set(np.unique(x)).issubset(set(path_i_top))]
+        id_wins_top = [i_x for i_x, x in enumerate(df_top_x.loc['edge']) if {b for a in x for b in a}.issubset(set(path_i_top))]
         if(flat_tree.degree(root_node)>1 and \
            edge_i_top==(root_node,dict_forest[cell_list_sorted[0]][root_node]['next'][0])):
             id_wins_top.insert(0,1)
@@ -973,9 +976,6 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
         for cellname in cell_list_sorted:
             x_top = df_top_x.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins_top))].tolist()
             y_top = df_top_y.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins_top))].tolist()
-            if len(x_top) ==0 or len(y_top)==0: #Mingbo add
-                continue
-            print("x_top, y_top: ", x_top, " ", y_top)
             f_top_linear = interpolate.interp1d(x_top, y_top, kind = 'linear')
             x_top_new = [x for x in x_smooth if (x>=x_top[0]) and (x<=x_top[-1])] + [x_top[-1]]
             x_top_new = np.unique(x_top_new).tolist()
@@ -988,7 +988,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
                                                                      np.array(y_top_new_linear)[id_selected]],index=['x','y'])
     for edge_i_base in dict_paths_base.keys():
         path_i_base = dict_paths_base[edge_i_base]
-        id_wins_base = [i_x for i_x, x in enumerate(df_base_x.loc['edge']) if set(np.unique(x)).issubset(set(path_i_base))]
+        id_wins_base = [i_x for i_x, x in enumerate(df_base_x.loc['edge']) if {b for a in x for b in a}.issubset(set(path_i_base))]
         if(flat_tree.degree(root_node)>1 and \
            edge_i_base==(root_node,dict_forest[cell_list_sorted[0]][root_node]['next'][-1])):
             id_wins_base.insert(0,1)
@@ -1040,8 +1040,8 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
         paths_CE_top = dict_paths_CE_top[cellname]
         for edge_i_top in paths_CE_top.keys():
             path_i_top = paths_CE_top[edge_i_top]
-            edges_top = [x for x in bfs_edges if set(np.unique(x)).issubset(set(path_i_top))]
-            id_wins_top = [i_x for i_x, x in enumerate(df_top_x.loc['edge']) if set(np.unique(x)).issubset(set(path_i_top))]
+            edges_top = [x for x in bfs_edges if {a for a in x}.issubset(set(path_i_top))]
+            id_wins_top = [i_x for i_x, x in enumerate(df_top_x.loc['edge']) if {b for a in x for b in a}.issubset(set(path_i_top))]
 
             x_top = []
             y_top = []
@@ -1066,8 +1066,8 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
         paths_CE_base = dict_paths_CE_base[cellname]
         for edge_i_base in paths_CE_base.keys():
             path_i_base = paths_CE_base[edge_i_base]
-            edges_base = [x for x in bfs_edges if set(np.unique(x)).issubset(set(path_i_base))]
-            id_wins_base = [i_x for i_x, x in enumerate(df_base_x.loc['edge']) if set(np.unique(x)).issubset(set(path_i_base))]
+            edges_base = [x for x in bfs_edges if {a for a in x}.issubset(set(path_i_base))]
+            id_wins_base = [i_x for i_x, x in enumerate(df_base_x.loc['edge']) if {b for a in x for b in a}.issubset(set(path_i_base))]
 
             x_base = []
             y_base = []
@@ -1610,29 +1610,14 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
         #interpolation
         for edge_i_top in dict_paths_top.keys():
             path_i_top = dict_paths_top[edge_i_top]
-            id_wins_top = [i_x for i_x, x in enumerate(df_top_x.loc['edge']) if set(np.unique(x)).issubset(set(path_i_top))]
+            id_wins_top = [i_x for i_x, x in enumerate(df_top_x.loc['edge']) if {b for a in x for b in a }.issubset(set(path_i_top))]
             if(flat_tree.degree(root_node)>1 and \
                edge_i_top==(root_node,dict_forest[cell_list_sorted[0]][root_node]['next'][0])):
                 id_wins_top.insert(0,1)
                 id_wins_top.insert(0,0)
             for cellname in cell_list_sorted:
-                #print("id_wins_top", id_wins_top)
-                #return  ## Mingbo
                 x_top = df_top_x.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins_top))].tolist()
                 y_top = df_top_y.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins_top))].tolist()
-                #print("cellname: ", cellname, "x_top, y_top: ", x_top, y_top)
-                #print("df_top_x, df_top_y: ", df_top_x, df_top_y)
-                #if len(x_top) ==0 or len(y_top)==0: #Mingbo add
-                if len(x_top) ==0 or len(y_top)==0: #Mingbo add
-                    print(cellname)
-                    print("x", x)
-                    print("id_wins_top", id_wins_top)
-                    print("df_top_x_cellname ", df_top_x.loc[cellname, :])
-                    print("df_top_y_cellname ", df_top_y.loc[cellname, :])
-                    print("x_top, y_top: ", x_top, y_top)
-
-                #    continue
-
                 f_top_linear = interpolate.interp1d(x_top, y_top, kind = 'linear')
                 x_top_new = [x for x in x_smooth if (x>=x_top[0]) and (x<=x_top[-1])] + [x_top[-1]]
                 x_top_new = np.unique(x_top_new).tolist()
@@ -1645,7 +1630,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
                                                                          np.array(y_top_new_linear)[id_selected]],index=['x','y'])
         for edge_i_base in dict_paths_base.keys():
             path_i_base = dict_paths_base[edge_i_base]
-            id_wins_base = [i_x for i_x, x in enumerate(df_base_x.loc['edge']) if set(np.unique(x)).issubset(set(path_i_base))]
+            id_wins_base = [i_x for i_x, x in enumerate(df_base_x.loc['edge']) if {b for a in x for b in a}.issubset(set(path_i_base))]
             if(flat_tree.degree(root_node)>1 and \
                edge_i_base==(root_node,dict_forest[cell_list_sorted[0]][root_node]['next'][-1])):
                 id_wins_base.insert(0,1)
@@ -1668,10 +1653,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
         dict_edges_CE = {cellname:[] for cellname in cell_list_sorted}
         for cellname in cell_list_sorted:
             for edge_i in bfs_edges:
-                ## Mingbo
-                #print("dict_smooth_linear[cellname]['top'][edge_i] ", dict_smooth_linear[cellname]['top'][edge_i].loc['y']
-                #if(sum(abs(dict_smooth_linear[cellname]['top'][edge_i].loc['y'] - \
-                if(sum(abs(dict_smooth_linear[cellname]['top'].get(edge_i, dict_smooth_linear[cellname]['base'][edge_i]).loc['y'] - \
+                if(sum(abs(dict_smooth_linear[cellname]['top'][edge_i].loc['y'] - \
                        dict_smooth_linear[cellname]['base'][edge_i].loc['y']) > 1e-12)):
                     dict_edges_CE[cellname].append(edge_i)
 
@@ -1700,8 +1682,8 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
             paths_CE_top = dict_paths_CE_top[cellname]
             for edge_i_top in paths_CE_top.keys():
                 path_i_top = paths_CE_top[edge_i_top]
-                edges_top = [x for x in bfs_edges if set(np.unique(x)).issubset(set(path_i_top))]
-                id_wins_top = [i_x for i_x, x in enumerate(df_top_x.loc['edge']) if set(np.unique(x)).issubset(set(path_i_top))]
+                edges_top = [x for x in bfs_edges if {a for a in x}.issubset(set(path_i_top))]
+                id_wins_top = [i_x for i_x, x in enumerate(df_top_x.loc['edge']) if {b for a in x for b in a}.issubset(set(path_i_top))]
 
                 x_top = []
                 y_top = []
@@ -1726,8 +1708,8 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
             paths_CE_base = dict_paths_CE_base[cellname]
             for edge_i_base in paths_CE_base.keys():
                 path_i_base = paths_CE_base[edge_i_base]
-                edges_base = [x for x in bfs_edges if set(np.unique(x)).issubset(set(path_i_base))]
-                id_wins_base = [i_x for i_x, x in enumerate(df_base_x.loc['edge']) if set(np.unique(x)).issubset(set(path_i_base))]
+                edges_base = [x for x in bfs_edges if {a for a in x}.issubset(set(path_i_base))]
+                id_wins_base = [i_x for i_x, x in enumerate(df_base_x.loc['edge']) if {b for a in x for b in a}.issubset(set(path_i_base))]
 
                 x_base = []
                 y_base = []
@@ -1742,14 +1724,13 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
                     y_base = y_base + py_base_linear.tolist()
                 x_base_new = x_base
                 #print("y_base: ", y_base)
-                if len(y_base) > 0: ### Mingbo
-                    y_base_new = savgol_filter(y_base,11,polyorder=1)
-                    #print("y_base_new: ", y_base_new)
-                    for id_node in range(len(path_i_base)-1):
-                        edge_i = (path_i_base[id_node],path_i_base[id_node+1])
-                        edge_i_bd = dict_edge_bd[edge_i]
-                        id_selected = [i_x for i_x,x in enumerate(x_base_new) if x>=edge_i_bd[0] and x<=edge_i_bd[1]]
-                        dict_smooth_new[cellname]['base'][edge_i] = pd.DataFrame([np.array(x_base_new)[id_selected],\
+                y_base_new = savgol_filter(y_base,11,polyorder=1)
+                #print("y_base_new: ", y_base_new)
+                for id_node in range(len(path_i_base)-1):
+                    edge_i = (path_i_base[id_node],path_i_base[id_node+1])
+                    edge_i_bd = dict_edge_bd[edge_i]
+                    id_selected = [i_x for i_x,x in enumerate(x_base_new) if x>=edge_i_bd[0] and x<=edge_i_bd[1]]
+                    dict_smooth_new[cellname]['base'][edge_i] = pd.DataFrame([np.array(x_base_new)[id_selected],\
                                                                           np.array(y_base_new)[id_selected]],index=['x','y'])
 
         #find all edges of polygon
@@ -1881,4 +1862,57 @@ def find_paths(dict_tree,bfs_nodes):
                 dict_paths_top[(node_i,next_nodes[i_mid+1])] = stack_top
     return dict_paths_top,dict_paths_base
 
+
+def fill_im_array(dict_im_array,df_bins_gene,flat_tree,df_base_x,df_base_y,df_top_x,df_top_y,xmin,xmax,ymin,ymax,im_nrow,im_ncol,step_w,dict_shift_dist,id_wins,edge_i,cellname,id_wins_prev,prev_edge):
+    pad_ratio = 0.008
+    xmin_edge = df_base_x.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins))].min()
+    xmax_edge = df_base_x.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins))].max()
+    id_st_x = int(np.floor(((xmin_edge - xmin)/(xmax - xmin))*(im_ncol-1)))
+    id_ed_x =  int(np.floor(((xmax_edge - xmin)/(xmax - xmin))*(im_ncol-1)))
+    if (flat_tree.degree(edge_i[1])==1):
+        id_ed_x = id_ed_x + 1
+    if(id_st_x < 0):
+        id_st_x = 0
+    if(id_st_x >0):
+        id_st_x  = id_st_x + 1
+    if(id_ed_x>(im_ncol-1)):
+        id_ed_x = im_ncol - 1
+    if(prev_edge != ''):
+        shift_dist = dict_shift_dist[edge_i] - dict_shift_dist[prev_edge]
+        gene_color = df_bins_gene.loc[cellname,list(map(lambda x: 'win' + str(x), [id_wins_prev[-1]] + id_wins[1:]))].tolist()
+    else:
+        gene_color = df_bins_gene.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins))].tolist()
+    x_axis = df_base_x.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins))].tolist()
+    x_base = np.linspace(x_axis[0],x_axis[-1],id_ed_x-id_st_x+1)
+    gene_color_new = np.interp(x_base,x_axis,gene_color)
+    y_axis_base = df_base_y.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins))].tolist()
+    y_axis_top = df_top_y.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins))].tolist()
+    f_base_linear = interpolate.interp1d(x_axis, y_axis_base, kind = 'linear')
+    f_top_linear = interpolate.interp1d(x_axis, y_axis_top, kind = 'linear')
+    y_base = f_base_linear(x_base)
+    y_top = f_top_linear(x_base)
+    id_y_base = np.ceil((1-(y_base-ymin)/(ymax-ymin))*(im_nrow-1)).astype(int) + int(im_ncol * pad_ratio)
+    id_y_base[id_y_base<0]=0
+    id_y_base[id_y_base>(im_nrow-1)]=im_nrow-1
+    id_y_top = np.floor((1-(y_top-ymin)/(ymax-ymin))*(im_nrow-1)).astype(int) - int(im_ncol * pad_ratio)
+    id_y_top[id_y_top<0]=0
+    id_y_top[id_y_top>(im_nrow-1)]=im_nrow-1
+    id_x_base = range(id_st_x,(id_ed_x+1))
+    for x in range(len(id_y_base)):
+        if(x in range(int(step_w/xmax * im_ncol)) and prev_edge != ''):
+            if(shift_dist>0):
+                id_y_base[x] = id_y_base[x] - int(im_ncol * pad_ratio)
+                id_y_top[x] = id_y_top[x] + int(im_ncol * pad_ratio) - \
+                                int(abs(shift_dist)/abs(ymin -ymax) * im_nrow * 0.3)
+                if(id_y_top[x] < 0):
+                    id_y_top[x] = 0
+            if(shift_dist<0):
+                id_y_base[x] = id_y_base[x] - int(im_ncol * pad_ratio) + \
+                                int(abs(shift_dist)/abs(ymin -ymax) * im_nrow * 0.3)
+                id_y_top[x] = id_y_top[x] + int(im_ncol * pad_ratio)
+                if(id_y_base[x] > im_nrow-1):
+                    id_y_base[x] = im_nrow-1
+        dict_im_array[cellname][id_y_top[x]:(id_y_base[x]+1),id_x_base[x]] =  np.tile(gene_color_new[x],\
+                                                                          (id_y_base[x]-id_y_top[x]+1))
+    return dict_im_array
 
