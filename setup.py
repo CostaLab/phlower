@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
 setup(
     name='hodgetraj',
@@ -8,7 +8,7 @@ setup(
     author='Mingbo Cheng',
     author_email='chengmingbo@gmail.com',
     license='BSD 2-clause',
-    packages=['hodgetraj'],
+    #packages=['hodgetraj'],
     install_requires=['numpy',
                       'matplotlib',
                       'seaborn',
@@ -23,7 +23,6 @@ setup(
                       "colorcet",
                       'umap-learn',
                       ],
-
     classifiers=[
         'Development Status :: 1 - Planning',
         'Intended Audience :: Science/Research',
@@ -38,5 +37,6 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
     ],
+    packages=find_packages()
 )
 

@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.metrics import pairwise_distances
 from sklearn.cluster import DBSCAN
 
-def get_igraph_from_adjacency(adjacency, directed=None):
+def _get_igraph_from_adjacency(adjacency, directed=None):
     """
     adjust from https://github.com/scverse/scanpy.git
     Get igraph graph from adjacency matrix.
@@ -34,7 +34,7 @@ def leiden(embedding, distance='euclidean',n_iterations=-1, resolution=1.0,  see
     _distances = pairwise_distances(embedding, metric=distance)
     connectivities = 1/(1+_distances)
 
-    gclust = get_igraph_from_adjacency(connectivities, directed=False)
+    gclust = _get_igraph_from_adjacency(connectivities, directed=False)
     partition_type = la.RBConfigurationVertexPartition
     partition_kwargs['weights'] = np.array(gclust.es['weight']).astype(np.float64)
     partition_kwargs['n_iterations'] = n_iterations
@@ -56,7 +56,7 @@ def louvain(embedding, distance='euclidean', resolution=1.0,  seed_state=0, **pa
     _distances = pairwise_distances(embedding, metric=distance)
     connectivities = 1/(1+_distances)
 
-    gclust = get_igraph_from_adjacency(connectivities, directed=False)
+    gclust = _get_igraph_from_adjacency(connectivities, directed=False)
     partition_type = lv.RBConfigurationVertexPartition
     partition_kwargs['weights'] = np.array(gclust.es['weight']).astype(np.float64)
     partition_kwargs['seed'] = seed_state
