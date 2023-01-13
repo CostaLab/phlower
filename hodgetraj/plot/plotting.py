@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 from typing import Iterable, List, Optional, Set, Tuple, TypeVar
 
-from .util import get_uniform_multiplication, kde_eastimate
+from ..util import get_uniform_multiplication, kde_eastimate
 
 V = TypeVar('V')
 def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
