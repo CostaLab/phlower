@@ -1,4 +1,4 @@
-## most of functions are adjusted from https://github.com/pinellolab/STREAM
+ ## code adjusted from from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03
 import copy
 import itertools
 import pandas as pd

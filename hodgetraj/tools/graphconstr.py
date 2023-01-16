@@ -13,6 +13,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from .diffusionmap import diffusionMaps, affinity, affinity, logsumexp
 from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl
+from .dimensionreduction import run_pca
 
 V = TypeVar('V')
 
@@ -218,8 +219,7 @@ def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None):
   print("done.")
   print("Pre-PCA: ")
   npc = min(100, Y.shape[0]-1, Y.shape[1]-1) if not npc else min(100, Y.shape[0]-1, Y.shape[1] -1, npc)
-  pc_model = PCA(n_components=npc)
-  pc = pc_model.fit_transform(Y)
+  pc = run_pca(Y, npc)
 
   dic = diffusionGraphDM(pc, roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma)
   return dic

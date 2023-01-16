@@ -23,3 +23,12 @@ from .dimensionreduction import (
         run_pca,
         run_umap,
         )
+
+from .viz import (
+        graph_layout,
+        )
+
+from .harmonic import *
+from .incidence import *
+from .trajectory import *
+

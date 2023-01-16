@@ -7,7 +7,7 @@ from typing import List
 from collections import Counter, defaultdict
 from scipy.sparse import csr_matrix
 
-from .util import pairwise, find_knee
+from ..util import pairwise, find_knee
 
 def random_climb(g:nx.Graph, attr:str='u', roots_ratio:float=0.1, n:int=10000, seeds:int=2022) -> list:
     """
@@ -170,10 +170,6 @@ def full_trajectory_matrix(graph: nx.Graph, mat_traj, elist, elist_dict, edge_w=
             elist.shape[0], len(j)), dtype=np.float32)# int8
         mat_vec_e.append(mat_temp)
     return mat_vec_e
-
-
-
-
 
 def flatten_trajectory_matrix(H_full) -> np.ndarray:
     """

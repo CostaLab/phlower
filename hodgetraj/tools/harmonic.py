@@ -4,7 +4,7 @@ import random
 import networkx as nx
 from scipy.sparse import linalg, csr_matrix
 from scipy.spatial import Delaunay,distance
-from .util import tuple_increase, top_n_from, is_in_2sets
+from ..util import tuple_increase, top_n_from, is_in_2sets
 
 
 

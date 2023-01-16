@@ -22,6 +22,8 @@ setup(
                       "louvain",
                       "colorcet",
                       'umap-learn',
+                      'scanpy',
+                      'anndata',
                       ],
     classifiers=[
         'Development Status :: 1 - Planning',

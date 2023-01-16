@@ -1,7 +1,7 @@
 import networkx as nx
 import numpy as np
 from scipy.sparse import csc_matrix
-from .util import lexsort_rows
+from ..util import lexsort_rows
 
 
 #def create_weighted_triangle_list(G: nx.Graph) -> np.ndarray:
