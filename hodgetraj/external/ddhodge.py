@@ -13,6 +13,7 @@ def ddhodge(
         adata: AnnData,
         basis: str = 'X_pca',
         roots: Union[str, list] = None,
+        cluster_name: str = 'group',
         k: int = 11,
         npc: int = 100,
         ndc: int = 40,
@@ -57,9 +58,9 @@ def ddhodge(
         adata_copy = adata
 
     if isinstance(roots, str):
-        roots = adata_copy.obs[roots].tolist()
+        roots = adata_copy.obs[cluster_name].tolist() ==  roots
     elif isinstance(roots, list) or isinstance(roots, np.ndarray) or isinstance(roots, pd.Series):
-        adata_copy.obs['roots'] = np.array(roots).tolist()
+        pass
 
     d = {}
     if basis:

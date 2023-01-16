@@ -36,3 +36,8 @@ from .triangulation import (
 from .incidence import *
 from .trajectory import *
 
+
+from .graphconstr import(
+        diffusionGraphDM,
+        diffusionGraph,
+        )
