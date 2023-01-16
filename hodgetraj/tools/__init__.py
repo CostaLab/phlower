@@ -28,7 +28,11 @@ from .viz import (
         graph_layout,
         )
 
-from .harmonic import *
+from .triangulation import (
+        construct_trucated_delaunay,
+        construct_circle_delaunay,
+        )
+
 from .incidence import *
 from .trajectory import *
 

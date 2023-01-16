@@ -3,6 +3,7 @@
 ## run ddhodge on dimension reduction of adata
 import numpy as np
 import pandas as pd
+import networkx as nx
 from typing import Union
 from anndata import AnnData
 from scipy.sparse import csr_matrix, issparse
@@ -19,6 +20,7 @@ def ddhodge(
         j: int = 7,
         lmda: float = 1e-4,
         sigma: float = None,
+        layout: str = 'neato',
         copy: bool = False,
         ):
 
@@ -75,5 +77,10 @@ def ddhodge(
     adata_copy.uns[f'{basis}_ddhodge_psi'] = d['psi']
     adata_copy.uns[f'{basis}_ddhodge_phi'] = d['phi']
     adata_copy.uns[f'{basis}_ddhodge_eig'] = d['eig']
+    if layout:
+        print('calculate layouts')
+        layouts = nx.nx_pydot.graphviz_layout(d['g'], prog=layout)
+        adata_copy.obsm[f'{basis}_ddhodge_g'] = np.array([layouts[i] for i in range(len(layouts))])
+    print('done')
 
     return adata if copy else None

@@ -1,6 +1,6 @@
 import networkx as nx
 import numpy as np
-from scipy.sparse import csc_matrix
+from scipy.sparse import csc_matrix, linalg, csr_matrix
 from ..util import lexsort_rows
 
 
@@ -24,6 +24,22 @@ from ..util import lexsort_rows
 #
 #    result = np.array(triangles)
 #    return lexsort_rows(result)
+
+def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int) -> dict:
+    """
+    Computes the harmonic projection matrix for the simplicial complex with the
+    given Hodge-1 Laplacian.
+
+    Parameters
+    ----------
+    L1 : csr_matrix of type float
+    number_of_holes : int
+    """
+    w, v = linalg.eigsh(L1, k=number_of_holes,
+                        v0=np.ones(L1.shape[0]), which='SM')
+    return {"w":w, "v":v.T}
+
+
 
 
 def assign_eweight(G, A):

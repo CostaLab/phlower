@@ -13,6 +13,7 @@ setup(
                       'matplotlib',
                       'seaborn',
                       'networkx>=2.4',
+                      'pydot',
                       'igraph',
                       "sklearn",
                       "scipy",

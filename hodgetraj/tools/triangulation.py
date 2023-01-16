@@ -2,27 +2,61 @@ import numpy as np
 import copy
 import random
 import networkx as nx
+from anndata import AnnData
 from scipy.sparse import linalg, csr_matrix
 from scipy.spatial import Delaunay,distance
 from ..util import tuple_increase, top_n_from, is_in_2sets
 
 
+def construct_trucated_delaunay(adata:AnnData,
+                                graph_name:str='X_dm_ddhodge_g',
+                                trunc_quantile:float=0.75,
+                                trunc_times:float=3,
+                                copy:bool=False,
+                                ):
+    if copy:
+        adata = adata.copy()
 
+    edges = truncated_delaunay(adata.obsm[graph_name], trunc_quantile=trunc_quantile, trunc_times=trunc_times)
+    adata.uns[f'{graph_name}_triangulation'] = reset_edges(adata.uns[graph_name], edges, keep_old=False)
 
-def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int) -> dict:
-    """
-    Computes the harmonic projection matrix for the simplicial complex with the
-    given Hodge-1 Laplacian.
+    return adata if copy else None
+#end construct_trucated_delaunay
 
-    Parameters
-    ----------
-    L1 : csr_matrix of type float
-    number_of_holes : int
-    """
-    w, v = linalg.eigsh(L1, k=number_of_holes,
-                        v0=np.ones(L1.shape[0]), which='SM')
-    return {"w":w, "v":v.T}
+def construct_circle_delaunay(adata:AnnData,
+                              graph_name:str='X_dm_ddhodge_g_triangulation',
+                              layout_name:str='X_dm_ddhodge_g',
+                              cluster_name:str='group',
+                              quant=0.1,
+                              node_attr='u',
+                              start_n=5,
+                              end_n = 5,
+                              separate_ends_triangle = False,
+                              random_seed = 2022,
+                              calc_layout:bool = False,
+                              copy:bool=False,
+                              ):
+    if copy:
+        adata = adata.copy()
 
+    layouts = adata.obsm[layout_name]
+    group = adata.obs[cluster_name]
+    adata.uns[f'{graph_name}_circle'] = connect_starts_ends_with_Delaunay(adata.uns[graph_name],
+                                                                          layouts,
+                                                                          group,
+                                                                          quant=quant,
+                                                                          node_attr=node_attr,
+                                                                          start_n=start_n,
+                                                                          end_n=end_n,
+                                                                          separate_ends_triangle=separate_ends_triangle,
+                                                                          random_seed=random_seed)
+
+    if calc_layout:
+        pydot_layouts = nx.nx_pydot.graphviz_layout(adata.uns[f"{graph_name}_circle"])
+        adata.obsm[f'{graph_name}_circle'] = np.array([pydot_layouts[i] for i in range(len(pydot_layouts))])
+
+    return adata if copy else None
+#endf construct_circle_delaunay
 
 
 def truncated_delaunay(position, trunc_quantile=0.75, trunc_times=3):
@@ -137,6 +171,8 @@ def connect_starts_ends_with_Delaunay(g,
 
     start_cts = list(set(group[starts]))
     end_cts = list(set(group[ends]))
+    print("start clusters ", start_cts)
+    print("end clusters ", end_cts)
     start_nodes = np.concatenate([np.where(np.array(group) == start_ct)[0] for start_ct in start_cts]).ravel()
     n_start_nodes = top_n_from(start_nodes, u, min(start_n, len(start_nodes)), largest=False)
 

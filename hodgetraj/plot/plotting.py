@@ -5,6 +5,7 @@ import pandas as pd
 import networkx as nx
 import seaborn as sns
 import matplotlib.pyplot as plt
+from anndata import AnnData
 from collections import defaultdict
 from typing import Iterable, List, Optional, Set, Tuple, TypeVar
 
@@ -15,8 +16,45 @@ def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
     return zip(path, path[1:])
 
 
+def nxdraw_group(adata: AnnData,
+                 graph_name:str = 'X_dm_ddhodge_g',
+                 layout_name: str = 'X_dm_ddhodge_g',
+                 group_name:str = 'group',
+                 show_edges:bool=True,
+                 show_legend:bool=True,
+                 color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                 legend_loc="center left",
+                 bbox_to_anchor=(1, 0.5),
+                 markerscale=1,
+                 label=True,
+                 labelsize=10,
+                 labelstyle='text',
+                 directed =False,
+                 ax = None,
+                 **args):
 
-def nxdraw_group(g,
+    G_nxdraw_group(adata.uns[graph_name],
+                   adata.obsm[layout_name],
+                   adata.obs[group_name],
+                   show_edges=show_edges,
+                   show_legend=show_legend,
+                   color_palette=color_palette,
+                   legend_loc=legend_loc,
+                   bbox_to_anchor=bbox_to_anchor,
+                   markerscale=markerscale,
+                   label=label,
+                   labelsize=labelsize,
+                   labelstyle=labelstyle,
+                   directed = directed,
+                   ax=ax,
+                   **args)
+
+
+#endf nxdraw_group
+
+
+
+def G_nxdraw_group(g,
                  layouts,
                  groups,
                  show_edges:bool=True,
@@ -28,6 +66,7 @@ def nxdraw_group(g,
                  label=True,
                  labelsize=10,
                  labelstyle='text',
+                 directed=False,
                  ax = None,
                  **args):
     """
@@ -62,7 +101,11 @@ def nxdraw_group(g,
         #print(labeldf)
 
     if show_edges:
-        nx.draw_networkx_edges(g, pos=layouts, ax=ax)
+        if directed:
+            nx.draw_networkx_edges(g, pos=layouts, ax=ax)
+        else:
+            nx.draw_networkx_edges(g.to_undirected(), pos=layouts, ax=ax)
+
     for i, (k, v) in enumerate(d_colors.items()):
         name = k
         nodes = v
@@ -93,7 +136,7 @@ def nxdraw_group(g,
 
 
 
-def plot_traj(graph: nx.Graph,
+def G_plot_traj(graph: nx.Graph,
               node_positions: np.ndarray,
               holes: List[List[int]] = None,
               trajectory: List = None,
@@ -152,7 +195,7 @@ def plot_traj(graph: nx.Graph,
 
 
 
-def plot_triangle_density(g:nx.Graph,
+def G_plot_triangle_density(g:nx.Graph,
                           layouts,
                           node_size=10,
                           ax=None,
