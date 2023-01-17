@@ -2,11 +2,99 @@ import copy
 import pandas as pd
 import numpy as np
 import networkx as nx
+from anndata import AnnData
 from tqdm import tqdm
 from ..util import networkx_node_to_df, kde_eastimate, bfs_layers
+from ..external.stream_extra import (add_pos_to_graph,
+                                     dfs_from_leaf,
+                                     extract_branches,
+                                     construct_flat_tree,
+                                     add_branch_info,
+                                     project_cells_to_epg,
+                                     calculate_pseudotime,
+                                     )
 
 ##TODO: use kde information to merge the buckets
 ##TODO: if duplicated nodes is an issue, we can calculate center of each vertex, if set the node to the nearest vertex.
+
+
+def create_stream_tree(adata: AnnData,
+                       fate_tree: str = 'fate_tree',
+                       layout_name: str = 'X_dm_ddhodge_g',
+                       iscopy: bool = False,
+                       ):
+
+    adata = adata.copy() if iscopy else adata
+    g = adata.uns[fate_tree]
+    g_pos   =  add_pos_to_graph(g.to_undirected(), layouts=adata.obsm[layout_name], iscopy=True)
+    dic_br  =  extract_branches(g_pos.to_undirected())
+    dic_br  =  add_branch_info(g_pos.to_undirected(), dic_br)
+    g_br    =  construct_flat_tree(dic_br, g_pos)
+
+    adata.uns['epg'] = g_pos
+    adata.uns['flat_tree'] = g_br
+    layouts = adata.obsm[layout_name]
+    if type(layouts) == dict:
+        layouts = np.array([layouts[x] for x in range(max(layouts.keys()) + 1)])
+    adata.obsm['X_dr'] = layouts
+    project_cells_to_epg(adata)
+    calculate_pseudotime(adata)
+
+    return adata if iscopy else None
+#endf create_stream_tree
+
+
+
+def create_fate_tree(adata: AnnData,
+                     graph_name: str = 'X_dm_ddhodge_g',
+                     layout_name: str= 'X_dm_ddhodge_g',
+                     trajs_name: str = 'knn_trajs',
+                     cluster_name: str = 'trajs_clusters',
+                     retain_clusters=[],
+                     node_attribute='u',
+                     sample_n=10000,
+                     min_kde_quant_rm=0.1,
+                     bucket_idx_name='buckets_idx',
+                     bucket_number=10,
+                     dic_cluster = {},
+                     ###---
+                     intersect_ratio = 0.4,
+                     ratio_decay = 1.05,
+                     oname_basis =  '',
+                     iscopy = False,
+                     ):
+    adata = adata.copy() if iscopy else adata
+
+    df_dict = trajectory_buckets(adata.uns[graph_name],
+                                 adata.obsm[layout_name],
+                                 adata.uns[trajs_name],
+                                 adata.uns[cluster_name],
+                                 retain_clusters,
+                                 node_attribute,
+                                 sample_n,
+                                 min_kde_quant_rm,
+                                 bucket_idx_name,
+                                 bucket_number)
+
+    keys = list(df_dict.keys())
+    if len(keys) < 2:
+        print("Error: at least two clusters should be retained!")
+        return
+
+    g = initialize_a_tree(df_dict[keys[0]],
+                          df_dict[keys[1]],
+                          dic_cluster.get(keys[0], keys[0]),
+                          dic_cluster.get(keys[1], keys[1]),
+                          intersect_ratio=intersect_ratio,
+                          decay_ratio=ratio_decay)
+
+    for key in keys[2:]:
+        g = add_traj_to_graph(g, df_dict[key], dic_cluster.get(key, key))
+
+    adata.uns[oname_basis + 'fate_tree'] = g
+    return adata if iscopy else None
+#endf create_fate_tree
+
 
 def trajectory_buckets(g=None,
                        layouts=None,

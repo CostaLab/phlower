@@ -12,15 +12,15 @@ def construct_trucated_delaunay(adata:AnnData,
                                 graph_name:str='X_dm_ddhodge_g',
                                 trunc_quantile:float=0.75,
                                 trunc_times:float=3,
-                                copy:bool=False,
+                                iscopy:bool=False,
                                 ):
-    if copy:
+    if iscopy:
         adata = adata.copy()
 
     edges = truncated_delaunay(adata.obsm[graph_name], trunc_quantile=trunc_quantile, trunc_times=trunc_times)
     adata.uns[f'{graph_name}_triangulation'] = reset_edges(adata.uns[graph_name], edges, keep_old=False)
 
-    return adata if copy else None
+    return adata if iscopy else None
 #end construct_trucated_delaunay
 
 def construct_circle_delaunay(adata:AnnData,
@@ -34,9 +34,9 @@ def construct_circle_delaunay(adata:AnnData,
                               separate_ends_triangle = False,
                               random_seed = 2022,
                               calc_layout:bool = False,
-                              copy:bool=False,
+                              iscopy:bool=False,
                               ):
-    if copy:
+    if iscopy:
         adata = adata.copy()
 
     layouts = adata.obsm[layout_name]
@@ -55,7 +55,7 @@ def construct_circle_delaunay(adata:AnnData,
         pydot_layouts = nx.nx_pydot.graphviz_layout(adata.uns[f"{graph_name}_circle"])
         adata.obsm[f'{graph_name}_circle'] = np.array([pydot_layouts[i] for i in range(len(pydot_layouts))])
 
-    return adata if copy else None
+    return adata if iscopy else None
 #endf construct_circle_delaunay
 
 

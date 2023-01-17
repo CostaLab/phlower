@@ -16,6 +16,17 @@ def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
     return zip(path, path[1:])
 
 
+def plot_fate_tree(adata: AnnData,
+                   fate_tree: str = 'fate_tree',
+                   layout_prog = 'twopi',
+                   with_labels= True,
+                   ax=None,
+                   ):
+    ax = plt.gca() if ax is None else ax
+    pos =nx.nx_pydot.graphviz_layout(adata.uns[fate_tree], prog='twopi')
+    nx.draw(adata.uns[fate_tree], pos, with_labels=with_labels, ax=ax)
+
+
 def plot_density_grid(adata: AnnData,
                       graph_name = "X_dm_ddhodge_g_triangulation_circle",
                       layout_name = "X_dm_ddhodge_g",

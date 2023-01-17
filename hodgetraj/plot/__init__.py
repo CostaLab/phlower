@@ -7,6 +7,7 @@ from .plotting import (
         plot_trajs_embedding,
         plot_triangle_density,
         plot_density_grid,
+        plot_fate_tree,
         G_nxdraw_group,
         G_plot_traj,
         G_plot_triangle_density,

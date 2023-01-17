@@ -13,6 +13,8 @@ from .clustering import (
         )
 
 from .fate_tree import (
+        create_fate_tree,
+        create_stream_tree,
         trajectory_buckets,
         initialize_a_tree,
         add_traj_to_graph,

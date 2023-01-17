@@ -1,4 +1,3 @@
-import copy
 import random
 import networkx as nx
 import numpy as np
@@ -24,11 +23,11 @@ def random_climb_knn(adata,
                      attr:str='u',
                      roots_ratio:float=0.1,
                      n:int=10000,
-                     copy=False,
+                     iscopy=False,
                      traj_name = None,
                      seeds:int=2022):
 
-    adata = adata.copy() if copy else adata
+    adata = adata.copy() if iscopy else adata
 
     g = adata.uns[graph_name]
     knn_edges = adjedges(adata.uns[A], adata.uns[W], knn_edges_k)
@@ -38,7 +37,7 @@ def random_climb_knn(adata,
         traj_name = f"knn_trajs"
     adata.uns[traj_name] = knn_trajs
 
-    return adata if copy else None
+    return adata if iscopy else None
 
 
 
@@ -47,14 +46,13 @@ def full_trajectory_matrix(adata: AnnData,
                            trajs : Union[str, List[List[int]]] = "knn_trajs",
                            edge_w : List = None,
                            oname_basis : str = "",
-                           copy = False,
+                           iscopy = False,
                            ):
-    if copy:
-        adata = adata.copy()
+    adata = adata.copy() if iscopy else adata
 
     if isinstance(trajs, str):
         trajs = adata.uns[trajs]
-    
+
     g = adata.uns[graph_name]
     elist = np.array([(x[0], x[1]) for x in g.edges()])
     elist_dict = {tuple(sorted(j)): i for i, j in enumerate(elist)}
@@ -63,7 +61,7 @@ def full_trajectory_matrix(adata: AnnData,
     adata.uns[oname_basis + "full_traj_matrix_flatten"] = L_flatten_trajectory_matrix(M_full)
 
 
-    return adata if copy else None
+    return adata if iscopy else None
 
 
 def trajs_dm(adata,
@@ -72,11 +70,11 @@ def trajs_dm(adata,
              embedding = 'umap',
              eig_num: int = 2,
              clustering_method: str = "dbscan",
-             copy=False,
+             iscopy=False,
              **args,
              ):
 
-    adata = adata.copy() if copy else adata
+    adata = adata.copy() if iscopy else adata
     if isinstance(M_flatten, str):
         M_flatten = adata.uns[M_flatten]
 
@@ -91,11 +89,11 @@ def trajs_dm(adata,
         raise ValueError("embedding method not supported, only umap and pca are supported for now")
     adata.uns["trajs_dm"] = dm
 
-    return adata if copy else None
+    return adata if iscopy else None
 #endf trajs_dm
 
-def trajs_clustering(adata, embedding = 'trajs_dm', clustering_method: str = "dbscan", copy=False, **args,):
-    adata = adata.copy() if copy else adata
+def trajs_clustering(adata, embedding = 'trajs_dm', clustering_method: str = "dbscan", iscopy=False, **args,):
+    adata = adata.copy() if iscopy else adata
     dm = adata.uns[embedding]
     if clustering_method == "dbscan":
         clusters = dbscan(dm, **args)
@@ -108,7 +106,7 @@ def trajs_clustering(adata, embedding = 'trajs_dm', clustering_method: str = "db
 
     adata.uns["trajs_clusters"] = clusters
 
-    return adata if copy else None
+    return adata if iscopy else None
 #endf trajs_clustering
 
 

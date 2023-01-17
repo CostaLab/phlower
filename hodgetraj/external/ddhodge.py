@@ -21,7 +21,7 @@ def ddhodge(
         lmda: float = 1e-4,
         sigma: float = None,
         layout: str = 'neato',
-        copy: bool = False,
+        iscopy: bool = False,
         ):
 
     """
@@ -51,7 +51,7 @@ def ddhodge(
     if roots is None:
         raise ValueError('roots is None')
 
-    if copy:
+    if iscopy:
         adata = adata.copy()
 
     if isinstance(roots, str) and roots in adata.obs.keys():
@@ -86,4 +86,4 @@ def ddhodge(
         adata.obsm[f'{basis}_ddhodge_g'] = np.array([layouts[i] for i in range(len(layouts))])
     print('done')
 
-    return adata if copy else None
+    return adata if iscopy else None

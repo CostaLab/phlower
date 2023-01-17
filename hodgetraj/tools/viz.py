@@ -2,11 +2,11 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-def graph_layout(adata, graph_name="X_pca_ddhodge_g", layout='neato', out_name=None, copy=False):
+def graph_layout(adata, graph_name="X_pca_ddhodge_g", layout='neato', out_name=None, iscopy=False):
     """generate a layout for a graph
     """
 
-    if copy:
+    if iscopy:
         adata = adata.copy()
 
     layouts = nx.nx_pydot.graphviz_layout(adata.uns[graph_name], prog=layout)
@@ -16,4 +16,4 @@ def graph_layout(adata, graph_name="X_pca_ddhodge_g", layout='neato', out_name=N
     else:
         adata.obsm[graph_name] = np.array([layouts[i] for i in range(len(layouts))])
 
-    return adata if copy else None
+    return adata if iscopy else None

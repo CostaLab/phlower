@@ -117,10 +117,10 @@ def curl(g, weight_attr="weight"):
 def L1Norm_decomp(adata: AnnData,
                   graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
                   eigen_num: int = 100,
-                  copy: bool = False,
+                  iscopy: bool = False,
         ):
 
-    if copy:
+    if iscopy:
         adata = adata.copy()
 
     elist = np.array(adata.uns[graph_name].edges())
@@ -141,14 +141,14 @@ def L1Norm_decomp(adata: AnnData,
     #adata.uns['X_dm_ddhodge_g_triangulation_circle_B1'] = B1
     #adata.uns['X_dm_ddhodge_g_triangulation_circle_B2'] = B2
 
-    return adata if copy else None
+    return adata if iscopy else None
 
 def knee_eigen(adata: AnnData,
                eigens: Union[str, np.ndarray] = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_value",
-               copy = False,
+               iscopy = False,
                ):
 
-    if copy:
+    if iscopy:
         adata = adata.copy()
 
     if isinstance(eigens, str):
@@ -160,5 +160,5 @@ def knee_eigen(adata: AnnData,
     adata.uns['eigen_value_knee'] = idx
     print("knee eigen value is ", idx)
 
-    return adata if copy else None
+    return adata if iscopy else None
 
