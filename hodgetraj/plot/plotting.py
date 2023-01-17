@@ -9,11 +9,80 @@ from anndata import AnnData
 from collections import defaultdict
 from typing import Iterable, List, Optional, Set, Tuple, TypeVar
 
-from ..util import get_uniform_multiplication, kde_eastimate
+from ..util import get_uniform_multiplication, kde_eastimate, norm01
 
 V = TypeVar('V')
 def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
     return zip(path, path[1:])
+
+
+def plot_eigen_line(adata,
+                    evalue_name="X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_value",
+                    n_eig=10,
+                    step_size=1,
+                    show_legend=True,
+                    ax=None,
+                    **args):
+    L_plot_eigen_line(adata.uns[evalue_name],
+                      n_eig=n_eig,
+                      step_size=step_size,
+                      show_legend=show_legend,
+                      ax=ax,
+                      **args)
+#endf
+
+
+def nxdraw_holes(adata: AnnData,
+                 graph_name: str='X_dm_ddhodge_g_triangulation_circle',
+                 layout_name: str='X_dm_ddhodge_g_triangulation_circle',
+                 evector_name: str="X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+                 vector_dim=0,
+                 font_size=0,
+                 node_size=0.1,
+                 width=1,
+                 edge_cmap=plt.cm.RdBu_r,
+                 is_norm=True,
+                 ax = None,
+                 **args):
+
+    ax = ax or plt.gca()
+    H = adata.uns[evector_name][vector_dim]
+    if is_norm:
+        H = norm01(H)
+    nx.draw_networkx(adata.uns[graph_name],
+                     adata.obsm[layout_name],
+                     edge_color=H,
+                     font_size=0,
+                     node_size=0.1,
+                     width=1,
+                     edge_cmap=plt.cm.RdBu_r,
+                     ax = ax,
+                     **args)
+#endf nxdraw_Holes
+
+
+def nxdraw_score(adata: AnnData,
+                 graph_name:str = "X_dm_ddhodge_g",
+                 layout_name:str = "X_dm_ddhodge_g",
+                 color:str = "u",
+                 colorbar:bool = True,
+                 directed:bool = False,
+                 font_size:float = 0,
+                 cmap = plt.cm.get_cmap('viridis'),
+                 **args
+    ):
+    u_color = np.fromiter(nx.get_node_attributes(adata.uns['X_dm_ddhodge_g'], 'u').values(), dtype='float')
+    if directed:
+        nx.draw_networkx(adata.uns[graph_name], adata.obsm[layout_name], node_color=u_color, cmap=cmap, font_size=font_size, **args)
+    else:
+        nx.draw_networkx(adata.uns[graph_name].to_undirected(), adata.obsm[layout_name], cmap=cmap, node_color=u_color, font_size=font_size, **args)
+
+    if colorbar:
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin = min(u_color), vmax=max(u_color)))
+        sm._A = []
+        plt.colorbar(sm)
+#endf nxdraw_score
+
 
 
 def nxdraw_group(adata: AnnData,
@@ -52,7 +121,17 @@ def nxdraw_group(adata: AnnData,
 
 #endf nxdraw_group
 
+def plot_triangle_density(adata: AnnData,
+                          graph_name: str = 'X_dm_ddhodge_g',
+                          layout_name: str = 'X_dm_ddhodge_g',
+                          node_size=10,
+                          ax=None,
+                          cmap = plt.get_cmap("jet"),
+                          colorbar = True,
+                          **args):
 
+    G_plot_triangle_density(adata.uns[graph_name], adata.obsm[layout_name], node_size=node_size, ax=ax, cmap=cmap, colorbar=colorbar, **args)
+#endf plot_triangle_density
 
 def G_nxdraw_group(g,
                  layouts,
@@ -200,7 +279,7 @@ def G_plot_triangle_density(g:nx.Graph,
                           node_size=10,
                           ax=None,
                           cmap = plt.get_cmap("jet"),
-                          show_colorbar = True,
+                          colorbar = True,
                           **args):
 
     """
@@ -209,7 +288,7 @@ def G_plot_triangle_density(g:nx.Graph,
     g: networkx graph
     layouts: layouts dict or array
     cmap: matplotlib.colors.LinearSegmentedColormap
-    show_colorbar: if show colorbar
+    colorbar: if show colorbar
     **args: parameters of networkx.draw
     """
 
@@ -217,7 +296,7 @@ def G_plot_triangle_density(g:nx.Graph,
     values = nx.triangles(g)
     n_color = np.asarray([values[n] for n in g.nodes()])
     nx.draw(g, layouts, node_color=n_color, node_size=node_size, ax=ax, cmap=cmap, **args)
-    if show_colorbar:
+    if colorbar:
         sm = plt.cm.ScalarMappable(cmap=plt.cm.jet, norm=plt.Normalize(vmin=min(n_color), vmax=max(n_color)))
         sm.set_array([])
         plt.colorbar(sm)
@@ -520,7 +599,7 @@ def plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
 #endf plot_trajectory_harmonic_points
 
 
-def plot_eigen_line(values, n_eig=10, step_size=1, show_legend=True, ax=None, **args):
+def L_plot_eigen_line(values, n_eig=10, step_size=1, show_legend=True, ax=None, **args):
     """
     Parameters
     ---------

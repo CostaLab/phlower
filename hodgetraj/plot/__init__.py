@@ -1,6 +1,9 @@
 
 from .plotting import (
         nxdraw_group,
+        nxdraw_score,
+        nxdraw_holes,
+        plot_triangle_density,
         G_nxdraw_group,
         G_plot_traj,
         G_plot_triangle_density,

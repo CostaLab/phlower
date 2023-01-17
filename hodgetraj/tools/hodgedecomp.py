@@ -1,8 +1,11 @@
+import time
 import networkx as nx
 import numpy as np
 import pandas as pd
+from anndata import AnnData
 from scipy.sparse import csc_matrix
 from numpy.linalg import qr,solve,lstsq
+from .incidence import *
 
 
 def lexsort_rows(array: np.ndarray) -> np.ndarray:
@@ -105,5 +108,38 @@ def div(g:nx.DiGraph, weight_attr='weight'):
 
 def curl(g, weight_attr="weight"):
     return curlop(g) @ np.fromiter(nx.get_edge_attributes(g, weight_attr).values(), dtype=float)
+
+
+
+
+def L1Norm_decomp(adata: AnnData,
+                  graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
+                  eigen_num: int = 100,
+                  copy: bool = False,
+        ):
+
+    if copy:
+        adata = adata.copy()
+
+    elist = np.array(adata.uns[graph_name].edges())
+    tlist = triangle_list(adata.uns[graph_name])
+
+    B1 = create_node_edge_incidence_matrix(elist)
+    B2 = create_edge_triangle_incidence_matrix(elist, tlist)
+
+    L1all = create_normalized_l1(B1, B2, mode="RW")
+    L1 = L1all[0]
+    start = time.time()
+    d = harmonic_projection_matrix_with_w(L1.astype(float), eigen_num)
+    end = time.time()
+    print((end-start), " sec")
+    adata.uns['X_dm_ddhodge_g_triangulation_circle_L1Norm'] = L1all
+    adata.uns['X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector'] = d['v']
+    adata.uns['X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_value'] = d['w']
+    adata.uns['X_dm_ddhodge_g_triangulation_circle_B1'] = B1
+    adata.uns['X_dm_ddhodge_g_triangulation_circle_B2'] = B2
+
+    return adata if copy else None
+
 
 

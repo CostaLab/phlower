@@ -214,6 +214,15 @@ def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None):
   ndc: number of diffusion components using
   npc: number of principal components using
   """
+  #print("X:", X)
+  #print("roots:", roots)
+  #print("k:", k)
+  #print("npc:", npc)
+  #print("ndc:", ndc)
+  #print("s:", s)
+  #print("j:", j)
+
+
   print("Normalization: ")
   Y = np.log(gscale(X+0.5)).T
   print("done.")

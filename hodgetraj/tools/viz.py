@@ -7,16 +7,13 @@ def graph_layout(adata, graph_name="X_pca_ddhodge_g", layout='neato', out_name=N
     """
 
     if copy:
-        adata_copy = adata.copy()
-    else:
-        adata_copy = adata
+        adata = adata.copy()
 
-
-    layouts = nx.nx_pydot.graphviz_layout(adata_copy.uns[graph_name], prog=layout)
+    layouts = nx.nx_pydot.graphviz_layout(adata.uns[graph_name], prog=layout)
 
     if not out_name:
-        adata_copy.obsm[out_name] = np.array([layouts[i] for i in range(len(layouts))])
+        adata.obsm[out_name] = np.array([layouts[i] for i in range(len(layouts))])
     else:
-        adata_copy.obsm[graph_name] = np.array([layouts[i] for i in range(len(layouts))])
+        adata.obsm[graph_name] = np.array([layouts[i] for i in range(len(layouts))])
 
-    return adata_copy if copy else None
+    return adata if copy else None

@@ -33,6 +33,10 @@ from .triangulation import (
         construct_circle_delaunay,
         )
 
+from .hodgedecomp import (
+    L1Norm_decomp,
+    )
+
 from .incidence import *
 from .trajectory import *
 

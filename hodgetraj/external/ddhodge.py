@@ -13,7 +13,6 @@ def ddhodge(
         adata: AnnData,
         basis: str = 'X_pca',
         roots: Union[str, list] = None,
-        cluster_name: str = 'group',
         k: int = 11,
         npc: int = 100,
         ndc: int = 40,
@@ -53,35 +52,38 @@ def ddhodge(
         raise ValueError('roots is None')
 
     if copy:
-        adata_copy = adata.copy()
-    else:
-        adata_copy = adata
+        adata = adata.copy()
 
-    if isinstance(roots, str):
-        roots = adata_copy.obs[cluster_name].tolist() ==  roots
+    if isinstance(roots, str) and roots in adata.obs.keys():
+        roots = adata.obs[roots].tolist()
     elif isinstance(roots, list) or isinstance(roots, np.ndarray) or isinstance(roots, pd.Series):
-        pass
+        adata.obs['root'] = roots
+
+    if len(roots) != adata.n_obs:
+        raise ValueError('Length of roots is not equal to adata.n_obs')
+    if set(roots) != {True, False}:
+        raise ValueError('Roots must be boolean and include True and False')
 
     d = {}
     if basis:
-        pc = adata_copy.obsm[basis][:, 0:npc]
-        d = diffusionGraphDM(pc,roots==roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma)
+        pc = adata.obsm[basis][:, 0:npc]
+        d = diffusionGraphDM(pc,roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma)
     else:
-        d = diffusionGraph(adata_copy.X.T,roots==roots,k=k,npc=npc,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma)
-        adata_copy.obsm['X_dm'] = d['dm']
+        d = diffusionGraph(adata.X.T,roots=roots,k=k,npc=npc,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma)
+        adata.obsm['X_dm'] = d['dm']
         basis = 'X_dm'
 
 
-    adata_copy.uns[f'{basis}_ddhodge_g'] = d['g']
-    adata_copy.uns[f'{basis}_ddhodge_A'] = d['A']
-    adata_copy.uns[f'{basis}_ddhodge_W'] = d['W']
-    adata_copy.uns[f'{basis}_ddhodge_psi'] = d['psi']
-    adata_copy.uns[f'{basis}_ddhodge_phi'] = d['phi']
-    adata_copy.uns[f'{basis}_ddhodge_eig'] = d['eig']
+    adata.uns[f'{basis}_ddhodge_g'] = d['g']
+    adata.uns[f'{basis}_ddhodge_A'] = d['A']
+    adata.uns[f'{basis}_ddhodge_W'] = d['W']
+    adata.uns[f'{basis}_ddhodge_psi'] = d['psi']
+    adata.uns[f'{basis}_ddhodge_phi'] = d['phi']
+    adata.uns[f'{basis}_ddhodge_eig'] = d['eig']
     if layout:
         print('calculate layouts')
         layouts = nx.nx_pydot.graphviz_layout(d['g'], prog=layout)
-        adata_copy.obsm[f'{basis}_ddhodge_g'] = np.array([layouts[i] for i in range(len(layouts))])
+        adata.obsm[f'{basis}_ddhodge_g'] = np.array([layouts[i] for i in range(len(layouts))])
     print('done')
 
     return adata if copy else None

@@ -9,7 +9,7 @@ from scipy.sparse import csr_matrix
 
 from ..util import pairwise, find_knee
 
-def random_climb(g:nx.Graph, attr:str='u', roots_ratio:float=0.1, n:int=10000, seeds:int=2022) -> list:
+def G_random_climb(g:nx.Graph, attr:str='u', roots_ratio:float=0.1, n:int=10000, seeds:int=2022) -> list:
     """
     random climb of a graph according to the attr
 
@@ -50,13 +50,13 @@ def random_climb(g:nx.Graph, attr:str='u', roots_ratio:float=0.1, n:int=10000, s
 
 
 
-def shortest_path_edge(g, an_edge):
+def G_shortest_path_edge(g, an_edge):
     if g.has_edge(an_edge[0], an_edge[1]):
         return [an_edge[0],]
     return nx.shortest_path(g, source=an_edge[0], target=an_edge[1])[:-1]
 #endf
 
-def random_climb_knn(g:nx.Graph, knn_edges, attr:str='u', roots_ratio:float=0.1, n:int=10000, seeds:int=2022) -> list:
+def G_random_climb_knn(g:nx.Graph, knn_edges, attr:str='u', roots_ratio:float=0.1, n:int=10000, seeds:int=2022) -> list:
     """
     1st: Random climb using KNN graph to construct a trajectory.
     2nd: Check each edge of the trajectory, if the edge does not belong to the edge of the graph G, find shotest path
@@ -72,16 +72,14 @@ def random_climb_knn(g:nx.Graph, knn_edges, attr:str='u', roots_ratio:float=0.1,
     """
     knn_g = nx.create_empty_copy(g)
     knn_g.add_edges_from(knn_edges)
-    knn_trajs = random_climb(knn_g, attr=attr, roots_ratio=roots_ratio, n=n, seeds=seeds)
+    knn_trajs = G_random_climb(knn_g, attr=attr, roots_ratio=roots_ratio, n=n, seeds=seeds)
     for i in trange(len(knn_trajs)):
         the_last = knn_trajs[i][-1]
-        lol = [shortest_path_edge(g, x) for x in pairwise(knn_trajs[i])]
+        lol = [G_shortest_path_edge(g, x) for x in pairwise(knn_trajs[i])]
         knn_trajs[i] = [y for x in lol for y in x] + [the_last] ## flatten
 
     return knn_trajs
 #endf
-
-
 
 def trajectory_class(traj:list, groups, last_n=10, min_prop=0.8, all_n=3):
     """
@@ -131,7 +129,7 @@ def knee_points(mat_coord_Hspace, trajs):
     return d_branch
 
 
-def full_trajectory_matrix(graph: nx.Graph, mat_traj, elist, elist_dict, edge_w=None) -> List[csr_matrix]:
+def G_full_trajectory_matrix(graph: nx.Graph, mat_traj, elist, elist_dict, edge_w=None) -> List[csr_matrix]:
     """
     import from https://git.rwth-aachen.de/netsci/trajectory-outlier-detection-flow-embeddings/
     """
@@ -171,7 +169,7 @@ def full_trajectory_matrix(graph: nx.Graph, mat_traj, elist, elist_dict, edge_w=
         mat_vec_e.append(mat_temp)
     return mat_vec_e
 
-def flatten_trajectory_matrix(H_full) -> np.ndarray:
+def L_flatten_trajectory_matrix(H_full) -> np.ndarray:
     """
     import from https://git.rwth-aachen.de/netsci/trajectory-outlier-detection-flow-embeddings/
     """
@@ -179,7 +177,7 @@ def flatten_trajectory_matrix(H_full) -> np.ndarray:
     return np.array(list(flattened)).squeeze()
 
 
-def create_matrix_coordinates_trajectory_Hspace(H, M_full):
+def M_create_matrix_coordinates_trajectory_Hspace(H, M_full):
     """
     import from https://git.rwth-aachen.de/netsci/trajectory-outlier-detection-flow-embeddings/
     """
