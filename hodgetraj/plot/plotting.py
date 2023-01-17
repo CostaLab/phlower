@@ -7,7 +7,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from anndata import AnnData
 from collections import defaultdict
-from typing import Iterable, List, Optional, Set, Tuple, TypeVar
+from typing import Iterable, List, Union, Optional, Set, Tuple, TypeVar
 
 from ..util import get_uniform_multiplication, kde_eastimate, norm01
 
@@ -16,7 +16,73 @@ def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
     return zip(path, path[1:])
 
 
-def plot_eigen_line(adata,
+def plot_density_grid(adata: AnnData,
+                      graph_name = "X_dm_ddhodge_g_triangulation_circle",
+                      layout_name = "X_dm_ddhodge_g",
+                      cluster_name = "trajs_clusters",
+                      trajs_name = "knn_trajs",
+                      retain_clusters=[],
+                      sample_n=10000,
+                      figsize=(20,16),
+                      title_prefix='cluster_',
+                      bg_alpha = 0.5,
+                      node_size = 2,
+                      **args
+                      ):
+
+    if graph_name not in adata.uns.keys():
+        raise ValueError("graph_name not in adata.uns.keys()")
+    if layout_name not in adata.obsm.keys():
+        raise ValueError("layout_name not in adata.obsm.keys()")
+    if cluster_name not in adata.uns.keys():
+        raise ValueError("cluster_name not in adata.uns.keys()")
+    if trajs_name not in adata.uns.keys():
+        raise ValueError("trajs_name not in adata.uns.keys()")
+
+    G_plot_density_grid(adata.uns[graph_name],
+                        adata.obsm[layout_name],
+                        adata.uns[cluster_name],
+                        adata.uns[trajs_name],
+                        retain_clusters=retain_clusters,
+                        sample_n=sample_n,
+                        figsize=figsize,
+                        title_prefix=title_prefix,
+                        bg_alpha=bg_alpha,
+                        node_size=node_size,
+                        **args)
+
+
+def plot_trajs_embedding(adata,
+                         embedding = "trajs_dm",
+                         clusters = "trajs_clusters",
+                         node_size=1,
+                         label=True,
+                         labelsize=15,
+                         labelstyle='text',
+                         show_legend=True,
+                         markerscale=10,
+                         ax = None,
+                         **args
+                         ):
+    ax = plt.gca() if ax is None else ax
+    if embedding not in adata.uns.keys():
+        raise ValueError("embedding not in adata.uns.keys()")
+    if clusters not in adata.uns.keys():
+        raise ValueError("clusters not in adata.uns.keys()")
+
+    plot_embedding(adata.uns[clusters],
+                   adata.uns[embedding],
+                   node_size=node_size,
+                   label=label,
+                   labelsize=labelsize,
+                   labelstyle=labelstyle,
+                   show_legend=show_legend,
+                   markerscale=markerscale,
+                   ax = ax,
+                   **args)
+
+
+def plot_eigen_line(adata: AnnData,
                     evalue_name="X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_value",
                     n_eig=10,
                     step_size=1,
@@ -31,6 +97,39 @@ def plot_eigen_line(adata,
                       **args)
 #endf
 
+def plot_traj(adata: AnnData,
+              graph_name: str = 'X_dm_ddhodge_g_triangulation',
+              layout_name: str='X_dm_ddhodge_g',
+              holes: List[List[int]] = None,
+              trajectory: Union[List[int], np.ndarray] = None,
+              colorid=None,
+              hole_centers=None,
+              *,
+              ax: Optional[plt.Axes] = None,
+              node_size=5,
+              edge_width=1,
+              plot_node=True,
+              alpha_nodes = 0.3,
+              color_palette = sns.color_palette('tab10'),
+              **args
+              ):
+
+    if trajectory is None:
+        raise ValueError("trajectory is None")
+
+    G_plot_traj(adata.uns[graph_name],
+                adata.obsm[layout_name],
+                trajectory=trajectory,
+                colorid=colorid,
+                holes=holes,
+                hole_centers=hole_centers,
+                ax=ax,
+                node_size=node_size,
+                edge_width=edge_width,
+                plot_node=plot_node,
+                alpha_nodes=alpha_nodes,
+                color_palette=color_palette,
+                **args)
 
 def nxdraw_holes(adata: AnnData,
                  graph_name: str='X_dm_ddhodge_g_triangulation_circle',
@@ -216,19 +315,19 @@ def G_nxdraw_group(g,
 
 
 def G_plot_traj(graph: nx.Graph,
-              node_positions: np.ndarray,
-              holes: List[List[int]] = None,
-              trajectory: List = None,
-              colorid=None,
-              hole_centers=None,
-              *,
-              ax: Optional[plt.Axes] = None,
-              node_size=5,
-              edge_width=1,
-              plot_node=True,
-              alpha_nodes = 0.3,
-              color_palette = sns.color_palette('tab10'),
-              ) -> None:
+                node_positions: np.ndarray,
+                holes: List[List[int]] = None,
+                trajectory: List = None,
+                colorid=None,
+                hole_centers=None,
+                *,
+                ax: Optional[plt.Axes] = None,
+                node_size=5,
+                edge_width=1,
+                plot_node=True,
+                alpha_nodes = 0.3,
+                color_palette = sns.color_palette('tab10'),
+                ) -> None:
 
     ax = ax or plt.gca()
     try:
@@ -383,7 +482,7 @@ def plot_embedding(cluster_list = [],
 
 
 
-def plot_density_grid(G,
+def G_plot_density_grid(G,
                       layouts,
                       cluster_list,
                       traj_list,

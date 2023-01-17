@@ -3,11 +3,114 @@ import random
 import networkx as nx
 import numpy as np
 from tqdm import trange
+from anndata import AnnData
 from typing import List
 from collections import Counter, defaultdict
+from itertools import chain
 from scipy.sparse import csr_matrix
+from typing import Union
 
-from ..util import pairwise, find_knee
+from .graphconstr import adjedges, edges_on_path
+from .dimensionreduction import run_umap, run_pca
+from .clustering import dbscan, leiden, louvain
+from ..util import pairwise, find_knee, tuple_increase
+
+
+def random_climb_knn(adata,
+                     graph_name = "X_dm_ddhodge_g_triangulation",
+                     A = "X_dm_ddhodge_A",
+                     W = "X_dm_ddhodge_W",
+                     knn_edges_k = 9,
+                     attr:str='u',
+                     roots_ratio:float=0.1,
+                     n:int=10000,
+                     copy=False,
+                     traj_name = None,
+                     seeds:int=2022):
+
+    adata = adata.copy() if copy else adata
+
+    g = adata.uns[graph_name]
+    knn_edges = adjedges(adata.uns[A], adata.uns[W], knn_edges_k)
+    knn_edges = [tuple_increase(i,j) for (i,j) in knn_edges]
+    knn_trajs = G_random_climb_knn(g, knn_edges, attr=attr, roots_ratio=roots_ratio, n=n, seeds=seeds)
+    if traj_name is None:
+        traj_name = f"knn_trajs"
+    adata.uns[traj_name] = knn_trajs
+
+    return adata if copy else None
+
+
+
+def full_trajectory_matrix(adata: AnnData,
+                           graph_name: str = "X_dm_ddhodge_g_triangulation_circle",
+                           trajs : Union[str, List[List[int]]] = "knn_trajs",
+                           edge_w : List = None,
+                           oname_basis : str = "",
+                           copy = False,
+                           ):
+    if copy:
+        adata = adata.copy()
+
+    if isinstance(trajs, str):
+        trajs = adata.uns[trajs]
+    
+    g = adata.uns[graph_name]
+    elist = np.array([(x[0], x[1]) for x in g.edges()])
+    elist_dict = {tuple(sorted(j)): i for i, j in enumerate(elist)}
+    M_full = G_full_trajectory_matrix(g, map(lambda path: list(edges_on_path(path)), chain.from_iterable([trajs])), elist, elist_dict)
+    adata.uns[oname_basis + "full_traj_matrix"] = M_full
+    adata.uns[oname_basis + "full_traj_matrix_flatten"] = L_flatten_trajectory_matrix(M_full)
+
+
+    return adata if copy else None
+
+
+def trajs_dm(adata,
+             evector_name: str = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+             M_flatten: Union[str, np.ndarray] = "full_traj_matrix_flatten",
+             embedding = 'umap',
+             eig_num: int = 2,
+             clustering_method: str = "dbscan",
+             copy=False,
+             **args,
+             ):
+
+    adata = adata.copy() if copy else adata
+    if isinstance(M_flatten, str):
+        M_flatten = adata.uns[M_flatten]
+
+    mat_coor_flatten_trajectory = [adata.uns[evector_name][0:eig_num, :] @ mat for mat in M_flatten]
+
+    dm=None
+    if embedding == "umap":
+        dm = run_umap(mat_coor_flatten_trajectory)
+    elif embedding == "pca":
+        dm = run_pca(mat_coor_flatten_trajectory, n_components=2)
+    else:
+        raise ValueError("embedding method not supported, only umap and pca are supported for now")
+    adata.uns["trajs_dm"] = dm
+
+    return adata if copy else None
+#endf trajs_dm
+
+def trajs_clustering(adata, embedding = 'trajs_dm', clustering_method: str = "dbscan", copy=False, **args,):
+    adata = adata.copy() if copy else adata
+    dm = adata.uns[embedding]
+    if clustering_method == "dbscan":
+        clusters = dbscan(dm, **args)
+    elif clustering_method == "leiden":
+        clusters = dbscan(dm, **args)
+    elif clustering_method == "louvain":
+        clusters = dbscan(dm, **args)
+    else:
+        raise ValueError("clustering method not supported, only dbscan, leiden and louvain are supported for now")
+
+    adata.uns["trajs_clusters"] = clusters
+
+    return adata if copy else None
+#endf trajs_clustering
+
 
 def G_random_climb(g:nx.Graph, attr:str='u', roots_ratio:float=0.1, n:int=10000, seeds:int=2022) -> list:
     """
@@ -81,7 +184,7 @@ def G_random_climb_knn(g:nx.Graph, knn_edges, attr:str='u', roots_ratio:float=0.
     return knn_trajs
 #endf
 
-def trajectory_class(traj:list, groups, last_n=10, min_prop=0.8, all_n=3):
+def L_trajectory_class(traj:list, groups, last_n=10, min_prop=0.8, all_n=3):
     """
     Parameters
     ---------
@@ -92,13 +195,13 @@ def trajectory_class(traj:list, groups, last_n=10, min_prop=0.8, all_n=3):
     """
     maj   = [groups[x] for x in traj[-last_n:-1]]
     end_e = [groups[x] for x in traj[-all_n:-1]]
-    maj_c = majority_proportion(maj, min_prop)
+    maj_c = L_majority_proportion(maj, min_prop)
     if maj_c and all(maj_c == x for x in end_e):
         return maj_c
     return None
 
 
-def majority_proportion(lst, min_prop=0.8):
+def L_majority_proportion(lst, min_prop=0.8):
     d = Counter(lst)
     total = sum(d.values())
     for key in d.keys():
@@ -108,10 +211,10 @@ def majority_proportion(lst, min_prop=0.8):
     return None
 #endf majority_proportion
 
-def distribute_traj(trajs, groups):
+def L_distribute_traj(trajs, groups):
     d_trajs = defaultdict(list)
     for i in range(0, len(trajs)):
-        c = trajectory_class(trajs[i], groups)
+        c = L_trajectory_class(trajs[i], groups)
         if not c: continue
         d_trajs[c].append(trajs[i])
     return d_trajs

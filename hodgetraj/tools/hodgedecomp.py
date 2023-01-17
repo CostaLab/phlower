@@ -4,8 +4,10 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 from scipy.sparse import csc_matrix
+from typing import Union
 from numpy.linalg import qr,solve,lstsq
 from .incidence import *
+from ..util import find_knee
 
 
 def lexsort_rows(array: np.ndarray) -> np.ndarray:
@@ -136,10 +138,27 @@ def L1Norm_decomp(adata: AnnData,
     adata.uns['X_dm_ddhodge_g_triangulation_circle_L1Norm'] = L1all
     adata.uns['X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector'] = d['v']
     adata.uns['X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_value'] = d['w']
-    adata.uns['X_dm_ddhodge_g_triangulation_circle_B1'] = B1
-    adata.uns['X_dm_ddhodge_g_triangulation_circle_B2'] = B2
+    #adata.uns['X_dm_ddhodge_g_triangulation_circle_B1'] = B1
+    #adata.uns['X_dm_ddhodge_g_triangulation_circle_B2'] = B2
 
     return adata if copy else None
 
+def knee_eigen(adata: AnnData,
+               eigens: Union[str, np.ndarray] = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_value",
+               copy = False,
+               ):
 
+    if copy:
+        adata = adata.copy()
+
+    if isinstance(eigens, str):
+        eigens = adata.uns[eigens]
+
+    x = range(1, len(eigens) + 1)
+    y = range(1, len(eigens) + 1)
+    idx = find_knee(x, y)
+    adata.uns['eigen_value_knee'] = idx
+    print("knee eigen value is ", idx)
+
+    return adata if copy else None
 

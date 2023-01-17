@@ -35,6 +35,7 @@ from .triangulation import (
 
 from .hodgedecomp import (
     L1Norm_decomp,
+    knee_eigen,
     )
 
 from .incidence import *

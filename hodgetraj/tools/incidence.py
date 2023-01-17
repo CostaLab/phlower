@@ -1,29 +1,9 @@
+## import from https://git.rwth-aachen.de/netsci/trajectory-outlier-detection-flow-embeddings/
 import networkx as nx
 import numpy as np
 from scipy.sparse import csc_matrix, linalg, csr_matrix
 from ..util import lexsort_rows
 
-
-#def create_weighted_triangle_list(G: nx.Graph) -> np.ndarray:
-#    triangles = []
-#    for i, j in G.edges():
-#        if i > j:
-#            i, j = j, i
-#
-#        # We filter the neighbors to be larger than the edge's incident nodes.
-#        # This way we guarantee uniqueness of the tuples we find.
-#        first_node_neighbors = set(filter(lambda t: t > j, G[i]))
-#        second_node_neighbors = set(filter(lambda t: t > j, G[j]))
-#
-#        # find intersection between those neighbors => triangle
-#        common_neighbors = first_node_neighbors & second_node_neighbors
-#
-#        for t in common_neighbors:
-#            assert i < j < t
-#            triangles.append([i, j, t])
-#
-#    result = np.array(triangles)
-#    return lexsort_rows(result)
 
 def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int) -> dict:
     """
@@ -38,9 +18,6 @@ def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int) -> d
     w, v = linalg.eigsh(L1, k=number_of_holes,
                         v0=np.ones(L1.shape[0]), which='SM')
     return {"w":w, "v":v.T}
-
-
-
 
 def assign_eweight(G, A):
     """
@@ -65,7 +42,6 @@ def create_weighted_node_edge_incidence_matrix(G, attr='weight'):
 
 
 
-## import from https://git.rwth-aachen.de/netsci/trajectory-outlier-detection-flow-embeddings/
 def create_node_edge_incidence_matrix(elist):
     num_edges = len(elist)
     data = [-1] * num_edges + [1] * num_edges
