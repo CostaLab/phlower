@@ -825,15 +825,15 @@ def M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
             np.random.seed(2022)
             v = np.random.choice(v, max(int(len(v)*sample_ratio), 1), replace=False)
 
-        ax.scatter(mat_coor_flatten_trajectory[idx][0],
-                       mat_coor_flatten_trajectory[idx][1],
-                       color=color_palette[i],
-                       s=node_size,
-                       label=cluster, ## for legend
-                       **args)
+        ax.scatter(mat_coor_flatten_trajectory[idx][dims[0]],
+                   mat_coor_flatten_trajectory[idx][dims[1]],
+                   color=color_palette[i],
+                   s=node_size,
+                   label=cluster, ## for legend
+                   **args)
         for idx in v[1:]:
-            ax.scatter(mat_coor_flatten_trajectory[idx][0],
-                       mat_coor_flatten_trajectory[idx][1],
+            ax.scatter(mat_coor_flatten_trajectory[idx][dims[0]],
+                       mat_coor_flatten_trajectory[idx][dims[1]],
                        color=color_palette[i],
                        s=node_size,
                        **args)

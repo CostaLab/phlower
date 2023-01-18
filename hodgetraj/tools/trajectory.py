@@ -80,6 +80,8 @@ def trajs_dm(adata,
 
     mat_coor_flatten_trajectory = [adata.uns[evector_name][0:eig_num, :] @ mat for mat in M_flatten]
 
+    adata.uns['trajs_harmonic_dm'] = np.vstack(mat_coor_flatten_trajectory)
+
     dm=None
     if embedding == "umap":
         dm = run_umap(mat_coor_flatten_trajectory)
@@ -92,19 +94,23 @@ def trajs_dm(adata,
     return adata if iscopy else None
 #endf trajs_dm
 
-def trajs_clustering(adata, embedding = 'trajs_dm', clustering_method: str = "dbscan", iscopy=False, **args,):
+
+
+#endf set_harmonic_dm
+
+def trajs_clustering(adata, embedding = 'trajs_dm', clustering_method: str = "dbscan", iscopy=False, oname_basis='', **args,):
     adata = adata.copy() if iscopy else adata
     dm = adata.uns[embedding]
     if clustering_method == "dbscan":
         clusters = dbscan(dm, **args)
     elif clustering_method == "leiden":
-        clusters = dbscan(dm, **args)
+        clusters = leiden(dm, **args)
     elif clustering_method == "louvain":
-        clusters = dbscan(dm, **args)
+        clusters = louvain(dm, **args)
     else:
         raise ValueError("clustering method not supported, only dbscan, leiden and louvain are supported for now")
 
-    adata.uns["trajs_clusters"] = clusters
+    adata.uns[oname_basis + "trajs_clusters"] = clusters
 
     return adata if iscopy else None
 #endf trajs_clustering
