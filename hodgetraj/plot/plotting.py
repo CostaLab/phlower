@@ -8,12 +8,165 @@ import matplotlib.pyplot as plt
 from anndata import AnnData
 from collections import defaultdict
 from typing import Iterable, List, Union, Optional, Set, Tuple, TypeVar
+from ..tools.trajectory import M_create_matrix_coordinates_trajectory_Hspace
 
 from ..util import get_uniform_multiplication, kde_eastimate, norm01
 
 V = TypeVar('V')
 def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
     return zip(path, path[1:])
+
+def plot_trajectory_harmonic_lines(adata: AnnData,
+                                   full_traj_matrix="full_traj_matrix",
+                                   clusters = "trajs_clusters",
+                                   evector_name = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+                                   retain_clusters=[],
+                                   dims = [0,1],
+                                   show_legend=True,
+                                   legend_loc="center left",
+                                   bbox_to_anchor=(1, 0.5),
+                                   markerscale=4,
+                                   ax = None,
+                                   sample_ratio = 0.1,
+                                   color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                                   **args):
+    """
+    Parameters
+    ---------
+    mat_coord_Hspace:
+    cluster_list: cluster_list for each trajectory
+    ax: matplotlib axes
+    show_legend: if show legend
+    legend_loc: legend location
+    bbox_to_anchor: for position of the legend
+    markerscale: legend linewidth scale to larger or smaller
+    color_palette: color palette for show cluster_list
+    """
+    mat_coord_Hspace = M_create_matrix_coordinates_trajectory_Hspace(adata.uns[evector_name][0:max(dims)+1],
+                                                                   adata.uns[full_traj_matrix])
+
+    M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
+                                     cluster_list = list(adata.uns[clusters]),
+                                     retain_clusters=retain_clusters,
+                                     dims = dims,
+                                     show_legend = show_legend,
+                                     legend_loc = legend_loc,
+                                     bbox_to_anchor = bbox_to_anchor,
+                                     markerscale = markerscale,
+                                     ax = ax,
+                                     sample_ratio = sample_ratio,
+                                     color_palette = color_palette,
+                                     **args)
+
+
+
+def plot_trajectory_harmonic_points(adata: AnnData,
+                                    full_traj_matrix_flatten="full_traj_matrix_flatten",
+                                    clusters = "trajs_clusters",
+                                    evector_name = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+                                    retain_clusters=[],
+                                    dims = [0,1],
+                                    label=True,
+                                    labelsize=10,
+                                    labelstyle='text',
+                                    node_size=2,
+                                    show_legend=False,
+                                    legend_loc="center left",
+                                    bbox_to_anchor=(1, 0.5),
+                                    markerscale=4,
+                                    ax = None,
+                                    sample_ratio = 0.1,
+                                    color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                                    **args):
+    """
+    Parameters
+    ---------
+    mat_coor_flatten_trajectory:
+    cluster_list: cluster_list for each trajectory
+    label: if show label
+    labelsize: labelsize
+    labelstyle: options: color,text, box. same color as nodes if use `color`, black if use `text`, white color with box if use `box`
+    show_legend: if show legend
+    legend_loc: legend location
+    bbox_to_anchor: for position of the legend
+    markerscale: legend marker scale to larger or smaller
+    color_palette: color palette for show cluster_list
+    **args: args for scatter
+    """
+    mat_coor_flatten_trajectory = [adata.uns[evector_name][0:max(dims)+1, :] @ mat for mat in adata.uns[full_traj_matrix_flatten]]
+    M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
+                                      cluster_list = list(adata.uns[clusters]),
+                                      retain_clusters = retain_clusters,
+                                      dims = dims,
+                                      label=label,
+                                      labelsize=labelsize,
+                                      node_size = node_size,
+                                      show_legend = show_legend,
+                                      legend_loc = legend_loc,
+                                      bbox_to_anchor = bbox_to_anchor,
+                                      markerscale = markerscale,
+                                      ax = ax,
+                                      sample_ratio = sample_ratio,
+                                      color_palette = color_palette,
+                                      **args
+                                      )
+
+
+
+def plot_fate_tree_embedding(adata: AnnData,
+                             graph_name = "X_dm_ddhodge_g",
+                             layout_name = "X_dm_ddhodge_g",
+                             fate_tree: str = 'fate_tree',
+                             bg_node_size=1,
+                             bg_node_color='grey',
+                             node_size=30,
+                             alpha=0.8,
+                             with_labels=False,
+                             ax=None,
+                             **args,
+                             ):
+
+    ax = plt.gca() if ax is None else ax
+    nx.draw_networkx_nodes(adata.uns[graph_name],
+                           adata.obsm[layout_name],
+                           ax=ax,
+                           node_size=bg_node_size,
+                           node_color=bg_node_color,
+                           alpha=alpha, **args)
+    nx.draw(adata.uns[fate_tree],
+            pos=nx.get_node_attributes(adata.uns[fate_tree], 'pos'),
+            node_size=node_size,
+            with_labels=with_labels,
+            ax=ax)
+#endf plot_fate_tree_embedding
+
+def plot_stream_tree_embedding(adata: AnnData,
+                             graph_name = "X_dm_ddhodge_g",
+                             layout_name = "X_dm_ddhodge_g",
+                             stream_tree: str = 'stream_tree',
+                             bg_node_size=1,
+                             bg_node_color='grey',
+                             node_size=30,
+                             alpha=0.8,
+                             with_labels=True,
+                             ax=None,
+                             **args,
+                             ):
+
+    ax = plt.gca() if ax is None else ax
+    nx.draw_networkx_nodes(adata.uns[graph_name],
+                           adata.obsm[layout_name],
+                           ax=ax,
+                           node_size=bg_node_size,
+                           node_color=bg_node_color,
+                           alpha=alpha, **args)
+    nx.draw(adata.uns[stream_tree],
+            pos=nx.get_node_attributes(adata.uns[stream_tree], 'pos'),
+            node_size=node_size,
+            with_labels=with_labels,
+            ax=ax)
+#endf plot_fate_tree_embedding
+
 
 
 def plot_fate_tree(adata: AnnData,
@@ -563,7 +716,7 @@ def G_plot_density_grid(G,
 
     return fig, axes
 
-def plot_trajectory_harmonic_lines(mat_coord_Hspace,
+def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
                                    cluster_list,
                                    retain_clusters=[],
                                    dims = [0,1],
@@ -621,7 +774,7 @@ def plot_trajectory_harmonic_lines(mat_coord_Hspace,
 
 #endf plot_trajectory_harmonic_lines
 
-def plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
+def M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
                                     cluster_list,
                                     retain_clusters=[],
                                     dims = [0,1],

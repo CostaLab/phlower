@@ -95,9 +95,9 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
         else:
             raise ValueError("could not find '%s' in `adata.obs.columns` and `adata.var_names`"  % (ann))
 
-    flat_tree = adata.uns['flat_tree']
-    ft_node_label = nx.get_node_attributes(flat_tree,'label')
-    label_to_node = {value: key for key,value in nx.get_node_attributes(flat_tree,'label').items()}
+    stream_tree = adata.uns['stream_tree']
+    ft_node_label = nx.get_node_attributes(stream_tree,'label')
+    label_to_node = {value: key for key,value in nx.get_node_attributes(stream_tree,'label').items()}
     if(root not in label_to_node.keys()):
         raise ValueError("There is no root '%s'" % root)
 
@@ -204,7 +204,7 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
                             ax_i.plot(branch_i.iloc[[ii,ii+1],0],branch_i.iloc[[ii,ii+1],1],
                                       c = 'black',alpha=1)
             if(show_text):
-                for node_i in flat_tree.nodes():
+                for node_i in stream_tree.nodes():
                     ax_i.text(stream_nodes[node_i][0],stream_nodes[node_i][1],ft_node_label[node_i],
                               color='black',fontsize=0.9*mpl.rcParams['font.size'],
                                ha='left', va='bottom')
@@ -309,9 +309,9 @@ def plot_stream(adata,root='S0',color = None,preference=None,dist_scale=0.9,
         else:
             raise ValueError("could not find '%s' in `adata.obs.columns` and `adata.var_names`"  % (ann))
 
-    flat_tree = adata.uns['flat_tree']
-    ft_node_label = nx.get_node_attributes(flat_tree,'label')
-    label_to_node = {value: key for key,value in nx.get_node_attributes(flat_tree,'label').items()}
+    stream_tree = adata.uns['stream_tree']
+    ft_node_label = nx.get_node_attributes(stream_tree,'label')
+    label_to_node = {value: key for key,value in nx.get_node_attributes(stream_tree,'label').items()}
     if(root not in label_to_node.keys()):
         raise ValueError("There is no root '%s'" % root)
 

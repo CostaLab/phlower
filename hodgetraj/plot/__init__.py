@@ -1,4 +1,3 @@
-
 from .plotting import (
         nxdraw_group,
         nxdraw_score,
@@ -8,12 +7,17 @@ from .plotting import (
         plot_triangle_density,
         plot_density_grid,
         plot_fate_tree,
+        plot_fate_tree_embedding,
+        plot_stream_tree_embedding,
+        plot_trajectory_harmonic_lines,
+        plot_trajectory_harmonic_points,
+        plot_eigen_line,
         G_nxdraw_group,
         G_plot_traj,
         G_plot_triangle_density,
         plot_embedding,
         G_plot_density_grid,
-        plot_trajectory_harmonic_lines,
-        plot_trajectory_harmonic_points,
-        plot_eigen_line,
+        M_plot_trajectory_harmonic_lines,
+        M_plot_trajectory_harmonic_points,
+        L_plot_eigen_line,
 )

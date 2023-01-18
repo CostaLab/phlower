@@ -8,9 +8,9 @@ from ..util import networkx_node_to_df, kde_eastimate, bfs_layers
 from ..external.stream_extra import (add_pos_to_graph,
                                      dfs_from_leaf,
                                      extract_branches,
-                                     construct_flat_tree,
+                                     construct_stream_tree,
                                      add_branch_info,
-                                     project_cells_to_epg,
+                                     project_cells_to_g_fate_tree,
                                      calculate_pseudotime,
                                      )
 
@@ -29,15 +29,14 @@ def create_stream_tree(adata: AnnData,
     g_pos   =  add_pos_to_graph(g.to_undirected(), layouts=adata.obsm[layout_name], iscopy=True)
     dic_br  =  extract_branches(g_pos.to_undirected())
     dic_br  =  add_branch_info(g_pos.to_undirected(), dic_br)
-    g_br    =  construct_flat_tree(dic_br, g_pos)
+    g_br    =  construct_stream_tree(dic_br, g_pos)
 
-    adata.uns['epg'] = g_pos
-    adata.uns['flat_tree'] = g_br
+    adata.uns['g_fate_tree'] = g_pos
+    adata.uns['stream_tree'] = g_br
     layouts = adata.obsm[layout_name]
     if type(layouts) == dict:
         layouts = np.array([layouts[x] for x in range(max(layouts.keys()) + 1)])
-    adata.obsm['X_dr'] = layouts
-    project_cells_to_epg(adata)
+    project_cells_to_g_fate_tree(adata, layout_name=layout_name)
     calculate_pseudotime(adata)
 
     return adata if iscopy else None

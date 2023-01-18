@@ -46,49 +46,49 @@ def dfs_from_leaf(graph_copy,node,degrees_of_nodes,nodes_to_visit,nodes_to_merge
 
 
 
-def extract_branches(epg):
+def extract_branches(g_fate_tree):
     #record the original degree(before removing nodes) for each node
-    degrees_of_nodes = epg.degree()
-    epg_copy = epg.copy()
+    degrees_of_nodes = g_fate_tree.degree()
+    g_fate_tree_copy = g_fate_tree.copy()
     dict_branches = dict()
     clusters_to_merge=[]
-    while epg_copy.order()>1: #the number of vertices
-        leaves=[n for n,d in epg_copy.degree() if d==1]
-        nodes_included=list(epg_copy.nodes())
+    while g_fate_tree_copy.order()>1: #the number of vertices
+        leaves=[n for n,d in g_fate_tree_copy.degree() if d==1]
+        nodes_included=list(g_fate_tree_copy.nodes())
         while leaves:
             leave=leaves.pop()
             nodes_included.remove(leave)
             nodes_to_merge=[leave]
-            nodes_to_visit=list(epg_copy.nodes())
-            dfs_from_leaf(epg_copy,leave,degrees_of_nodes,nodes_to_visit,nodes_to_merge)
+            nodes_to_visit=list(g_fate_tree_copy.nodes())
+            dfs_from_leaf(g_fate_tree_copy,leave,degrees_of_nodes,nodes_to_visit,nodes_to_merge)
             clusters_to_merge.append(nodes_to_merge)
             dict_branches[(nodes_to_merge[0],nodes_to_merge[-1])] = {}
             dict_branches[(nodes_to_merge[0],nodes_to_merge[-1])]['nodes'] = nodes_to_merge
             nodes_to_delete = nodes_to_merge[0:len(nodes_to_merge)-1]
-            if epg_copy.degree()[nodes_to_merge[-1]] == 1: #avoid the single point
+            if g_fate_tree_copy.degree()[nodes_to_merge[-1]] == 1: #avoid the single point
                 nodes_to_delete = nodes_to_merge
                 leaves = []
-            epg_copy.remove_nodes_from(nodes_to_delete)
-    dict_branches = add_branch_info(epg,dict_branches)
+            g_fate_tree_copy.remove_nodes_from(nodes_to_delete)
+    dict_branches = add_branch_info(g_fate_tree,dict_branches)
     # print('Number of branches: ' + str(len(clusters_to_merge)))
     return dict_branches
 
 
-def construct_flat_tree(dict_branches, graph):
-    flat_tree = nx.Graph()
-    flat_tree.add_nodes_from(list(set(itertools.chain.from_iterable(dict_branches.keys()))))
-    flat_tree.add_edges_from(dict_branches.keys())
+def construct_stream_tree(dict_branches, graph):
+    stream_tree = nx.Graph()
+    stream_tree.add_nodes_from(list(set(itertools.chain.from_iterable(dict_branches.keys()))))
+    stream_tree.add_edges_from(dict_branches.keys())
 
-    for node in flat_tree.nodes():
-        flat_tree.nodes[node]['cells'] = graph.nodes[node]['cells']
-        flat_tree.nodes[node]['pos'] = graph.nodes[node]['pos']
-    root = list(flat_tree.nodes())[0]
-    edges = nx.bfs_edges(flat_tree, root)
+    for node in stream_tree.nodes():
+        stream_tree.nodes[node]['cells'] = graph.nodes[node]['cells']
+        stream_tree.nodes[node]['pos'] = graph.nodes[node]['pos']
+    root = list(stream_tree.nodes())[0]
+    edges = nx.bfs_edges(stream_tree, root)
     nodes = [root] + [v for u, v in edges]
     dict_nodes_label = dict()
     for i,node in enumerate(nodes):
         dict_nodes_label[node] = 'S'+str(i)
-    nx.set_node_attributes(flat_tree,values=dict_nodes_label,name='label')
+    nx.set_node_attributes(stream_tree,values=dict_nodes_label,name='label')
     dict_branches_color = dict()
     dict_branches_len = dict()
     dict_branches_nodes = dict()
@@ -98,11 +98,11 @@ def construct_flat_tree(dict_branches, graph):
         dict_branches_len[x]=dict_branches[x]['len']
         dict_branches_nodes[x]=dict_branches[x]['nodes']
         dict_branches_id[x]=dict_branches[x]['id']
-    nx.set_edge_attributes(flat_tree,values=dict_branches_nodes,name='nodes')
-    nx.set_edge_attributes(flat_tree,values=dict_branches_id,name='id')
-    nx.set_edge_attributes(flat_tree,values=dict_branches_color,name='color')
-    nx.set_edge_attributes(flat_tree,values=dict_branches_len,name='len')
-    return flat_tree
+    nx.set_edge_attributes(stream_tree,values=dict_branches_nodes,name='nodes')
+    nx.set_edge_attributes(stream_tree,values=dict_branches_id,name='id')
+    nx.set_edge_attributes(stream_tree,values=dict_branches_color,name='color')
+    nx.set_edge_attributes(stream_tree,values=dict_branches_len,name='len')
+    return stream_tree
 
 def add_branch_info(graph,dict_branches):
     dict_nodes_pos = nx.get_node_attributes(graph,'pos')
@@ -120,10 +120,10 @@ def add_branch_info(graph,dict_branches):
 
 
 
-def project_cells_to_epg(adata):
-    input_data = adata.obsm['X_dr']
-    epg = adata.uns['epg']
-    dict_nodes_pos = nx.get_node_attributes(epg,'pos')
+def project_cells_to_g_fate_tree(adata, layout_name="X_dr"):
+    input_data = adata.obsm[layout_name]
+    g_fate_tree = adata.uns['g_fate_tree']
+    dict_nodes_pos = nx.get_node_attributes(g_fate_tree,'pos')
     nodes_pos = np.empty((0,input_data.shape[1]))
     nodes = np.empty((0,1),dtype=object)
     for key in dict_nodes_pos.keys():
@@ -133,19 +133,19 @@ def project_cells_to_epg(adata):
     x_node = nodes[indices]
     adata.obs['node'] = x_node
     #update the projection info for each cell
-    flat_tree = adata.uns['flat_tree']
-    dict_branches_nodes = nx.get_edge_attributes(flat_tree,'nodes')
-    dict_branches_id = nx.get_edge_attributes(flat_tree,'id')
-    dict_node_state = nx.get_node_attributes(flat_tree,'label')
+    stream_tree = adata.uns['stream_tree']
+    dict_branches_nodes = nx.get_edge_attributes(stream_tree,'nodes')
+    dict_branches_id = nx.get_edge_attributes(stream_tree,'id')
+    dict_node_state = nx.get_node_attributes(stream_tree,'label')
     list_x_br_id = list()
     list_x_br_id_alias = list()
     list_x_lam = list()
     list_x_dist = list()
     for ix,xp in enumerate(input_data):
-        list_br_id = [flat_tree.edges[br_key]['id'] for br_key,br_value in dict_branches_nodes.items() if x_node[ix] in br_value]
+        list_br_id = [stream_tree.edges[br_key]['id'] for br_key,br_value in dict_branches_nodes.items() if x_node[ix] in br_value]
         dict_br_matrix = dict()
         for br_id in list_br_id:
-            dict_br_matrix[br_id] = np.array([dict_nodes_pos[i] for i in flat_tree.edges[br_id]['nodes']])
+            dict_br_matrix[br_id] = np.array([dict_nodes_pos[i] for i in stream_tree.edges[br_id]['nodes']])
         dict_results = dict()
         list_dist_xp = list()
         for br_id in list_br_id:
@@ -154,7 +154,7 @@ def project_cells_to_epg(adata):
         #print(list_dist_xp)
         x_br_id = list_br_id[np.argmin(list_dist_xp)]
         x_br_id_alias = dict_node_state[x_br_id[0]],dict_node_state[x_br_id[1]]
-        br_len = flat_tree.edges[x_br_id]['len']
+        br_len = stream_tree.edges[x_br_id]['len']
         results = dict_results[x_br_id]
         x_dist = results[2]
         x_lam = results[3]
@@ -173,14 +173,14 @@ def project_cells_to_epg(adata):
 
 
 def calculate_pseudotime(adata):
-    flat_tree = adata.uns['flat_tree']
-    dict_edge_len = nx.get_edge_attributes(flat_tree,'len')
+    stream_tree = adata.uns['stream_tree']
+    dict_edge_len = nx.get_edge_attributes(stream_tree,'len')
     adata.obs = adata.obs[adata.obs.columns.drop(list(adata.obs.filter(regex='_pseudotime')))].copy()
     # dict_nodes_pseudotime = dict()
-    for root_node in flat_tree.nodes():
+    for root_node in stream_tree.nodes():
         df_pseudotime = pd.Series(index=adata.obs.index, dtype='float64')
-        list_bfs_edges = list(nx.bfs_edges(flat_tree,source=root_node))
-        dict_bfs_predecessors = dict(nx.bfs_predecessors(flat_tree,source=root_node))
+        list_bfs_edges = list(nx.bfs_edges(stream_tree,source=root_node))
+        dict_bfs_predecessors = dict(nx.bfs_predecessors(stream_tree,source=root_node))
         for edge in list_bfs_edges:
             list_pre_edges = list()
             pre_node = edge[0]
@@ -188,16 +188,16 @@ def calculate_pseudotime(adata):
                 pre_edge = (dict_bfs_predecessors[pre_node],pre_node)
                 list_pre_edges.append(pre_edge)
                 pre_node = dict_bfs_predecessors[pre_node]
-            len_pre_edges = sum([flat_tree.edges[x]['len'] for x in list_pre_edges])
+            len_pre_edges = sum([stream_tree.edges[x]['len'] for x in list_pre_edges])
             indices = adata.obs[(adata.obs['branch_id'] == edge) | (adata.obs['branch_id'] == (edge[1],edge[0]))].index
-            if(edge==flat_tree.edges[edge]['id']):
+            if(edge==stream_tree.edges[edge]['id']):
                 df_pseudotime[indices] = len_pre_edges + adata.obs.loc[indices,'branch_lam']
             else:
-                df_pseudotime[indices] = len_pre_edges + (flat_tree.edges[edge]['len']-adata.obs.loc[indices,'branch_lam'])
-        adata.obs[flat_tree.nodes[root_node]['label']+'_pseudotime'] = df_pseudotime
+                df_pseudotime[indices] = len_pre_edges + (stream_tree.edges[edge]['len']-adata.obs.loc[indices,'branch_lam'])
+        adata.obs[stream_tree.nodes[root_node]['label']+'_pseudotime'] = df_pseudotime
         # dict_nodes_pseudotime[root_node] = df_pseudotime
-    # nx.set_node_attributes(flat_tree,values=dict_nodes_pseudotime,name='pseudotime')
-    # adata.uns['flat_tree'] = flat_tree
+    # nx.set_node_attributes(stream_tree,values=dict_nodes_pseudotime,name='pseudotime')
+    # adata.uns['stream_tree'] = stream_tree
     return None
 
 
@@ -224,24 +224,24 @@ def project_point_to_line_segment_matrix(XP,p):
 
 
 def add_stream_sc_pos(adata,root='S0',dist_scale=1,dist_pctl=95,preference=None):
-    flat_tree = adata.uns['flat_tree']
-    label_to_node = {value: key for key,value in nx.get_node_attributes(flat_tree,'label').items()}
+    stream_tree = adata.uns['stream_tree']
+    label_to_node = {value: key for key,value in nx.get_node_attributes(stream_tree,'label').items()}
 
     root_node = label_to_node[root]
-    dict_bfs_pre = dict(nx.bfs_predecessors(flat_tree,root_node))
-    dict_bfs_suc = dict(nx.bfs_successors(flat_tree,root_node))
+    dict_bfs_pre = dict(nx.bfs_predecessors(stream_tree,root_node))
+    dict_bfs_suc = dict(nx.bfs_successors(stream_tree,root_node))
     dict_edge_shift_dist = calculate_shift_distance(adata,root=root,dist_pctl=dist_pctl,preference=preference)
-    dict_path_len = nx.shortest_path_length(flat_tree,source=root_node,weight='len')
+    dict_path_len = nx.shortest_path_length(stream_tree,source=root_node,weight='len')
     df_cells_pos = pd.DataFrame(index=adata.obs.index,columns=['cells_pos'])
     dict_edge_pos = {}
     dict_node_pos = {}
     for edge in dict_edge_shift_dist.keys():
         node_pos_st = np.array([dict_path_len[edge[0]],dict_edge_shift_dist[edge]])
         node_pos_ed = np.array([dict_path_len[edge[1]],dict_edge_shift_dist[edge]])
-        br_id = flat_tree.edges[edge]['id']
+        br_id = stream_tree.edges[edge]['id']
         id_cells = np.where(adata.obs['branch_id']==br_id)[0]
-        # cells_pos_x = flat_tree.nodes[root_node]['pseudotime'].iloc[id_cells]
-        cells_pos_x = adata.obs[flat_tree.nodes[root_node]['label']+'_pseudotime'].iloc[id_cells]
+        # cells_pos_x = stream_tree.nodes[root_node]['pseudotime'].iloc[id_cells]
+        cells_pos_x = adata.obs[stream_tree.nodes[root_node]['label']+'_pseudotime'].iloc[id_cells]
         np.random.seed(100)
         cells_pos_y = node_pos_st[1] + dist_scale*adata.obs.iloc[id_cells,]['branch_dist']*np.random.choice([1,-1],size=id_cells.shape[0])
         cells_pos = np.array((cells_pos_x,cells_pos_y)).T
@@ -252,7 +252,7 @@ def add_stream_sc_pos(adata,root='S0',dist_scale=1,dist_pctl=95,preference=None)
         dict_node_pos[edge[1]] = node_pos_ed
     adata.obsm['X_stream_'+root] = np.array(df_cells_pos['cells_pos'].tolist())
 
-    if(flat_tree.degree(root_node)>1):
+    if(stream_tree.degree(root_node)>1):
         suc_nodes = dict_bfs_suc[root_node]
         edges = [(root_node,sn) for sn in suc_nodes]
         max_y_pos = max([dict_edge_pos[x][0,1] for x in edges])
@@ -267,13 +267,13 @@ def add_stream_sc_pos(adata,root='S0',dist_scale=1,dist_pctl=95,preference=None)
 
     for edge in dict_edge_pos.keys():
         edge_pos = dict_edge_pos[edge]
-        edge_color = flat_tree.edges[edge]['color']
+        edge_color = stream_tree.edges[edge]['color']
         if(edge[0] in dict_bfs_pre.keys()):
             pre_node = dict_bfs_pre[edge[0]]
             link_edge_pos = np.array([dict_edge_pos[(pre_node,edge[0])][1,],dict_edge_pos[edge][0,]])
             edge_pos = np.vstack((link_edge_pos,edge_pos))
         adata.uns['stream_'+root]['edges'][edge]=edge_pos
-    if(flat_tree.degree(root_node)>1):
+    if(stream_tree.degree(root_node)>1):
         suc_nodes = dict_bfs_suc[root_node]
         edges = [(root_node,sn) for sn in suc_nodes]
         max_y_pos = max([dict_edge_pos[x][0,1] for x in edges])
@@ -285,22 +285,22 @@ def add_stream_sc_pos(adata,root='S0',dist_scale=1,dist_pctl=95,preference=None)
 
 
 def calculate_shift_distance(adata,root='S0',dist_pctl=95,preference=None):
-    flat_tree = adata.uns['flat_tree']
-    dict_label_node = {value: key for key,value in nx.get_node_attributes(flat_tree,'label').items()}
+    stream_tree = adata.uns['stream_tree']
+    dict_label_node = {value: key for key,value in nx.get_node_attributes(stream_tree,'label').items()}
     root_node = dict_label_node[root]
     ##shift distance for each branch
     dict_edge_shift_dist = dict()
     max_dist = np.percentile(adata.obs['branch_dist'],dist_pctl) ## maximum distance from cells to branch
-    leaves = [k for k,v in flat_tree.degree() if v==1]
+    leaves = [k for k,v in stream_tree.degree() if v==1]
     n_nonroot_leaves = len(list(set(leaves) - set([root_node])))
-    dict_bfs_pre = dict(nx.bfs_predecessors(flat_tree,root_node))
-    dict_bfs_suc = dict(nx.bfs_successors(flat_tree,root_node))
+    dict_bfs_pre = dict(nx.bfs_predecessors(stream_tree,root_node))
+    dict_bfs_suc = dict(nx.bfs_successors(stream_tree,root_node))
     #depth first search
     if(preference != None):
         preference_nodes = [dict_label_node[x] for x in preference]
     else:
         preference_nodes = None
-    dfs_nodes = dfs_nodes_modified(flat_tree,root_node,preference=preference_nodes)
+    dfs_nodes = dfs_nodes_modified(stream_tree,root_node,preference=preference_nodes)
     dfs_nodes_copy = copy.deepcopy(dfs_nodes)
     id_leaf = 0
     while(len(dfs_nodes_copy)>1):
@@ -475,17 +475,17 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
 
     list_ann_numeric = [k for k,v in dict_ann.items() if is_numeric_dtype(v)]
 
-    flat_tree = adata.uns['flat_tree']
-    label_to_node = {value: key for key,value in nx.get_node_attributes(flat_tree,'label').items()}
+    stream_tree = adata.uns['stream_tree']
+    label_to_node = {value: key for key,value in nx.get_node_attributes(stream_tree,'label').items()}
     if(preference!=None):
         preference_nodes = [label_to_node[x] for x in preference]
     else:
         preference_nodes = None
-    dict_branches = {x: flat_tree.edges[x] for x in flat_tree.edges()}
-    dict_node_state = nx.get_node_attributes(flat_tree,'label')
+    dict_branches = {x: stream_tree.edges[x] for x in stream_tree.edges()}
+    dict_node_state = nx.get_node_attributes(stream_tree,'label')
 
     root_node = label_to_node[root]
-    bfs_edges = bfs_edges_modified(flat_tree,root_node,preference=preference_nodes)
+    bfs_edges = bfs_edges_modified(stream_tree,root_node,preference=preference_nodes)
     bfs_nodes = []
     for x in bfs_edges:
         if x[0] not in bfs_nodes:
@@ -498,7 +498,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
     df_stream['edge'] = ''
     df_stream['lam_ordered'] = ''
     for x in bfs_edges:
-        if x in nx.get_edge_attributes(flat_tree,'id').values():
+        if x in nx.get_edge_attributes(stream_tree,'id').values():
             id_cells = np.where(df_stream['branch_id']==x)[0]
             df_stream.loc[df_stream.index[id_cells],'edge'] = pd.Series(
                 index= df_stream.index[id_cells],
@@ -509,7 +509,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
             df_stream.loc[df_stream.index[id_cells],'edge'] = pd.Series(
                 index= df_stream.index[id_cells],
                 data = [x] * len(id_cells))
-            df_stream.loc[df_stream.index[id_cells],'lam_ordered'] = flat_tree.edges[x]['len'] - df_stream.loc[df_stream.index[id_cells],'branch_lam']
+            df_stream.loc[df_stream.index[id_cells],'lam_ordered'] = stream_tree.edges[x]['len'] - df_stream.loc[df_stream.index[id_cells],'branch_lam']
 
     df_stream['CELL_LABEL'] = 'unknown'
     for ann in list_ann_numeric:
@@ -523,8 +523,8 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
             len_ori[x] = dict_branches[(x[1],x[0])]['len']
 
     dict_tree = {}
-    bfs_prev = dict(nx.bfs_predecessors(flat_tree,root_node))
-    bfs_next = dict(nx.bfs_successors(flat_tree,root_node))
+    bfs_prev = dict(nx.bfs_predecessors(stream_tree,root_node))
+    bfs_next = dict(nx.bfs_successors(stream_tree,root_node))
     for x in bfs_nodes:
         dict_tree[x] = {'prev':"",'next':[]}
         if(x in bfs_prev.keys()):
@@ -536,8 +536,8 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
     ##shift distance of each branch
     dict_shift_dist = dict()
     #modified depth first search
-    dfs_nodes = dfs_nodes_modified(flat_tree,root_node,preference=preference_nodes)
-    leaves=[n for n,d in flat_tree.degree() if d==1]
+    dfs_nodes = dfs_nodes_modified(stream_tree,root_node,preference=preference_nodes)
+    leaves=[n for n,d in stream_tree.degree() if d==1]
     id_leaf = 0
     dfs_nodes_copy = copy.deepcopy(dfs_nodes)
     num_nonroot_leaf = len(list(set(leaves) - set([root_node])))
@@ -550,7 +550,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
         else:
             next_nodes = dict_tree[node]['next']
             dict_shift_dist[(prev_node,node)] = (sum([dict_shift_dist[(node,next_node)] for next_node in next_nodes]))/float(len(next_nodes))
-    if (flat_tree.degree(root_node))>1:
+    if (stream_tree.degree(root_node))>1:
         next_nodes = dict_tree[root_node]['next']
         dict_shift_dist[(root_node,root_node)] = (sum([dict_shift_dist[(root_node,next_node)] for next_node in next_nodes]))/float(len(next_nodes))
 
@@ -559,7 +559,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
     df_bins = pd.DataFrame(index = list(df_stream['CELL_LABEL'].unique()) + ['boundary','center','edge'])
     dict_ann_df = {ann: pd.DataFrame(index=list(df_stream['CELL_LABEL'].unique())) for ann in list_ann_numeric}
     dict_merge_num = {ann:[] for ann in list_ann_numeric} #number of merged sliding windows
-    list_paths = find_root_to_leaf_paths(flat_tree, root_node)
+    list_paths = find_root_to_leaf_paths(stream_tree, root_node)
     max_path_len = find_longest_path(list_paths,len_ori)
     size_w = max_path_len/float(factor_num_win)
     if(size_w>min(len_ori.values())/float(factor_min_win)):
@@ -589,9 +589,9 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
 
     for i,edge_i in enumerate(bfs_edges):
         #degree of the start node
-        degree_st = flat_tree.degree(edge_i[0])
+        degree_st = stream_tree.degree(edge_i[0])
         #degree of the end node
-        degree_end = flat_tree.degree(edge_i[1])
+        degree_end = stream_tree.degree(edge_i[1])
         #matrix of windows only appearing on one edge
         mat_w = np.vstack([np.arange(0,len_ori[edge_i]-size_w+(len_ori[edge_i]/10**6),step_w),\
                        np.arange(size_w,len_ori[edge_i]+(len_ori[edge_i]/10**6),step_w)]).T
@@ -607,7 +607,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
             #matrix of windows appearing on multiple edges
             mat_w_common = np.array([[0,size_w/2.0],[0,size_w]])
             #neighbor nodes
-            nb_nodes = list(flat_tree.neighbors(edge_i[0]))
+            nb_nodes = list(stream_tree.neighbors(edge_i[0]))
             index_nb_nodes = [bfs_nodes.index(x) for x in nb_nodes]
             nb_nodes = np.array(nb_nodes)[np.argsort(index_nb_nodes)].tolist()
             #matrix of windows appearing on multiple edges
@@ -711,7 +711,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
             mat_w_common = np.vstack([np.arange(len_ori[edge_i]-size_w+step_w,len_ori[edge_i]+(len_ori[edge_i]/10**6),step_w),\
                                       np.arange(step_w,size_w+(len_ori[edge_i]/10**6),step_w)]).T
             #neighbor nodes
-            nb_nodes = list(flat_tree.neighbors(edge_i[1]))
+            nb_nodes = list(stream_tree.neighbors(edge_i[1]))
             nb_nodes.remove(edge_i[0])
             index_nb_nodes = [bfs_nodes.index(x) for x in nb_nodes]
             nb_nodes = np.array(nb_nodes)[np.argsort(index_nb_nodes)].tolist()
@@ -803,7 +803,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
                    for cellname in df_edge_cellnum.index}
     for cellname in cell_list_sorted:
         for node_i in bfs_nodes:
-            nb_nodes = list(flat_tree.neighbors(node_i))
+            nb_nodes = list(stream_tree.neighbors(node_i))
             index_in_bfs = [bfs_nodes.index(nb) for nb in nb_nodes]
             nb_nodes_sorted = np.array(nb_nodes)[np.argsort(index_in_bfs)].tolist()
             if node_i == root_node:
@@ -839,7 +839,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
         prev_node = dict_tree[edge_i[0]]['prev']
         if(prev_node == ''):
             x_st = 0
-            if(flat_tree.degree(root_node)>1):
+            if(stream_tree.degree(root_node)>1):
                 id_wins = id_wins[1:]
         else:
             id_wins = id_wins[1:] # remove the overlapped window
@@ -887,7 +887,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
     #determine joints points
     dict_joint_top = {cellname:dict() for cellname in cell_list_sorted} #coordinates of joint points
     dict_joint_base = {cellname:dict() for cellname in cell_list_sorted} #coordinates of joint points
-    if(flat_tree.degree(root_node)==1):
+    if(stream_tree.degree(root_node)==1):
         id_joints = [i for i,x in enumerate(df_bins_cumsum_norm.loc['edge',:]) if len(x)>1]
     else:
         id_joints = [i for i,x in enumerate(df_bins_cumsum_norm.loc['edge',:]) if len(x)>1 and x[0]!=(root_node,root_node)]
@@ -939,7 +939,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
     for edge_i_top in dict_paths_top.keys():
         path_i_top = dict_paths_top[edge_i_top]
         id_wins_top = [i_x for i_x, x in enumerate(df_top_x.loc['edge']) if {b for a in x for b in a}.issubset(set(path_i_top))]
-        if(flat_tree.degree(root_node)>1 and \
+        if(stream_tree.degree(root_node)>1 and \
            edge_i_top==(root_node,dict_forest[cell_list_sorted[0]][root_node]['next'][0])):
             id_wins_top.insert(0,1)
             id_wins_top.insert(0,0)
@@ -959,7 +959,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
     for edge_i_base in dict_paths_base.keys():
         path_i_base = dict_paths_base[edge_i_base]
         id_wins_base = [i_x for i_x, x in enumerate(df_base_x.loc['edge']) if {b for a in x for b in a}.issubset(set(path_i_base))]
-        if(flat_tree.degree(root_node)>1 and \
+        if(stream_tree.degree(root_node)>1 and \
            edge_i_base==(root_node,dict_forest[cell_list_sorted[0]][root_node]['next'][-1])):
             id_wins_base.insert(0,1)
             id_wins_base.insert(0,0)
@@ -1144,10 +1144,10 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
                 id_wins_all = [i for i,x in enumerate(df_bins_cumsum_norm.loc['edge',:]) if x[0]==edge_i]
                 prev_edge = ''
                 id_wins_prev = []
-                if(flat_tree.degree(root_node)>1):
+                if(stream_tree.degree(root_node)>1):
                     if(edge_i == bfs_edges[0]):
                         id_wins = [0,1]
-                        im_array = fill_im_array(im_array,df_bins_ann,flat_tree,df_base_x,df_base_y,df_top_x,df_top_y,xmin,xmax,ymin,ymax,im_nrow,im_ncol,step_w,dict_shift_dist,id_wins,edge_i,cellname,id_wins_prev,prev_edge)
+                        im_array = fill_im_array(im_array,df_bins_ann,stream_tree,df_base_x,df_base_y,df_top_x,df_top_y,xmin,xmax,ymin,ymax,im_nrow,im_ncol,step_w,dict_shift_dist,id_wins,edge_i,cellname,id_wins_prev,prev_edge)
                     id_wins = id_wins_all
                     if(edge_i[0] == root_node):
                         prev_edge = (root_node,root_node)
@@ -1155,13 +1155,13 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
                     else:
                         prev_edge = (dict_tree[edge_i[0]]['prev'],edge_i[0])
                         id_wins_prev = [i for i,x in enumerate(df_bins_cumsum_norm.loc['edge',:]) if x[0]==prev_edge]
-                    im_array = fill_im_array(im_array,df_bins_ann,flat_tree,df_base_x,df_base_y,df_top_x,df_top_y,xmin,xmax,ymin,ymax,im_nrow,im_ncol,step_w,dict_shift_dist,id_wins,edge_i,cellname,id_wins_prev,prev_edge)
+                    im_array = fill_im_array(im_array,df_bins_ann,stream_tree,df_base_x,df_base_y,df_top_x,df_top_y,xmin,xmax,ymin,ymax,im_nrow,im_ncol,step_w,dict_shift_dist,id_wins,edge_i,cellname,id_wins_prev,prev_edge)
                 else:
                     id_wins = id_wins_all
                     if(edge_i[0]!=root_node):
                         prev_edge = (dict_tree[edge_i[0]]['prev'],edge_i[0])
                         id_wins_prev = [i for i,x in enumerate(df_bins_cumsum_norm.loc['edge',:]) if x[0]==prev_edge]
-                    im_array = fill_im_array(im_array,df_bins_ann,flat_tree,df_base_x,df_base_y,df_top_x,df_top_y,xmin,xmax,ymin,ymax,im_nrow,im_ncol,step_w,dict_shift_dist,id_wins,edge_i,cellname,id_wins_prev,prev_edge)
+                    im_array = fill_im_array(im_array,df_bins_ann,stream_tree,df_base_x,df_base_y,df_top_x,df_top_y,xmin,xmax,ymin,ymax,im_nrow,im_ncol,step_w,dict_shift_dist,id_wins,edge_i,cellname,id_wins_prev,prev_edge)
         dict_im_array[ann] = im_array
     return verts,extent,cell_list_sorted,dict_ann_df,dict_im_array
 
@@ -1174,17 +1174,17 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
     simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
     list_ann_string = [k for k,v in dict_ann.items() if is_string_dtype(v)]
 
-    flat_tree = adata.uns['flat_tree']
-    label_to_node = {value: key for key,value in nx.get_node_attributes(flat_tree,'label').items()}
+    stream_tree = adata.uns['stream_tree']
+    label_to_node = {value: key for key,value in nx.get_node_attributes(stream_tree,'label').items()}
     if(preference!=None):
         preference_nodes = [label_to_node[x] for x in preference]
     else:
         preference_nodes = None
-    dict_branches = {x: flat_tree.edges[x] for x in flat_tree.edges()}
-    dict_node_state = nx.get_node_attributes(flat_tree,'label')
+    dict_branches = {x: stream_tree.edges[x] for x in stream_tree.edges()}
+    dict_node_state = nx.get_node_attributes(stream_tree,'label')
 
     root_node = label_to_node[root]
-    bfs_edges = bfs_edges_modified(flat_tree,root_node,preference=preference_nodes)
+    bfs_edges = bfs_edges_modified(stream_tree,root_node,preference=preference_nodes)
     bfs_nodes = []
     for x in bfs_edges:
         if x[0] not in bfs_nodes:
@@ -1200,7 +1200,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
     df_stream['edge'] = ''
     df_stream['lam_ordered'] = ''
     for x in bfs_edges:
-        if x in nx.get_edge_attributes(flat_tree,'id').values():
+        if x in nx.get_edge_attributes(stream_tree,'id').values():
             id_cells = np.where(df_stream['branch_id']==x)[0]
             df_stream.loc[df_stream.index[id_cells],'edge'] = pd.Series(
                 index= df_stream.index[id_cells],
@@ -1211,7 +1211,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
             df_stream.loc[df_stream.index[id_cells],'edge'] = pd.Series(
                 index= df_stream.index[id_cells],
                 data = [x] * len(id_cells))
-            df_stream.loc[df_stream.index[id_cells],'lam_ordered'] = flat_tree.edges[x]['len'] - df_stream.loc[df_stream.index[id_cells],'branch_lam']
+            df_stream.loc[df_stream.index[id_cells],'lam_ordered'] = stream_tree.edges[x]['len'] - df_stream.loc[df_stream.index[id_cells],'branch_lam']
     for ann in list_ann_string:
         df_stream['CELL_LABEL'] = dict_ann[ann]
         len_ori = {}
@@ -1222,8 +1222,8 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
                 len_ori[x] = dict_branches[(x[1],x[0])]['len']
 
         dict_tree = {}
-        bfs_prev = dict(nx.bfs_predecessors(flat_tree,root_node))
-        bfs_next = dict(nx.bfs_successors(flat_tree,root_node))
+        bfs_prev = dict(nx.bfs_predecessors(stream_tree,root_node))
+        bfs_next = dict(nx.bfs_successors(stream_tree,root_node))
         for x in bfs_nodes:
             dict_tree[x] = {'prev':"",'next':[]}
             if(x in bfs_prev.keys()):
@@ -1235,8 +1235,8 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
         ##shift distance of each branch
         dict_shift_dist = dict()
         #modified depth first search
-        dfs_nodes = dfs_nodes_modified(flat_tree,root_node,preference=preference_nodes)
-        leaves=[n for n,d in flat_tree.degree() if d==1]
+        dfs_nodes = dfs_nodes_modified(stream_tree,root_node,preference=preference_nodes)
+        leaves=[n for n,d in stream_tree.degree() if d==1]
         id_leaf = 0
         dfs_nodes_copy = copy.deepcopy(dfs_nodes)
         num_nonroot_leaf = len(list(set(leaves) - set([root_node])))
@@ -1249,14 +1249,14 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
             else:
                 next_nodes = dict_tree[node]['next']
                 dict_shift_dist[(prev_node,node)] = (sum([dict_shift_dist[(node,next_node)] for next_node in next_nodes]))/float(len(next_nodes))
-        if (flat_tree.degree(root_node))>1:
+        if (stream_tree.degree(root_node))>1:
             next_nodes = dict_tree[root_node]['next']
             dict_shift_dist[(root_node,root_node)] = (sum([dict_shift_dist[(root_node,next_node)] for next_node in next_nodes]))/float(len(next_nodes))
 
 
         #dataframe of bins
         df_bins = pd.DataFrame(index = list(df_stream['CELL_LABEL'].unique()) + ['boundary','center','edge'])
-        list_paths = find_root_to_leaf_paths(flat_tree, root_node)
+        list_paths = find_root_to_leaf_paths(stream_tree, root_node)
         max_path_len = find_longest_path(list_paths,len_ori)
         size_w = max_path_len/float(factor_num_win)
         if(size_w>min(len_ori.values())/float(factor_min_win)):
@@ -1287,9 +1287,9 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
 
         for i,edge_i in enumerate(bfs_edges):
             #degree of the start node
-            degree_st = flat_tree.degree(edge_i[0])
+            degree_st = stream_tree.degree(edge_i[0])
             #degree of the end node
-            degree_end = flat_tree.degree(edge_i[1])
+            degree_end = stream_tree.degree(edge_i[1])
             #matrix of windows only appearing on one edge
             mat_w = np.vstack([np.arange(0,len_ori[edge_i]-size_w+(len_ori[edge_i]/10**6),step_w),\
                            np.arange(size_w,len_ori[edge_i]+(len_ori[edge_i]/10**6),step_w)]).T
@@ -1306,7 +1306,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
                 #matrix of windows appearing on multiple edges
                 mat_w_common = np.array([[0,size_w/2.0],[0,size_w]])
                 #neighbor nodes
-                nb_nodes = list(flat_tree.neighbors(edge_i[0]))
+                nb_nodes = list(stream_tree.neighbors(edge_i[0]))
                 index_nb_nodes = [bfs_nodes.index(x) for x in nb_nodes]
                 nb_nodes = np.array(nb_nodes)[np.argsort(index_nb_nodes)].tolist()
                 #matrix of windows appearing on multiple edges
@@ -1381,7 +1381,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
                 mat_w_common = np.vstack([np.arange(len_ori[edge_i]-size_w+step_w,len_ori[edge_i]+(len_ori[edge_i]/10**6),step_w),\
                                           np.arange(step_w,size_w+(len_ori[edge_i]/10**6),step_w)]).T
                 #neighbor nodes
-                nb_nodes = list(flat_tree.neighbors(edge_i[1]))
+                nb_nodes = list(stream_tree.neighbors(edge_i[1]))
                 nb_nodes.remove(edge_i[0])
                 index_nb_nodes = [bfs_nodes.index(x) for x in nb_nodes]
                 nb_nodes = np.array(nb_nodes)[np.argsort(index_nb_nodes)].tolist()
@@ -1441,7 +1441,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
                        for cellname in df_edge_cellnum.index}
         for cellname in cell_list_sorted:
             for node_i in bfs_nodes:
-                nb_nodes = list(flat_tree.neighbors(node_i))
+                nb_nodes = list(stream_tree.neighbors(node_i))
                 index_in_bfs = [bfs_nodes.index(nb) for nb in nb_nodes]
                 nb_nodes_sorted = np.array(nb_nodes)[np.argsort(index_in_bfs)].tolist()
                 if node_i == root_node:
@@ -1477,7 +1477,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
             prev_node = dict_tree[edge_i[0]]['prev']
             if(prev_node == ''):
                 x_st = 0
-                if(flat_tree.degree(root_node)>1):
+                if(stream_tree.degree(root_node)>1):
                     id_wins = id_wins[1:]
             else:
                 id_wins = id_wins[1:] # remove the overlapped window
@@ -1525,7 +1525,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
         #determine joints points
         dict_joint_top = {cellname:dict() for cellname in cell_list_sorted} #coordinates of joint points
         dict_joint_base = {cellname:dict() for cellname in cell_list_sorted} #coordinates of joint points
-        if(flat_tree.degree(root_node)==1):
+        if(stream_tree.degree(root_node)==1):
             id_joints = [i for i,x in enumerate(df_bins_cumsum_norm.loc['edge',:]) if len(x)>1]
         else:
             id_joints = [i for i,x in enumerate(df_bins_cumsum_norm.loc['edge',:]) if len(x)>1 and x[0]!=(root_node,root_node)]
@@ -1580,7 +1580,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
         for edge_i_top in dict_paths_top.keys():
             path_i_top = dict_paths_top[edge_i_top]
             id_wins_top = [i_x for i_x, x in enumerate(df_top_x.loc['edge']) if {b for a in x for b in a }.issubset(set(path_i_top))]
-            if(flat_tree.degree(root_node)>1 and \
+            if(stream_tree.degree(root_node)>1 and \
                edge_i_top==(root_node,dict_forest[cell_list_sorted[0]][root_node]['next'][0])):
                 id_wins_top.insert(0,1)
                 id_wins_top.insert(0,0)
@@ -1600,7 +1600,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
         for edge_i_base in dict_paths_base.keys():
             path_i_base = dict_paths_base[edge_i_base]
             id_wins_base = [i_x for i_x, x in enumerate(df_base_x.loc['edge']) if {b for a in x for b in a}.issubset(set(path_i_base))]
-            if(flat_tree.degree(root_node)>1 and \
+            if(stream_tree.degree(root_node)>1 and \
                edge_i_base==(root_node,dict_forest[cell_list_sorted[0]][root_node]['next'][-1])):
                 id_wins_base.insert(0,1)
                 id_wins_base.insert(0,0)
@@ -1776,11 +1776,11 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
         dict_extent[ann] = extent
     return dict_verts,dict_extent
 
-def find_root_to_leaf_paths(flat_tree, root):
+def find_root_to_leaf_paths(stream_tree, root):
     list_paths = list()
-    for x in flat_tree.nodes():
-        if((x!=root)&(flat_tree.degree(x)==1)):
-            path = list(nx.all_simple_paths(flat_tree,root,x))[0]
+    for x in stream_tree.nodes():
+        if((x!=root)&(stream_tree.degree(x)==1)):
+            path = list(nx.all_simple_paths(stream_tree,root,x))[0]
             list_edges = list()
             for ft,sd in zip(path,path[1:]):
                 list_edges.append((ft,sd))
@@ -1832,13 +1832,13 @@ def find_paths(dict_tree,bfs_nodes):
     return dict_paths_top,dict_paths_base
 
 
-def fill_im_array(dict_im_array,df_bins_gene,flat_tree,df_base_x,df_base_y,df_top_x,df_top_y,xmin,xmax,ymin,ymax,im_nrow,im_ncol,step_w,dict_shift_dist,id_wins,edge_i,cellname,id_wins_prev,prev_edge):
+def fill_im_array(dict_im_array,df_bins_gene,stream_tree,df_base_x,df_base_y,df_top_x,df_top_y,xmin,xmax,ymin,ymax,im_nrow,im_ncol,step_w,dict_shift_dist,id_wins,edge_i,cellname,id_wins_prev,prev_edge):
     pad_ratio = 0.008
     xmin_edge = df_base_x.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins))].min()
     xmax_edge = df_base_x.loc[cellname,list(map(lambda x: 'win' + str(x), id_wins))].max()
     id_st_x = int(np.floor(((xmin_edge - xmin)/(xmax - xmin))*(im_ncol-1)))
     id_ed_x =  int(np.floor(((xmax_edge - xmin)/(xmax - xmin))*(im_ncol-1)))
-    if (flat_tree.degree(edge_i[1])==1):
+    if (stream_tree.degree(edge_i[1])==1):
         id_ed_x = id_ed_x + 1
     if(id_st_x < 0):
         id_st_x = 0
