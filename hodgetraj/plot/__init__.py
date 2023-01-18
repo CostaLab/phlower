@@ -10,7 +10,9 @@ from .plotting import (
         plot_fate_tree_embedding,
         plot_stream_tree_embedding,
         plot_trajectory_harmonic_lines,
+        plot_trajectory_harmonic_lines_3d,
         plot_trajectory_harmonic_points,
+        plot_trajectory_harmonic_points_3d,
         plot_eigen_line,
         G_nxdraw_group,
         G_plot_traj,
@@ -18,6 +20,8 @@ from .plotting import (
         plot_embedding,
         G_plot_density_grid,
         M_plot_trajectory_harmonic_lines,
+        M_plot_trajectory_harmonic_lines_3d,
         M_plot_trajectory_harmonic_points,
+        M_plot_trajectory_harmonic_points_3d,
         L_plot_eigen_line,
 )

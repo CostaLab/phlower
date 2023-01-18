@@ -18,6 +18,7 @@ setup(
                       "sklearn",
                       "scipy",
                       "pandas",
+                      "plotly",
                       "tqdm",
                       "leidenalg",
                       "louvain",

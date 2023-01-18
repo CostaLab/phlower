@@ -609,7 +609,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
             #neighbor nodes
             nb_nodes = list(stream_tree.neighbors(edge_i[0]))
             index_nb_nodes = [bfs_nodes.index(x) for x in nb_nodes]
-            nb_nodes = np.array(nb_nodes)[np.argsort(index_nb_nodes)].tolist()
+            nb_nodes = np.array(nb_nodes, dtype=object)[np.argsort(index_nb_nodes)].tolist()
             #matrix of windows appearing on multiple edges
             total_bins = df_bins.shape[1] # current total number of bins
             for i_win in range(mat_w_common.shape[0]):
@@ -714,7 +714,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
             nb_nodes = list(stream_tree.neighbors(edge_i[1]))
             nb_nodes.remove(edge_i[0])
             index_nb_nodes = [bfs_nodes.index(x) for x in nb_nodes]
-            nb_nodes = np.array(nb_nodes)[np.argsort(index_nb_nodes)].tolist()
+            nb_nodes = np.array(nb_nodes, dtype=object)[np.argsort(index_nb_nodes)].tolist()
 
             #matrix of windows appearing on multiple edges
             total_bins = df_bins.shape[1] # current total number of bins
@@ -805,7 +805,7 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
         for node_i in bfs_nodes:
             nb_nodes = list(stream_tree.neighbors(node_i))
             index_in_bfs = [bfs_nodes.index(nb) for nb in nb_nodes]
-            nb_nodes_sorted = np.array(nb_nodes)[np.argsort(index_in_bfs)].tolist()
+            nb_nodes_sorted = np.array(nb_nodes, dtype=object)[np.argsort(index_in_bfs)].tolist()
             if node_i == root_node:
                 next_nodes = nb_nodes_sorted
                 prev_nodes = ''
@@ -1308,7 +1308,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
                 #neighbor nodes
                 nb_nodes = list(stream_tree.neighbors(edge_i[0]))
                 index_nb_nodes = [bfs_nodes.index(x) for x in nb_nodes]
-                nb_nodes = np.array(nb_nodes)[np.argsort(index_nb_nodes)].tolist()
+                nb_nodes = np.array(nb_nodes, dtype=object)[np.argsort(index_nb_nodes)].tolist()
                 #matrix of windows appearing on multiple edges
                 total_bins = df_bins.shape[1] # current total number of bins
                 for i_win in range(mat_w_common.shape[0]):
@@ -1384,7 +1384,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
                 nb_nodes = list(stream_tree.neighbors(edge_i[1]))
                 nb_nodes.remove(edge_i[0])
                 index_nb_nodes = [bfs_nodes.index(x) for x in nb_nodes]
-                nb_nodes = np.array(nb_nodes)[np.argsort(index_nb_nodes)].tolist()
+                nb_nodes = np.array(nb_nodes, dtype=object)[np.argsort(index_nb_nodes)].tolist()
 
                 #matrix of windows appearing on multiple edges
                 total_bins = df_bins.shape[1] # current total number of bins
@@ -1443,7 +1443,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
             for node_i in bfs_nodes:
                 nb_nodes = list(stream_tree.neighbors(node_i))
                 index_in_bfs = [bfs_nodes.index(nb) for nb in nb_nodes]
-                nb_nodes_sorted = np.array(nb_nodes)[np.argsort(index_in_bfs)].tolist()
+                nb_nodes_sorted = np.array(nb_nodes, dtype=object)[np.argsort(index_in_bfs)].tolist()
                 if node_i == root_node:
                     next_nodes = nb_nodes_sorted
                     prev_nodes = ''

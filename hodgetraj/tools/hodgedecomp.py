@@ -155,7 +155,7 @@ def knee_eigen(adata: AnnData,
         eigens = adata.uns[eigens]
 
     x = range(1, len(eigens) + 1)
-    y = range(1, len(eigens) + 1)
+    y = eigens
     idx = find_knee(x, y)
     adata.uns['eigen_value_knee'] = idx
     print("knee eigen value is ", idx)

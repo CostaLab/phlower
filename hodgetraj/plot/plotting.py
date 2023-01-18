@@ -16,6 +16,44 @@ V = TypeVar('V')
 def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
     return zip(path, path[1:])
 
+def plot_trajectory_harmonic_lines_3d(adata: AnnData,
+                                      full_traj_matrix="full_traj_matrix",
+                                      clusters = "trajs_clusters",
+                                      evector_name = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+                                      retain_clusters=[],
+                                      figsize = (800,800),
+                                      dims = [0,1,2],
+                                      show_legend=True,
+                                      sample_ratio = 0.1,
+                                      color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                                      **args):
+    """
+    Parameters
+    ---------
+    mat_coord_Hspace:
+    cluster_list: cluster_list for each trajectory
+    ax: matplotlib axes
+    show_legend: if show legend
+    legend_loc: legend location
+    bbox_to_anchor: for position of the legend
+    markerscale: legend linewidth scale to larger or smaller
+    color_palette: color palette for show cluster_list
+    """
+    mat_coord_Hspace = M_create_matrix_coordinates_trajectory_Hspace(adata.uns[evector_name][0:max(dims)+1],
+                                                                     adata.uns[full_traj_matrix])
+    M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
+                                        cluster_list = list(adata.uns[clusters]),
+                                        retain_clusters=retain_clusters,
+                                        dims = dims,
+                                        show_legend = show_legend,
+                                        sample_ratio = sample_ratio,
+                                        color_palette = color_palette,
+                                        **args)
+
+
+
+
+
 def plot_trajectory_harmonic_lines(adata: AnnData,
                                    full_traj_matrix="full_traj_matrix",
                                    clusters = "trajs_clusters",
@@ -57,6 +95,49 @@ def plot_trajectory_harmonic_lines(adata: AnnData,
                                      sample_ratio = sample_ratio,
                                      color_palette = color_palette,
                                      **args)
+
+
+
+def plot_trajectory_harmonic_points_3d(adata: AnnData,
+                                       full_traj_matrix_flatten="full_traj_matrix_flatten",
+                                       clusters = "trajs_clusters",
+                                       evector_name = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+                                       retain_clusters=[],
+                                       dims = [0,1],
+                                       node_size=2,
+                                       show_legend=False,
+                                       figsize=(800,800),
+                                       sample_ratio = 0.1,
+                                       color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                                       **args):
+    """
+    Parameters
+    ---------
+    mat_coor_flatten_trajectory:
+    cluster_list: cluster_list for each trajectory
+    label: if show label
+    labelsize: labelsize
+    labelstyle: options: color,text, box. same color as nodes if use `color`, black if use `text`, white color with box if use `box`
+    show_legend: if show legend
+    legend_loc: legend location
+    bbox_to_anchor: for position of the legend
+    markerscale: legend marker scale to larger or smaller
+    color_palette: color palette for show cluster_list
+    **args: args for scatter
+    """
+    mat_coor_flatten_trajectory = [adata.uns[evector_name][0:max(dims)+1, :] @ mat for mat in adata.uns[full_traj_matrix_flatten]]
+    M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
+                                         cluster_list = list(adata.uns[clusters]),
+                                         retain_clusters = retain_clusters,
+                                         dims = dims,
+                                         node_size = node_size,
+                                         show_legend = show_legend,
+                                         figsize = figsize,
+                                         sample_ratio = sample_ratio,
+                                         color_palette = color_palette,
+                                         **args
+                                         )
+
 
 
 
@@ -716,6 +797,95 @@ def G_plot_density_grid(G,
 
     return fig, axes
 
+
+
+def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
+                                        cluster_list,
+                                        retain_clusters=[],
+                                        dims = [0,1,2],
+                                        figsize = (800, 800),
+                                        show_legend=True,
+                                        sample_ratio = 1,
+                                        color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                                        **args):
+    """
+    Parameters
+    ---------
+    mat_coord_Hspace:
+    cluster_list: cluster_list for each trajectory
+    ax: matplotlib axes
+    show_legend: if show legend
+    legend_loc: legend location
+    bbox_to_anchor: for position of the legend
+    markerscale: legend linewidth scale to larger or smaller
+    color_palette: color palette for show cluster_list
+    """
+    import plotly.graph_objects as go
+
+    assert(all(np.array(dims) < mat_coord_Hspace[0].shape[0])) ## dims is in the range of the dimension of the data
+    assert(len(dims) >=3)
+    if len(retain_clusters) == 0:
+        retain_clusters = set(cluster_list)
+    #print(retain_clusters)
+    assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
+
+
+    cumsums = list(map(lambda i: [np.cumsum(i[dims[0]]), np.cumsum(i[dims[1]]), np.cumsum(i[dims[2]])], mat_coord_Hspace))
+    for i, cluster in enumerate(retain_clusters):
+        #print(i, cluster)
+        v = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
+        idx = v[0] ## for legend
+        cumsum = cumsums[idx]
+        if i == 0:
+            fig = go.Figure(data=go.Scatter3d(x=cumsum[0],
+                                              y=cumsum[1],
+                                              z=cumsum[2],
+                                              line=dict(
+                                                  color=color_palette[i],
+                                                  width=2
+                                              ),
+                                              legendgroup=cluster,
+                                              showlegend=show_legend,
+                                              name = cluster,
+                                              mode='lines'
+                                          ))
+        else:
+            fig.add_scatter3d(x=cumsum[0],
+                              y=cumsum[1],
+                              z=cumsum[2],
+                              line=dict(
+                                color=color_palette[i],
+                                width=2
+                            ),
+                            legendgroup=cluster,
+                            showlegend=show_legend,
+                            name = cluster,
+                            mode='lines'
+            )
+        if sample_ratio < 1:
+            np.random.seed(2022)
+            v = np.random.choice(v, max(int(len(v)*sample_ratio), 1), replace=False)
+        for idx in v[1:]:
+            cumsum = cumsums[idx]
+            fig.add_scatter3d(x=cumsum[0],
+                              y=cumsum[1],
+                              z=cumsum[2],
+                              line=dict(
+                                color=color_palette[i],
+                                width=2
+                            ),
+                            name = cluster,
+                            showlegend=False,
+                            legendgroup=cluster,
+                            mode='lines'
+            )
+    fig.update_layout(
+                autosize=False,
+                width=figsize[1],
+                height=figsize[0],)
+    fig.show()
+
+
 def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
                                    cluster_list,
                                    retain_clusters=[],
@@ -773,6 +943,82 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
 
 
 #endf plot_trajectory_harmonic_lines
+
+
+def M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
+                                         cluster_list,
+                                         retain_clusters=[],
+                                         dims = [0,1,2],
+                                         node_size=2,
+                                         show_legend=False,
+                                         figsize = (800,800),
+                                         sample_ratio = 1,
+                                         color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                                         **args):
+    """
+    Parameters
+    ---------
+    mat_coor_flatten_trajectory:
+    cluster_list: cluster_list for each trajectory
+    show_legend: if show legend
+    color_palette: color palette for show cluster_list
+    **args: args for scatter
+    """
+    import plotly.graph_objects as go
+
+    if len(retain_clusters) == 0:
+        retain_clusters = set(cluster_list)
+    assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
+
+
+    for i, cluster in enumerate(retain_clusters):
+        #print(i, cluster)
+        v = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
+        idx = v[0] # for legend
+        if sample_ratio < 1: ## need at least 1
+            np.random.seed(2022)
+            v = np.random.choice(v, max(int(len(v)*sample_ratio), 1), replace=False)
+
+        df = pd.DataFrame({'x': [mat_coor_flatten_trajectory[ii][dims[0]] for ii in v],
+                           'y': [mat_coor_flatten_trajectory[ii][dims[1]] for ii in v],
+                           'z': [mat_coor_flatten_trajectory[ii][dims[2]] for ii in v],
+                           'cluster': [cluster for ii in v],
+                          })
+        if i == 0:
+            fig = go.Figure(data=[go.Scatter3d(x=df['x'],
+                                               y=df['y'],
+                                               z=df['z'],
+                                               mode='markers',
+                                               name=cluster,
+                                               showlegend = show_legend,
+                                               marker=dict(
+                                                    size=node_size,
+                                                    color=color_palette[i],                # set color to an array/list of desired values
+                                                    **args)
+                                               )])
+
+        else:
+            fig.add_scatter3d(x=df['x'],
+                              y=df['y'],
+                              z=df['z'],
+                              mode='markers',
+                              name=cluster,
+                              showlegend = show_legend,
+                              marker=dict(size=node_size,
+                                          color=color_palette[i],                # set color to an array/list of desired values
+                                          **args)
+
+                             )
+
+
+    fig.update_layout(
+                legend= {'itemsizing': 'constant'}, ## increase the point size in legend.
+                autosize=False,
+                width=figsize[1],
+                height=figsize[0],)
+
+    fig.show()
+
 
 def M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
                                     cluster_list,
