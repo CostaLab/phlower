@@ -6,6 +6,7 @@ import pandas as pd
 import networkx as nx
 from typing import Union
 from anndata import AnnData
+import scipy
 from scipy.sparse import csr_matrix, issparse
 from ..tools.graphconstr import diffusionGraphDM, diffusionGraph
 
@@ -69,7 +70,7 @@ def ddhodge(
         pc = adata.obsm[basis][:, 0:npc]
         d = diffusionGraphDM(pc,roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma)
     else:
-        d = diffusionGraph(adata.X.T,roots=roots,k=k,npc=npc,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma)
+        d = diffusionGraph(adata.X.T.todense() if scipy.sparse.issparse(adata.X.T) else adata.X.T ,roots=roots,k=k,npc=npc,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma)
         adata.obsm['X_dm'] = d['dm']
         basis = 'X_dm'
 

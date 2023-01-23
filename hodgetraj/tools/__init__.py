@@ -42,6 +42,7 @@ from .hodgedecomp import (
 
 from .incidence import *
 from .trajectory import *
+from .featuretraj import *
 
 
 from .graphconstr import(

@@ -15,6 +15,18 @@ def tuple_increase(a,b):
     return(b,a)
 #endf tuple_increase
 
+def pearsonr_2D(x, y):
+    """computes pearson correlation coefficient
+       where x is a 1D and y a 2D array"""
+
+    upper = np.sum((x - np.mean(x)) * (y - np.mean(y, axis=1)[:,None]), axis=1)
+    lower = np.sqrt(np.sum(np.power(x - np.mean(x), 2)) * np.sum(np.power(y - np.mean(y, axis=1)[:,None], 2), axis=1))
+
+    rho = upper / lower
+
+    return rho
+
+
 def norm01(a):
     maxx= max(a)
     minn = min(a)

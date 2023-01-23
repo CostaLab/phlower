@@ -380,6 +380,8 @@ def nxdraw_holes(adata: AnnData,
                  graph_name: str='X_dm_ddhodge_g_triangulation_circle',
                  layout_name: str='X_dm_ddhodge_g_triangulation_circle',
                  evector_name: str="X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+                 title = "",
+                 edge_value= [],
                  vector_dim=0,
                  font_size=0,
                  node_size=0.1,
@@ -393,6 +395,8 @@ def nxdraw_holes(adata: AnnData,
     H = adata.uns[evector_name][vector_dim]
     if is_norm:
         H = norm01(H)
+    if len(edge_value)>0:
+        H = edge_value
     nx.draw_networkx(adata.uns[graph_name],
                      adata.obsm[layout_name],
                      edge_color=H,
@@ -402,6 +406,8 @@ def nxdraw_holes(adata: AnnData,
                      edge_cmap=plt.cm.RdBu_r,
                      ax = ax,
                      **args)
+    if title:
+        ax.set_title(title)
 #endf nxdraw_Holes
 
 
@@ -880,6 +886,7 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                             mode='lines'
             )
     fig.update_layout(
+                legend= {'itemsizing': 'constant'}, ## increase the point size in legend.
                 autosize=False,
                 width=figsize[1],
                 height=figsize[0],)

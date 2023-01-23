@@ -127,7 +127,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None):
   d['W']: Distances
   """
 
-  if all(roots==False):
+  if all(np.array(roots)==False):
     raise Exception("there should but some True cells as root")
 
   # Euclid distance matrix
