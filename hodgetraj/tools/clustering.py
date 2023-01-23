@@ -27,7 +27,7 @@ def _get_igraph_from_adjacency(adjacency, directed=None):
     return g
 
 
-def leiden(embedding, distance='euclidean',n_iterations=-1, resolution=1.0,  seed_state=0, **partition_kwargs):
+def leiden(embedding, distance='euclidean',n_iterations=-1, resolution=1.0,  seed_state=2022, **partition_kwargs):
     import leidenalg as la
 
     print("calcaulating distances...")
@@ -49,7 +49,7 @@ def leiden(embedding, distance='euclidean',n_iterations=-1, resolution=1.0,  see
 
 
 
-def louvain(embedding, distance='euclidean', resolution=1.0,  seed_state=0, **partition_kwargs):
+def louvain(embedding, distance='euclidean', resolution=1.0,  seed_state=2022, **partition_kwargs):
     import louvain as lv
 
     print("calcaulating distances...")

@@ -388,22 +388,23 @@ def nxdraw_holes(adata: AnnData,
                  width=1,
                  edge_cmap=plt.cm.RdBu_r,
                  is_norm=True,
+                 is_abs = False,
                  ax = None,
                  **args):
 
     ax = ax or plt.gca()
     H = adata.uns[evector_name][vector_dim]
     if is_norm:
-        H = norm01(H)
+        H = np.abs(norm01(H)) if is_abs else norm01(H)
     if len(edge_value)>0:
-        H = edge_value
+        H = np.abs(edge_value) if is_abs else edge_value
     nx.draw_networkx(adata.uns[graph_name],
                      adata.obsm[layout_name],
                      edge_color=H,
-                     font_size=0,
-                     node_size=0.1,
-                     width=1,
-                     edge_cmap=plt.cm.RdBu_r,
+                     font_size=font_size,
+                     node_size=node_size,
+                     width=width,
+                     edge_cmap=edge_cmap,
                      ax = ax,
                      **args)
     if title:
@@ -932,14 +933,16 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
         v = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
         idx = v[0] ## for legend
         cumsum = cumsums[idx]
-        sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, label=cluster, **args)
+
+        #print(cumsum[0], cumsum[1], color_palette[i], cluster)
+        sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, label=cluster, **args) #
 
         if sample_ratio < 1:
             np.random.seed(2022)
             v = np.random.choice(v, max(int(len(v)*sample_ratio), 1), replace=False)
         for idx in v[1:]:
             cumsum = cumsums[idx]
-            sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, **args)
+            sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, **args) #
 
     if show_legend:
         leg = ax.legend(loc=legend_loc, bbox_to_anchor=bbox_to_anchor)

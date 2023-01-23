@@ -2,6 +2,7 @@ import time
 import networkx as nx
 import numpy as np
 import pandas as pd
+import scipy
 from anndata import AnnData
 from scipy.sparse import csc_matrix
 from typing import Union
@@ -117,6 +118,8 @@ def curl(g, weight_attr="weight"):
 def L1Norm_decomp(adata: AnnData,
                   graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
                   eigen_num: int = 100,
+                  check_symmetric: bool = True,
+                  isnorm = True,
                   iscopy: bool = False,
         ):
 
@@ -129,10 +132,23 @@ def L1Norm_decomp(adata: AnnData,
     B1 = create_node_edge_incidence_matrix(elist)
     B2 = create_edge_triangle_incidence_matrix(elist, tlist)
 
-    L1all = create_normalized_l1(B1, B2, mode="RW")
-    L1 = L1all[0]
+    #L1all = create_normalized_l1(B1, B2, mode="RW")
+    if isnorm:
+        L1all = create_normalized_l1(B1, B2, mode="RW")
+        L1 = L1all[0]
+        #if not scipy.linalg.issymmetric(L1):
+            #L1 = np.tril(L1) + np.triu(L1.T, 1)
+            #L1 = 1/2*(L1 + L1.T)
+            #L1 =  np.maximum(L1, L1.T)
+    else:
+        L1all = create_l1(B1, B2)
+        L1 = L1all[0]
+    #if not scipy.linalg.issymmetric(L1):
+    #    L1 = (L1 + L1.T) / 2
+        #L1all[0] = L1
+
     start = time.time()
-    d = harmonic_projection_matrix_with_w(L1.astype(float), eigen_num)
+    d = harmonic_projection_matrix_with_w(L1.astype(float), eigen_num, check_symmetric = check_symmetric)
     end = time.time()
     print((end-start), " sec")
     adata.uns['X_dm_ddhodge_g_triangulation_circle_L1Norm'] = L1all

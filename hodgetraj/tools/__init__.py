@@ -49,3 +49,7 @@ from .graphconstr import(
         diffusionGraphDM,
         diffusionGraph,
         )
+
+
+### for test
+from .graphconstr import *

@@ -2,10 +2,11 @@
 import networkx as nx
 import numpy as np
 from scipy.sparse import csc_matrix, linalg, csr_matrix
+import scipy
 from ..util import lexsort_rows
 
 
-def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int) -> dict:
+def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, check_symmetric:bool=True) -> dict:
     """
     Computes the harmonic projection matrix for the simplicial complex with the
     given Hodge-1 Laplacian.
@@ -15,8 +16,19 @@ def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int) -> d
     L1 : csr_matrix of type float
     number_of_holes : int
     """
-    w, v = linalg.eigsh(L1, k=number_of_holes,
+    if (not check_symmetric) or scipy.linalg.issymmetric(L1):
+        w, v = linalg.eigsh(L1, k=number_of_holes,
                         v0=np.ones(L1.shape[0]), which='SM')
+    else:
+
+        w, v = linalg.eigs(L1, k=number_of_holes,
+                        v0=np.ones(L1.shape[0]), which='SM')
+        idx = w.argsort()
+        w = w[idx]
+        w = np.real(w)
+        v = v[:, idx]
+        v = np.real(v)
+
     return {"w":w, "v":v.T}
 
 def assign_eweight(G, A):
@@ -82,6 +94,26 @@ def create_edge_triangle_incidence_matrix(elist, tlist):
         col_ind))), shape=(len(elist), len(tlist)), dtype=np.int8)
     return B2
 
+
+def create_l1(B1, B2):
+    L1 = (B1.T @ B1 + B2 @ B2.T)
+    if B2.shape[1] > 0:
+        d1 = np.sum(np.abs(B2), axis=1)
+        d1 = np.asarray(d1.flatten())[0]
+        D1 = np.diag(np.maximum(1, d1))
+        D1inv = np.diag(np.divide(1, np.diag(D1)))
+    else:
+        num_edges = B1.shape[1]
+        D1 = np.eye(num_edges)
+        D1inv = D1
+
+    #d0weighted = np.maximum(1, np.sum(np.abs(B1 * D1), axis=1))
+    d0weighted = np.maximum(1, np.sum(np.abs(B1 @ D1), axis=1))
+    d0weighted = np.reshape(d0weighted, (d0weighted.size))
+    D0weighted = np.diag(d0weighted)
+    D0weightedinv = np.diag(np.divide(1, d0weighted))
+
+    return L1, D1, D1inv, D0weighted, D0weightedinv
 
 
 
