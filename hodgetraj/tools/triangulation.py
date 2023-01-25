@@ -195,7 +195,7 @@ def connect_starts_ends_with_Delaunay(g,
     if separate_ends_triangle: ## each ends create triangles with the starts
         for i in range(len(n_end_nodes_arr)):
             selected_nodes = list(n_start_nodes) + list(n_end_nodes_arr[i])
-            tri = Delaunay(np.array(layouts)[selected_nodes])
+            tri = Delaunay(layouts[selected_nodes])
             tri_edges =[[ti(a,b),ti(a,c),ti(b,c)] for a,b,c in tri.simplices]
             tri_edges = list(set([item for sublist in tri_edges for item in sublist])) # flatten
             tri_edges = [(selected_nodes[x], selected_nodes[y]) for (x,y) in tri_edges]

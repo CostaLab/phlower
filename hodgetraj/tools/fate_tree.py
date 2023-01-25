@@ -117,10 +117,13 @@ def trajectory_buckets(g=None,
 
     assert(set(retain_clusters).issubset(set(cluster_list)))
     assert(len(trajs) == len(cluster_list))
+    if not isinstance(cluster_list, np.ndarray):
+        cluster_list = np.array(cluster_list)
+
 
     buckets_df_dict = {}
     for cluster in tqdm(retain_clusters):
-        idx = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
+        idx = [i for i in np.where(cluster_list == cluster)[0]]
         kde = kde_eastimate(np.array(trajs, dtype=list)[idx], layouts, sample_n=sample_n)
         ## left merge to keep kde index
         df_left = pd.merge(pd.DataFrame(kde), networkx_node_to_df(g), how='left', left_on = 'idx', right_on = 'node')

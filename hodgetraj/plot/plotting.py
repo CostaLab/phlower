@@ -255,10 +255,14 @@ def plot_fate_tree(adata: AnnData,
                    layout_prog = 'twopi',
                    with_labels= True,
                    ax=None,
+                   **args
                    ):
+    """
+    layout_prog: may ‘dot’, ‘twopi’, ‘fdp’, ‘sfdp’, ‘circo’
+    """
     ax = plt.gca() if ax is None else ax
-    pos =nx.nx_pydot.graphviz_layout(adata.uns[fate_tree], prog='twopi')
-    nx.draw(adata.uns[fate_tree], pos, with_labels=with_labels, ax=ax)
+    pos =nx.nx_pydot.graphviz_layout(adata.uns[fate_tree], prog=layout_prog)
+    nx.draw(adata.uns[fate_tree], pos, with_labels=with_labels, ax=ax, **args)
 
 
 def plot_density_grid(adata: AnnData,
@@ -711,7 +715,7 @@ def plot_embedding(cluster_list = [],
     cluster_n = len(set(cluster_list))
     ax.set_facecolor(facecolor)
     for i, x in enumerate(retain_clusters):
-        idx = [i for i in np.where(np.array(cluster_list) == x)[0]]
+        idx = [i for i in np.where(cluster_list == x)[0]]
         ax.scatter(x=embedding[idx, 0], y=embedding[idx, 1], c = color_palette[i], s=node_size, **args, label=x)
         if label:
             if labelstyle=='text' or labelstyle == "color":
@@ -772,6 +776,9 @@ def G_plot_density_grid(G,
     if not isinstance(cluster_list, np.ndarray):
         cluster_list = np.array(cluster_list)
 
+    if not isinstance(traj_list, np.ndarray):
+        traj_list = np.array(traj_list)
+
     r,c = get_uniform_multiplication(cluster_n)
     r = r - 1 if (r-1)*c == cluster_n else r
     fig, axes = plt.subplots(r,c, sharex=False, sharey=False,)
@@ -779,8 +786,8 @@ def G_plot_density_grid(G,
     for a, cluster in enumerate(retain_clusters):
         i = int(a/c)
         j = a%c
-        idx = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
-        cdic = kde_eastimate(np.array(traj_list)[idx], layouts, sample_n)
+        idx = [i for i in np.where(cluster_list == cluster)[0]]
+        cdic = kde_eastimate(traj_list[idx], layouts, sample_n)
         x = cdic['x']
         y = cdic['y']
         z = cdic['z']
@@ -849,7 +856,7 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
     cumsums = list(map(lambda i: [np.cumsum(i[dims[0]]), np.cumsum(i[dims[1]]), np.cumsum(i[dims[2]])], mat_coord_Hspace))
     for i, cluster in enumerate(retain_clusters):
         #print(i, cluster)
-        v = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
+        v = [i for i in np.where(cluster_list == cluster)[0]]
         idx = v[0] ## for legend
         cumsum = cumsums[idx]
         if i == 0:
@@ -942,7 +949,7 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
     cumsums = list(map(lambda i: [np.cumsum(i[dims[0]]), np.cumsum(i[dims[1]])], mat_coord_Hspace))
     for i, cluster in enumerate(retain_clusters):
         #print(i, cluster)
-        v = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
+        v = [i for i in np.where(cluster_list == cluster)[0]]
         idx = v[0] ## for legend
         cumsum = cumsums[idx]
 
@@ -997,7 +1004,7 @@ def M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
 
     for i, cluster in enumerate(retain_clusters):
         #print(i, cluster)
-        v = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
+        v = [i for i in np.where(cluster_list == cluster)[0]]
         idx = v[0] # for legend
         if sample_ratio < 1: ## need at least 1
             np.random.seed(2022)
@@ -1091,7 +1098,7 @@ def M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
 
     for i, cluster in enumerate(retain_clusters):
         #print(i, cluster)
-        v = [i for i in np.where(np.array(cluster_list) == cluster)[0]]
+        v = [i for i in np.where(cluster_list == cluster)[0]]
         idx = v[0] # for legend
         if sample_ratio < 1: ## need at least 1
             np.random.seed(2022)

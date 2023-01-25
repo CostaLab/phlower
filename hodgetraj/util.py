@@ -281,4 +281,5 @@ def bsplit(facs, keep_empty=False):
         l1.append([x[1] for x in zip(pattern,facs) if x[0]])
         l2.append([x[1] for x in zip(pattern,facs) if not x[0]])
 
-    return [(l1[i],l2[i]) for i in range(len(l1)) if keep_empty or (l1[i] and l2[i])]
+    return [(tuple(set(l1[i])),tuple(set(l2[i]))) for i in range(len(l1)) if keep_empty or (l1[i] and l2[i])]
+

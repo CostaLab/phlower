@@ -100,7 +100,7 @@ def feature_correlation_cluster(adata: AnnData,
         dic = {}
         #multiplied = evec @ adata.uns[full_traj_matrix_flatten].T
         for cluster in clusters:
-            idx = np.where(np.array(l_trajs_clusters, dtype=object)==cluster)[0]
+            idx = np.where(l_trajs_clusters==cluster)[0]
             scores = np.mean(pearsonr_2D(evec, traj_score[idx, :]))
             dic[cluster] = scores
         dics[features[i]] = dic
@@ -140,7 +140,7 @@ def feature_statistic_cluster(adata: AnnData,
         dic = {}
         multiplied = evec @ traj_score.T
         for cluster in clusters:
-            scores = st((multiplied).T[np.where(np.array(l_trajs_clusters, dtype=object)==cluster)[0], :], axis=0)
+            scores = st((multiplied).T[np.where(l_trajs_clusters==cluster)[0], :], axis=0)
             dic[cluster] = scores
         dics[features[i]] = dic
     return dics
@@ -155,7 +155,7 @@ def task_statistics(feature, evec, traj_score, l_trajs_clusters, clusters, st):
         l_trajs_clusters = np.array(l_trajs_clusters, dtype=object)
 
     for cluster in clusters:
-        score = st((multiplied).T[np.where(np.array(l_trajs_clusters, dtype=object)==cluster)[0], :])
+        score = st((multiplied).T[np.where(l_trajs_clusters==cluster)[0], :])
         dic[cluster] = score
     return feature, dic
 
@@ -190,7 +190,7 @@ def feature_statistic_cluster2(adata: AnnData,
             traj_score = np.multiply(adata.uns[full_traj_matrix_flatten], edges_score[None, :])
             dic = {}
             for cluster in clusters:
-                score = st((evec @ traj_score.T).T[np.where(np.array(l_trajs_clusters, dtype=object)==cluster)[0], :])
+                score = st((evec @ traj_score.T).T[np.where(l_trajs_clusters==cluster)[0], :])
                 dic[cluster] = score
             dics[features[i]] = dic
         return dics
@@ -237,7 +237,7 @@ def feature_statistic_cluster3(adata: AnnData,
             traj_score = np.multiply(adata.uns[full_traj_matrix_flatten], edges_score[None, :])
             dic = {}
             for cluster in clusters:
-                scores = st((evec @ traj_score.T).T[np.where(np.array(l_trajs_clusters, dtype=object)==cluster)[0], :], axis=0)
+                scores = st((evec @ traj_score.T).T[np.where(l_trajs_clusters==cluster)[0], :], axis=0)
                 dic[cluster] = scores
             dics[features[i]] = dic
         return dics

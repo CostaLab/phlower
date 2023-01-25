@@ -50,6 +50,8 @@ from .graphconstr import(
         diffusionGraph,
         )
 
+from .harmonic_tree import *
+
 
 ### for test
 from .graphconstr import *
