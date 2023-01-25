@@ -89,6 +89,8 @@ def feature_correlation_cluster(adata: AnnData,
     evec = adata.uns[evector_name][dim, :]
     l_trajs_clusters =adata.uns[trajs_clusters]
     clusters = set(l_trajs_clusters)
+    if not isinstance(l_trajs_clusters, np.ndarray):
+        l_trajs_clusters = np.array(l_trajs_clusters, dtype=object)
 
     dics = {}
     for i in trange(len(features), desc='features statistic cluster'):
@@ -126,6 +128,9 @@ def feature_statistic_cluster(adata: AnnData,
     evec = adata.uns[evector_name][0:max(dims)+1, :]
     l_trajs_clusters =adata.uns[trajs_clusters]
     clusters = set(l_trajs_clusters)
+    if not isinstance(l_trajs_clusters, np.ndarray):
+        l_trajs_clusters = np.array(l_trajs_clusters, dtype=object)
+
 
     dics = {}
     for i in trange(len(features), desc='features statistic cluster'):
@@ -146,9 +151,12 @@ def feature_statistic_cluster(adata: AnnData,
 def task_statistics(feature, evec, traj_score, l_trajs_clusters, clusters, st):
     dic = {}
     multiplied = evec @ traj_score.T
+    if not isinstance(l_trajs_clusters, np.ndarray):
+        l_trajs_clusters = np.array(l_trajs_clusters, dtype=object)
+
     for cluster in clusters:
-        scores = st((multiplied).T[np.where(np.array(l_trajs_clusters, dtype=object)==cluster)[0], :], axis=0)
-        dic[cluster] = scores
+        score = st((multiplied).T[np.where(np.array(l_trajs_clusters, dtype=object)==cluster)[0], :])
+        dic[cluster] = score
     return feature, dic
 
 def feature_statistic_cluster2(adata: AnnData,
@@ -171,6 +179,9 @@ def feature_statistic_cluster2(adata: AnnData,
     l_trajs_clusters =adata.uns[trajs_clusters]
     clusters = set(l_trajs_clusters)
 
+    if not isinstance(l_trajs_clusters, np.ndarray):
+        l_trajs_clusters = np.array(l_trajs_clusters, dtype=object)
+
     if n_jobs == 1:
         dics = {}
         for i in trange(len(features), desc='features statistic cluster'):
@@ -179,8 +190,8 @@ def feature_statistic_cluster2(adata: AnnData,
             traj_score = np.multiply(adata.uns[full_traj_matrix_flatten], edges_score[None, :])
             dic = {}
             for cluster in clusters:
-                scores = st((evec @ traj_score.T).T[np.where(np.array(l_trajs_clusters, dtype=object)==cluster)[0], :], axis=0)
-                dic[cluster] = scores
+                score = st((evec @ traj_score.T).T[np.where(np.array(l_trajs_clusters, dtype=object)==cluster)[0], :])
+                dic[cluster] = score
             dics[features[i]] = dic
         return dics
     else:
@@ -215,6 +226,8 @@ def feature_statistic_cluster3(adata: AnnData,
     evec = adata.uns[evector_name][0:max(dims)+1, :]
     l_trajs_clusters =adata.uns[trajs_clusters]
     clusters = set(l_trajs_clusters)
+    if not isinstance(l_trajs_clusters, np.ndarray):
+        l_trajs_clusters = np.array(l_trajs_clusters, dtype=object)
 
     if n_jobs == 1:
         dics = {}

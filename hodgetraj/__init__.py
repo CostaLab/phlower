@@ -18,7 +18,7 @@ from .util import norm01, tuple_increase, pairwise, top_n_from, is_in_2sets, kde
 
 
 
-
+from .util import *
 from . import tl
 from . import pl
 from . import ext

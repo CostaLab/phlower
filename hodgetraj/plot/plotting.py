@@ -698,6 +698,9 @@ def plot_embedding(cluster_list = [],
     assert(len(cluster_list) == embedding.shape[0])
     assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
 
+    if not isinstance(cluster_list, np.ndarray):
+        cluster_list = np.array(cluster_list)
+
     ax = ax or plt.gca()
 
     if label:
@@ -765,6 +768,9 @@ def G_plot_density_grid(G,
     assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
     cluster_n = len(retain_clusters)
     assert(cluster_n > 0)
+
+    if not isinstance(cluster_list, np.ndarray):
+        cluster_list = np.array(cluster_list)
 
     r,c = get_uniform_multiplication(cluster_n)
     r = r - 1 if (r-1)*c == cluster_n else r
@@ -835,6 +841,9 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
         retain_clusters = set(cluster_list)
     #print(retain_clusters)
     assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
+
+    if not isinstance(cluster_list, np.ndarray):
+        cluster_list = np.array(cluster_list)
 
 
     cumsums = list(map(lambda i: [np.cumsum(i[dims[0]]), np.cumsum(i[dims[1]]), np.cumsum(i[dims[2]])], mat_coord_Hspace))
@@ -925,6 +934,9 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
     #print(retain_clusters)
     assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
 
+    if not isinstance(cluster_list, np.ndarray):
+        cluster_list = np.array(cluster_list)
+
 
     ax = ax or plt.gca()
     cumsums = list(map(lambda i: [np.cumsum(i[dims[0]]), np.cumsum(i[dims[1]])], mat_coord_Hspace))
@@ -979,6 +991,8 @@ def M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
     if len(retain_clusters) == 0:
         retain_clusters = set(cluster_list)
     assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
+    if not isinstance(cluster_list, np.ndarray):
+        cluster_list = np.array(cluster_list)
 
 
     for i, cluster in enumerate(retain_clusters):
@@ -1065,6 +1079,8 @@ def M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
     if len(retain_clusters) == 0:
         retain_clusters = set(cluster_list)
     assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
+    if not isinstance(cluster_list, np.ndarray):
+        cluster_list = np.array(cluster_list)
 
     ax = ax or plt.gca()
 

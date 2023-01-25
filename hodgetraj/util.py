@@ -1,6 +1,7 @@
 import itertools
 import numpy as np
 import numpy.matlib
+import itertools
 import pandas as pd
 from collections import OrderedDict
 from scipy.stats import gaussian_kde
@@ -269,3 +270,15 @@ def bfs_layers(G, sources):
                     visited.add(child)
                     next_layer.append(child)
         current_layer = next_layer
+
+
+
+def bsplit(facs, keep_empty=False):
+    #facs = ['one','two','three']
+    l1 = []
+    l2 = []
+    for pattern in itertools.product([True,False],repeat=len(facs)):
+        l1.append([x[1] for x in zip(pattern,facs) if x[0]])
+        l2.append([x[1] for x in zip(pattern,facs) if not x[0]])
+
+    return [(l1[i],l2[i]) for i in range(len(l1)) if keep_empty or (l1[i] and l2[i])]

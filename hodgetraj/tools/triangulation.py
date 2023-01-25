@@ -163,6 +163,8 @@ def connect_starts_ends_with_Delaunay(g,
     ## might be networkx.Graph layouts dict, convert to list
     if type(layouts) == dict:
         layouts = np.array([layouts[x] for x in range(max(layouts.keys()) + 1)])
+    if not isinstance(layouts, np.ndarray):
+        layouts = np.array(layouts)
 
     G_ae = copy.deepcopy(g)
     starts = early
