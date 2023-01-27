@@ -65,15 +65,16 @@ def create_fate_tree(adata: AnnData,
     adata = adata.copy() if iscopy else adata
 
     df_dict = trajectory_buckets(adata.uns[graph_name],
-                                 adata.obsm[layout_name],
-                                 adata.uns[trajs_name],
-                                 adata.uns[cluster_name],
-                                 retain_clusters,
-                                 node_attribute,
-                                 sample_n,
-                                 min_kde_quant_rm,
-                                 bucket_idx_name,
-                                 bucket_number)
+    #df_dict = trajectory_buckets_auto(adata.uns[graph_name],
+                                      adata.obsm[layout_name],
+                                      adata.uns[trajs_name],
+                                      adata.uns[cluster_name],
+                                      retain_clusters,
+                                      node_attribute,
+                                      sample_n,
+                                      min_kde_quant_rm,
+                                      bucket_idx_name,
+                                      bucket_number)
 
     keys = list(df_dict.keys())
     if len(keys) < 2:
@@ -141,6 +142,84 @@ def trajectory_buckets(g=None,
         buckets_df_dict[cluster] = df_left
 
     return buckets_df_dict
+
+
+
+def trajectory_buckets_auto(g=None,
+                            layouts=None,
+                            trajs=[],
+                            cluster_list=[],
+                            retain_clusters=[],
+                            node_attribute='u',
+                            sample_n=10000,
+                            min_kde_quant_rm=0.1,
+                            bucket_idx_name='buckets_idx',
+                            min_bucket_number=10):
+    """
+    Bucket the trajectory clusters into a number of buckets.
+    """
+
+    if len(retain_clusters) == 0:
+        retain_clusters = set(cluster_list)
+    if len(cluster_list)==0:
+        print("Error: cluster_list should not be NULL!")
+        return
+
+    assert(set(retain_clusters).issubset(set(cluster_list)))
+    assert(len(trajs) == len(cluster_list))
+    if not isinstance(cluster_list, np.ndarray):
+        cluster_list = np.array(cluster_list)
+
+
+    buckets_df_dict = {}
+    df_left_dict = {}
+    range_dict = {} ## remember max_min_range
+    nx_df = networkx_node_to_df(g)
+    max_min_range = max(nx_df[node_attribute]) - min(nx_df[node_attribute])
+
+    for cluster in tqdm(retain_clusters):
+        idx = [i for i in np.where(cluster_list == cluster)[0]]
+        kde = kde_eastimate(np.array(trajs, dtype=list)[idx], layouts, sample_n=sample_n)
+        ## left merge to keep kde index
+        df_left = pd.merge(pd.DataFrame(kde), nx_df, how='left', left_on = 'idx', right_on = 'node')
+        ## remove the left quantile of the kde
+        df_left = df_left[df_left.z >df_left.z.quantile(min_kde_quant_rm)]
+
+        ## buckets by the node attribute rank
+        df_left['rank'] = df_left[node_attribute].rank()
+        df_left_dict[cluster] = df_left
+        u_range = df_left[node_attribute].max() - df_left[node_attribute].min()
+        range_dict[cluster] = u_range
+        max_min_range = min(max_min_range, u_range)
+
+    ## find the bucket number
+    for cluster in tqdm(retain_clusters):
+        df_left = df_left_dict[cluster]
+        u_range = range_dict[cluster]
+        bucket_number = int(round(u_range/max_min_range * min_bucket_number))
+        bins = np.linspace(df_left['rank'].min(), df_left['rank'].max(), bucket_number+1)
+        df_left['buckets'] = pd.cut(df_left['rank'], bins , include_lowest=True)
+        d_buckets = {v:i for  i, v in enumerate(sorted(set(df_left.buckets)))}
+
+        df_left[bucket_idx_name] = df_left['buckets'].apply(lambda x: d_buckets[x])
+
+        buckets_df_dict[cluster] = df_left
+#    for cluster in tqdm(retain_clusters):
+#        df_left = df_left_dict[cluster]
+#        bins = np.linspace(df_left['rank'].min(), df_left['rank'].max(), bucket_number+1)
+#        df_left['buckets'] = pd.cut(df_left['rank'], bins , include_lowest=True)
+#        d_buckets = {v:i for  i, v in enumerate(sorted(set(df_left.buckets)))}
+#
+#        df_left[bucket_idx_name] = df_left['buckets'].apply(lambda x: d_buckets[x])
+#
+#        buckets_df_dict[cluster] = df_left
+
+    return buckets_df_dict
+
+
+
+
+
 
 
 
@@ -255,6 +334,7 @@ def add_traj_to_graph(graph, df, name, bucket_idx_name='buckets_idx', intersect_
     else:
         graph_out = graph
     bucket_max_b = max(set(df[bucket_idx_name][pd.notna(df[bucket_idx_name])]))
+    #print('bucket_max_b: ', bucket_max_b) ###--------------------------------------------
     offset_b = 0
     layers = list(bfs_layers(graph_out, 0))
     branching_point = ""

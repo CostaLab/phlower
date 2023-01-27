@@ -55,3 +55,4 @@ from .harmonic_tree import *
 
 ### for test
 from .graphconstr import *
+from .fate_tree import *

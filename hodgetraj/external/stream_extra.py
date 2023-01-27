@@ -80,7 +80,7 @@ def construct_stream_tree(dict_branches, graph):
     stream_tree.add_edges_from(dict_branches.keys())
 
     for node in stream_tree.nodes():
-        stream_tree.nodes[node]['cells'] = graph.nodes[node]['cells']
+        #stream_tree.nodes[node]['cells'] = graph.nodes[node]['cells'] -------------------====
         stream_tree.nodes[node]['pos'] = graph.nodes[node]['pos']
     root = list(stream_tree.nodes())[0]
     edges = nx.bfs_edges(stream_tree, root)
