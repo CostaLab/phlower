@@ -123,6 +123,7 @@ def harmonic_tree(adata: AnnData,
                   node_attribute = 'u',
                   k = 100,
                   eigen_n = 20,
+                  bucket_number=3,
                   trajs_use = 10000,
                   tree_name = 'htree',
                   **args
@@ -163,7 +164,7 @@ def harmonic_tree(adata: AnnData,
     htree = nx.DiGraph()
     last_node = tree_add_nodes(htree, dff, bucket_idx_name = "bucket_idx", name_idx=0, ttype=tuple(full_list))
 
-    create_detail_harmonic_tree_list(full_list, tree_list, htree, keys_counters, dic_edges_counts, dic_u, last_node)
+    create_detail_harmonic_tree_list(full_list, tree_list, htree, keys_counters, dic_edges_counts, dic_u, last_node, bucket_number=bucket_number)
     #for node in htree.nodes():
     #    htree.nodes[node]['edges'] = list(dic_edges_counts[node].items())
 
@@ -244,7 +245,7 @@ def edge_mid_attribute(adata: AnnData,
 
 
 
-def add_pos_to_graph_edge(graph, layouts, iscopy=False):
+def add_pos_to_graph_edge(graph, layouts, weight_power=2,iscopy=False):
     """
     using an edge information to add the position of the htree
     """
@@ -259,8 +260,9 @@ def add_pos_to_graph_edge(graph, layouts, iscopy=False):
     for node in graph_out.nodes():
         edge_data = graph_out.nodes[node]['edges']
         edge = [i[0] for i in edge_data]
-        weight = [i[1] for i in edge_data]
+        weight = [np.power(i[1], weight_power) for i in edge_data]
         dict_pos[node] = np.average([layouts[x] for x in edge], axis=0, weights=weight)
+        #dict_pos[node] = np.average([layouts[x] for x in edge], axis=0)
 
     #print(dict_pos)
     nx.set_node_attributes(graph_out,values=dict_pos,name='pos')
@@ -342,8 +344,8 @@ def create_detail_harmonic_tree_list(lst, tree_list, htree, keys_counters, dic_e
 
 
         tree_list.append((lst1, lst2))
-        create_detail_harmonic_tree_list(lst1, tree_list, htree, keys_counters, dic_edges_counts, dic_u, last_node1, times_diff, name_idx=name_idx+1)
-        create_detail_harmonic_tree_list(lst2, tree_list, htree, keys_counters, dic_edges_counts, dic_u, last_node2, times_diff, name_idx=name_idx+2)
+        create_detail_harmonic_tree_list(lst1, tree_list, htree, keys_counters, dic_edges_counts, dic_u, last_node1, times_diff, name_idx=name_idx+1, bucket_number=bucket_number)
+        create_detail_harmonic_tree_list(lst2, tree_list, htree, keys_counters, dic_edges_counts, dic_u, last_node2, times_diff, name_idx=name_idx+2, bucket_number=bucket_number)
     else:
         return
 

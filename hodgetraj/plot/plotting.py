@@ -391,8 +391,12 @@ def nxdraw_holes(adata: AnnData,
                  node_size=0.1,
                  width=1,
                  edge_cmap=plt.cm.RdBu_r,
-                 is_norm=True,
+                 with_labels = False,
+                 with_potential = ['X_dm_ddhodge', 'u'],
+                 flip = False,
+                 is_norm=False,
                  is_abs = False,
+                 is_arrow = True,
                  ax = None,
                  **args):
 
@@ -402,15 +406,32 @@ def nxdraw_holes(adata: AnnData,
         H = np.abs(norm01(H)) if is_abs else norm01(H)
     if len(edge_value)>0:
         H = np.abs(edge_value) if is_abs else edge_value
-    nx.draw_networkx(adata.uns[graph_name],
-                     adata.obsm[layout_name],
+
+    elist = adata.uns[graph_name].edges()
+    elist_set = set(list(elist))
+    if with_potential is not None and  len(with_potential) == 2:
+        u=nx.get_node_attributes(adata.uns[graph_name], with_potential[1])
+        direction = [-1 if (u[e]-u[a])>0 else 1 for a,e in elist]
+        H = [i*j for i,j in zip(H, direction)]
+
+    gg = adata.uns[graph_name].to_directed()
+    for edge in list(gg.edges()):
+        if edge in elist_set:
+            continue
+        gg.remove_edge(edge[0], edge[1])
+
+    if flip:
+        H = [i*-1 for i in H]
+    nx.draw_networkx(gg if is_arrow else gg.to_undirected(),
+                     adata.obsm[graph_name],
                      edge_color=H,
-                     font_size=font_size,
                      node_size=node_size,
                      width=width,
                      edge_cmap=edge_cmap,
-                     ax = ax,
+                     with_labels=with_labels,
+                     ax=ax,
                      **args)
+
     if title:
         ax.set_title(title)
 #endf nxdraw_Holes
