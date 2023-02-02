@@ -37,6 +37,39 @@ def feature_mat_coor_flatten_trajectory(adata: AnnData,
 
 
 
+def feature_mat_coor_flatten_trajectory_direction(adata: AnnData,
+                                                  feature : str = None,
+                                                  graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
+                                                  evector_name: str = 'X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector',
+                                                  full_traj_matrix_flatten: str = 'full_traj_matrix_flatten',
+                                                  u_attribute = 'u',
+                                                  dims = [0,1],
+                                                  ):
+
+    if not feature in adata.var_names:
+        raise ValueError(f'Feature {feature} not in adata.var_names')
+
+    featureidx = np.where(adata.var_names == feature)[0]
+
+    edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidx] for y in x], feature)
+
+    elist = adata.uns[graph_name].edges()
+    elist_set = set(list(elist))
+
+    if u_attribute is not None:
+        u=nx.get_node_attributes(adata.uns[graph_name], u_attribute)
+        direction = [-1 if (u[e]-u[a])>0 else 1 for a,e in elist]
+        edges_score= np.array([i*j for i,j in zip(edges_score, direction)])
+
+    traj_score = np.multiply(adata.uns[full_traj_matrix_flatten], edges_score[None, :])
+    # speed up
+    #mat_coor_flatten_trajectory = [np.einsum("ij, jk -> ik", adata.uns[evector_name][0:max(dims)+1, :],  mat) for mat in traj_score] #most time consuming
+    mat_coor_flatten_trajectory = (adata.uns[evector_name][0:max(dims)+1, :] @ traj_score.T).T #most time consuming
+    return mat_coor_flatten_trajectory
+
+
+
+
 
 def feature_harmonic_multiply(adata: AnnData,
                                 features : Union[str, List[str]] = None,

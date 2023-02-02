@@ -20,6 +20,33 @@ from ..external.stream_extra import (add_pos_to_graph,
 
 
 
+
+def atraj_edges_split(cumsum, itraj, row_clusters, row_edges, indices, dic_traj_starts_idx, dic_edges_counts,isprint=False):
+
+    dic_keys_counts = defaultdict(int)
+    if not isinstance(row_clusters, np.ndarray):
+        row_clusters = np.array(row_clusters)
+    for i in range(cumsum[0].shape[0]):
+        row_idx = i+dic_traj_starts_idx[itraj]
+        nn = (row_clusters[indices[row_idx]])
+        dd = Counter(nn)
+        for k,v in list(dd.items()):
+            if v <3: ## only 2 present in NNs, remove it
+                del dd[k]
+
+        t_k = tuple(set(dd.keys()))
+        if t_k not in dic_edges_counts:
+            dic_edges_counts[t_k] = defaultdict(int)
+        dic_edges_counts[t_k][row_edges[row_idx]] +=1
+
+        dic_keys_counts[t_k] += 1
+
+        if isprint:
+            print(i, len(dd.keys()) ,dd)
+    return dic_keys_counts
+
+
+
 def create_hstream_tree(adata: AnnData,
                        fate_tree: str = 'fate_tree',
                        layout_name: str = 'X_dm_ddhodge_g',
@@ -159,7 +186,7 @@ def harmonic_tree(adata: AnnData,
 
 
     dic_u = edge_mid_attribute(adata, graph_name, node_attribute)
-    dff = edges_distribute(dic_edges_counts, tuple(full_list), dic_u, 2)
+    dff = edges_distribute_dic(dic_edges_counts[tuple(full_list)], dic_u, 2)
 
     tree_list=[]
     htree = nx.DiGraph()
@@ -175,18 +202,25 @@ def harmonic_tree(adata: AnnData,
     return htree
 
 
-def edges_distribute(dic_edges_counts, key, dic_u, bucket_number=5, bucket_idx_name = "bucket_idx"):
-    print("key", key)
-    dff = pd.DataFrame(dic_edges_counts[key], index=('counts',)).T
+def edges_distribute_dic(dic_edges, dic_u, min_u=0, bucket_number=5, bucket_idx_name = "bucket_idx"):
+    #print(dic_edges)
+    dff = pd.DataFrame(dic_edges, index=('counts',)).T
+    #print(dff)
     dff['edges'] = dff.index
     dff['u'] = [ dic_u[i] for i in dff.index]
+    dff = dff[dff['u']>=min_u]
     dff['rank'] = dff['u'].rank()
     bins = np.linspace(dff['rank'].min(), dff['rank'].max(), bucket_number+1)
-    dff['buckets'] = pd.cut(dff['rank'], bins , include_lowest=True)
+    if len(set(bins))== 1:
+        #bins = np.array([dff['rank'].min(), dff['rank'].max()])
+        dff['buckets'] = dff['rank']
+    else:
+        dff['buckets'] = pd.cut(dff['rank'], bins , include_lowest=True)
     d_buckets = {v:i for  i, v in enumerate(sorted(set(dff.buckets)))}
     dff[bucket_idx_name] = dff['buckets'].apply(lambda x: d_buckets[x])
 
     return dff
+
 
 
 def edges_distribute_buckets_num(dic_edges_counts, key_list, dic_u, min_bucket_number=2,):
@@ -303,7 +337,13 @@ def add_pos_to_graph_edge(graph, layouts, weight_power=2,iscopy=False):
         graph_out = graph
 
     for node in graph_out.nodes():
+        if 'edges' not in graph_out.nodes[node]:
+            raise ValueError(f"no edges in the node {node}")
         edge_data = graph_out.nodes[node]['edges']
+        if isinstance(edge_data, defaultdict) or isinstance(edge_data, dict):
+            edge_data = tuple(edge_data.items())
+        #print('node', node)
+        #print('e data', edge_data)
         edge = [i[0] for i in edge_data]
         weight = [np.power(i[1], weight_power) for i in edge_data]
         dict_pos[node] = np.average([layouts[x] for x in edge], axis=0, weights=weight)
@@ -312,33 +352,52 @@ def add_pos_to_graph_edge(graph, layouts, weight_power=2,iscopy=False):
     #print(dict_pos)
     nx.set_node_attributes(graph_out,values=dict_pos,name='pos')
     return graph_out
-#endf add_pos_to_graph
+#endf add_pos_to_graph_eddge
 
 
-
-def atraj_edges_split(cumsum, itraj, row_clusters, row_edges, indices, dic_traj_starts_idx, dic_edges_counts,isprint=False):
-
+def trajs_travel_stat(cumsums, row_clusters, row_edges, indices, dic_traj_starts_idx, dic_edges_counts,isprint=False):
+    change_dict = defaultdict(int)
+    edges_branching_dict = {}
     dic_keys_counts = defaultdict(int)
-    if not isinstance(row_clusters, np.ndarray):
-        row_clusters = np.array(row_clusters)
-    for i in range(cumsum[0].shape[0]):
-        row_idx = i+dic_traj_starts_idx[itraj]
-        nn = (row_clusters[indices[row_idx]])
-        dd = Counter(nn)
-        for k,v in list(dd.items()):
-            if v <3: ## only 2 present in NNs, remove it
-                del dd[k]
 
-        t_k = tuple(set(dd.keys()))
-        if t_k not in dic_edges_counts:
-            dic_edges_counts[t_k] = defaultdict(int)
-        dic_edges_counts[t_k][row_edges[row_idx]] +=1
 
-        dic_keys_counts[t_k] += 1
+    for itraj in trange(len(cumsums)):
+        cumsum = cumsums[itraj]
+        if not isinstance(row_clusters, np.ndarray):
+            row_clusters = np.array(row_clusters)
 
-        if isprint:
-            print(i, len(dd.keys()) ,dd)
-    return dic_keys_counts
+        dd_list = []
+        edge_list = []
+        for i in range(cumsum[0].shape[0]):
+            row_idx = i+dic_traj_starts_idx[itraj]
+            nn = (row_clusters[indices[row_idx]])
+            #print(nn)
+            dd = Counter(nn)
+            for k,v in list(dd.items()):
+                if v <4: ## only 2 present in NNs, remove it
+                    del dd[k]
+            if i > 0 and len(dd.keys()) > len(dd_list[-1].keys()): ## remove increase number of trajectory cell types.
+                continue
+
+            dd_list.append(dd)
+            #print(dd)
+            edge_list.append(row_edges[row_idx])
+            t_k = tuple(sorted(list(dd.keys())))
+            if t_k not in dic_edges_counts:
+                dic_edges_counts[t_k] = defaultdict(int)
+            dic_edges_counts[t_k][row_edges[row_idx]] +=1
+            dic_keys_counts[t_k] += 1
+
+
+        ## count branching
+        for i in range(1, len(dd_list)):
+            if len(dd_list[i].keys()) < len(dd_list[i-1].keys()):
+                change_dict[(tuple(sorted(list(dd_list[i-1].keys()))), tuple(sorted(list(dd_list[i].keys()))))] += 1
+                if (tuple(sorted(list(dd_list[i-1].keys()))), tuple(sorted(list(dd_list[i].keys())))) not in edges_branching_dict:
+                    edges_branching_dict[(tuple(sorted(list(dd_list[i-1].keys()))), tuple(sorted(list(dd_list[i].keys()))))] = defaultdict(int)
+                edges_branching_dict[(tuple(sorted(list(dd_list[i-1].keys()))), tuple(sorted(list(dd_list[i].keys()))))][edge_list[i]] +=1
+
+    return change_dict, edges_branching_dict, dic_keys_counts
 
 
 
@@ -377,11 +436,11 @@ def create_detail_harmonic_tree_list(lst, tree_list, htree, keys_counters, dic_e
 
         name_idx +=1
 
-        dff = edges_distribute(dic_edges_counts, tuple(lst1), dic_u, bucket_number=bucket_number, bucket_idx_name='bucket_idx')
+        dff = edges_distribute_dic(dic_edges_counts[tuple(lst1)], dic_u, bucket_number=bucket_number, bucket_idx_name='bucket_idx')
         last_node1 = tree_add_nodes(htree, dff, "bucket_idx", name_idx+1, parent=last_node)
         #print("add 1", htree.edges())
 
-        dff = edges_distribute(dic_edges_counts, tuple(lst2), dic_u, bucket_number=bucket_number, bucket_idx_name='bucket_idx')
+        dff = edges_distribute_dic(dic_edges_counts[tuple(lst2)], dic_u, bucket_number=bucket_number, bucket_idx_name='bucket_idx')
         last_node2 = tree_add_nodes(htree, dff, "bucket_idx", name_idx+2, parent=last_node)
         #print("add 2", htree.edges())
         #htree.add_edge(tuple(lst), lst1)

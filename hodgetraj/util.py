@@ -1,10 +1,12 @@
-import itertools
+import math
 import numpy as np
 import numpy.matlib
 import itertools
 import pandas as pd
 from collections import OrderedDict
 from scipy.stats import gaussian_kde
+
+
 
 def lexsort_rows(array: np.ndarray) -> np.ndarray:
     array = np.array(array)
@@ -84,6 +86,16 @@ def is_in_2sets(a,b, set_list):
     return True
 #endf is_in_2sets
 
+def cosine_dic(dic1,dic2):
+    numerator = 0
+    dena = 0
+    for k1,v1 in dic1.items():
+        numerator += v1*dic2.get(k1,0.0)
+        dena += v1*v1
+    denb = 0
+    for v2 in dic2.values():
+        denb += v2*v2
+    return numerator/math.sqrt(dena*denb)
 
 def kde_eastimate(trajectories, layouts, sample_n=4000, seeds=2022):
     """
