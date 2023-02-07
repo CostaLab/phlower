@@ -9,4 +9,4 @@ from .stream import(
 from .ddhodge import ddhodge
 
 from .stream import *
-from .stream_extras import *
+from .stream_extra import *

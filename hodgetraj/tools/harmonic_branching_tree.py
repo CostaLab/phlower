@@ -135,6 +135,78 @@ def htraj_matrix(adata=None,
 
     return mat, row_ids, np.array(row_clusters), row_edges, dic_traj_starts_idx, cumsums
 
+def htraj_fair_matrix(adata=None,
+                 evector_name="X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+                 full_traj_matrix = "full_traj_matrix",
+                 trajs_clusters = 'trajs_clusters',
+                 trajs_each = 100,
+                 eigen_n = 2,
+                ):
+
+    """
+    Create a matrix:
+        each column is the harmonic dimension of eigen_n,
+        each row is a trajectory edge.
+        there are average(len(a_traj))*trajs_num rows
+
+    Parameters
+    ----------
+    trajs_use: number of trajectories to use to create the Hspace matrix
+    eigen_n: number of eigen vectors to use to calculate the KNN
+
+
+    Returns
+    -------
+    mat: matrix of the htraj_matrix
+    row_ids: list of a tuple(trajectory_id, edge_idx)
+    row_clusters: assign the cluster id for each trajectory edge point
+    row_edges: assign the edge id for each trajectory edge point
+    dic_traj_starts_idx: assign the start index for each trajectory
+    cumsums: assign the Hspace cumsum of the trajectory edge points for each trajectory
+    """
+    from IPython.core.debugger import set_trace
+    #set_trace()
+
+    m_full_traj_matrix = adata.uns[full_traj_matrix]
+    trajs_each = min(trajs_each, len(m_full_traj_matrix))
+    mat_coord_Hspace = M_create_matrix_coordinates_trajectory_Hspace(adata.uns[evector_name][0:eigen_n, :], adata.uns[full_traj_matrix])
+    cumsums = list(map(lambda i: [np.cumsum(j) for j in i ], mat_coord_Hspace))
+
+    cluster_counter = Counter(adata.uns[trajs_clusters])
+    trajs_each = min(trajs_each, min(cluster_counter.values()))
+    idxs = []
+    for key in cluster_counter:
+        idxs.extend(np.where(np.array(adata.uns[trajs_clusters]) == key)[0][0:trajs_each])
+    cumsums = [cumsums[i] for i in idxs]
+
+    mat = None
+    row_ids = np.array([], dtype=int)
+    row_clusters = []
+    row_edges = [] ## store trajectory edges info
+    dic_traj_starts_idx = {0:0} #store where to start for each trajectory
+
+    trajs_mtxs = np.array(adata.uns[full_traj_matrix])[idxs]
+    for itraj in trange(len(cumsums)):
+        nmtx = np.vstack(cumsums[itraj]).T
+        traj_mtx = trajs_mtxs[itraj]
+        traj_edge_idx = [j for i in np.argmax(np.abs(traj_mtx.astype(int)), axis=0).tolist() for j in i]
+
+        dic_traj_starts_idx[itraj] = len(row_edges)
+        if mat is None:
+            mat = nmtx
+            row_ids = np.array(list(zip([itraj]*nmtx.shape[0], range(nmtx.shape[0]))), dtype=int)
+            row_edges = traj_edge_idx
+        else:
+            mat = np.concatenate((mat, nmtx))
+            row_ids = np.concatenate((row_ids, np.array(list(zip([itraj]*nmtx.shape[0], range(nmtx.shape[0]))))))
+            row_edges.extend(traj_edge_idx)
+
+        row_clusters.extend([adata.uns[trajs_clusters][itraj]]*nmtx.shape[0])
+
+    return mat, row_ids, np.array(row_clusters), row_edges, dic_traj_starts_idx, cumsums
+
+
+
 
 def traj_knn(coor_mat, k=100, **args):
     tree = KDTree(coor_mat, **args)
