@@ -109,7 +109,7 @@ def add_node_info(fate_tree, ddf, root):
 
         e_lists = [ddf[key][ddf[key]['ubin'] == tm]['edge_idx'] for key in celltype_tuple]
         es = [j for i in e_lists for j in i]
-        e_dic = Counter(es)
+        e_dic = list(Counter(es).items())
         d_e_dic[node_name] = e_dic
 
         pos_lists = [ddf[key][ddf[key]['ubin'] == tm]['edge_mid_pos'] for key in celltype_tuple]
