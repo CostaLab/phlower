@@ -54,7 +54,22 @@ def create_bstream_tree(adata: AnnData,
     return adata if iscopy else None
 #endf create_stream_tree
 
+def get_root_bins(ddf, node_name, start, end):
+    """
+    get the root bins
+    """
+    all_nodes = set(node_name)
+    root_bins = []
 
+    for i in range(start, end):
+        for node in all_nodes:
+            df = ddf[node]
+
+            if i in df['ubin'].values:
+                root_bins.append(i)
+                break
+
+    return sorted(root_bins)
 
 def create_detail_tree(htree, root, ddf):
     travel_edges = list(nx.bfs_tree(htree, root).edges())
@@ -66,8 +81,12 @@ def create_detail_tree(htree, root, ddf):
         t1 = htree.nodes[n0].get('time', -1)
         t2 = htree.nodes[n1].get('time', -1)
         if i == 0: #root
-            for tm in range(t1):
-                fate_tree.add_edge(((n0, tm)), ((n0, tm+1) ))
+            curr_tm = 0
+            # look up all merged trajectoris, see if the time point exists
+            rest_ubins = get_root_bins(ddf, n0, 0, t1+1)
+            for tm in rest_ubins[1:]:
+                fate_tree.add_edge(((n0, curr_tm)), ((n0, tm)))
+                curr_tm = tm
             root = (n0, 0)
 
         if t2 == -1: ## to the ends
@@ -90,9 +109,31 @@ def create_detail_tree(htree, root, ddf):
                 curr_tm = tm
 
     fate_tree = add_node_info(fate_tree, ddf, root)
+    fate_tree = relabel_tree(fate_tree, root)
 
     return fate_tree
 
+
+
+def relabel_tree(fate_tree, root):
+    """
+    relabel a tree to be astring due to its complicated name giving rise to error of function pairwise_distances_argmin_min
+    """
+    travel_nodes = list(nx.bfs_tree(fate_tree, root).nodes())
+    all_pre = sorted(list({i[0] for i in  travel_nodes}), key=lambda x:len(x), reverse=True)
+    idx_mapping = {key:idx for idx, key in enumerate(all_pre)}
+
+    mapping = {}
+    attr_dic = {}
+    for node in travel_nodes:
+        new_node =  f"{idx_mapping[node[0]]}_{node[1]}"
+        mapping[node] = new_node
+        attr_dic[new_node] = node
+    renamed_tree = nx.relabel_nodes(fate_tree, mapping)
+
+    nx.set_node_attributes(renamed_tree, attr_dic, 'original')
+
+    return renamed_tree
 
 def add_node_info(fate_tree, ddf, root):
 
@@ -107,8 +148,15 @@ def add_node_info(fate_tree, ddf, root):
         #print(celltype_tuple)
         tm = node_name[1]
 
+        #if celltype_tuple == (0,1) and tm == 6:
+        #    import ipdb
+        #    ipdb.set_trace()
+
         e_lists = [ddf[key][ddf[key]['ubin'] == tm]['edge_idx'] for key in celltype_tuple]
         es = [j for i in e_lists for j in i]
+        #if len(es) == 0:
+            #import ipdb
+            #ipdb.set_trace()
         e_dic = list(Counter(es).items())
         d_e_dic[node_name] = e_dic
 
@@ -392,34 +440,6 @@ def df_attr_counter(ddf, keys, attr='edge_idx', bin_attr='ubin', which_bin=10):
         if which_bin in df[bin_attr].unique():
             list_attr.extend([tuple(i) for i in df[df[bin_attr] == which_bin][attr] if isinstance(i, list)])
     return Counter(list_attr)
-
-def create_pseudo_tree(ddf, pairwise_bdict, bin_attr='ubin', edge_attr='edge_idx', u_attr='edge_mid_u', pos_attr='edge_mid_pos'):
-    min_pseudo = min(ddf.keys())
-    all_clusters = set(ddf.keys())
-    ptree = nx.DiGraph()
-
-
-    inv_bdict = {}
-    for k, v in pairwise_bdict.items():
-        inv_bdict[v] = inv_bdict.get(v, []) + [k]
-
-    for i in range(min_pseudo):
-        ptree.add_node(i)
-        ptree.nodes[i]['edges']  =  df_attr_counter(ddf, all_clusters, attr=edge_attr, bin_attr=bin_attr, which_bin=i)
-        ptree.nodes[i]['ubin']   =  df_attr_counter(ddf, all_clusters, attr=bin_attr,  bin_attr=bin_attr, which_bin=i)
-        ptree.nodes[i]['u']      =  df_attr_counter(ddf, all_clusters, attr=u_attr,    bin_attr=bin_attr, which_bin=i)
-        ptree.nodes[i]['pos']    =  df_attr_counter(ddf, all_clusters, attr=pos_attr,  bin_attr=bin_attr, which_bin=i)
-        if i > 0:
-            ptree.add_edge(i-1, i)
-
-    for i in range(min_pseudo, max(pairwise_bdict.values())+1):
-        ptree.add_node(i)
-        ptree.nodes[i]['edges']  =  df_attr_counter(ddf, inv_bdict[i], attr=edge_attr, bin_attr=bin_attr, which_bin=i)
-        ptree.nodes[i]['ubin']   =  df_attr_counter(ddf, inv_bdict[i], attr=bin_attr,  bin_attr=bin_attr, which_bin=i)
-        ptree.nodes[i]['u']      =  df_attr_counter(ddf, inv_bdict[i], attr=u_attr,    bin_attr=bin_attr, which_bin=i)
-        ptree.nodes[i]['pos']    =  df_attr_counter(ddf, inv_bdict[i], attr=pos_attr,  bin_attr=bin_attr, which_bin=i)
-        ptree.add_edge(i-1, i)
-
 
 
 def max_min_attribute(ddf, attr='edge_mid_u'):
