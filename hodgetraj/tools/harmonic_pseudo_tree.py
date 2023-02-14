@@ -182,8 +182,9 @@ def add_branching(tm, val, htree, htree_roots):
         #print('in_roots', in_roots)
         for i in in_roots:
             a_root = roots[i]
-            htree.add_edge(tuple(all_leaves), tuple(a_root))
-            htree_roots[i] = tuple(all_leaves)
+            if tuple(a_root) != tuple(all_leaves):
+                htree.add_edge(tuple(all_leaves), tuple(a_root))
+                htree_roots[i] = tuple(all_leaves)
         htree_roots = list(set(htree_roots))
 
     else: ### create a new subtree
