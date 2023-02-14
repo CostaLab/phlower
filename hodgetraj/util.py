@@ -3,7 +3,7 @@ import numpy as np
 import numpy.matlib
 import itertools
 import pandas as pd
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 from scipy.stats import gaussian_kde
 
 
@@ -294,4 +294,67 @@ def bsplit(facs, keep_empty=False):
         l2.append([x[1] for x in zip(pattern,facs) if not x[0]])
 
     return [(tuple(set(l1[i])),tuple(set(l2[i]))) for i in range(len(l1)) if keep_empty or (l1[i] and l2[i])]
+
+
+def term_frequency_cosine(list1, list2):
+    """
+    calculate the cosine similarity of two lists
+    """
+    c1 = Counter(list1)
+    c2 = Counter(list2)
+    terms = set(c1).union(c2)
+    vec1 = np.array([c1.get(k, 0) for k in terms])
+    vec2 = np.array([c2.get(k, 0) for k in terms])
+    return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+
+def find_cut_point(list_with_nan, cut_threshold=0.1, increase=False):
+    """
+    find the cut point of a list with nan
+    when encounter value < cut_threshold, return the former index
+    """
+    compare = np.greater if increase else np.less
+
+    length = len(list_with_nan)
+    curr_candidate = 0
+    for i in range(1, length):
+        if np.isnan(list_with_nan[i]):
+            continue
+        if compare(list_with_nan[i], cut_threshold):
+            break
+        if not compare(list_with_nan[i], cut_threshold):
+            curr_candidate = i
+    return curr_candidate
+
+
+def find_cut_point_bu(list_with_nan, cut_threshold=0.1, increase=False):
+    """
+    bottom up find the cut point of a list with nan
+    when encounter value < cut_threshold, return the former index
+    """
+    compare = np.greater if increase else np.less
+
+
+    length = len(list_with_nan)
+    candidate = length - 1
+    for i in range(length - 2, -1, -1):
+        if np.isnan(list_with_nan[i]):
+            continue
+        if compare(list_with_nan[i], cut_threshold):
+            candidate = i
+            break
+    if candidate == 0:
+        return 0
+
+    curr_candidate = candidate - 1
+    for i in range(candidate, -1, -1):
+        if np.isnan(list_with_nan[i]):
+            continue
+        if compare(list_with_nan[i], cut_threshold):
+            continue
+
+        if not compare(list_with_nan[i], cut_threshold):
+            curr_candidate = i
+            break
+
+    return curr_candidate  if curr_candidate > 0 else 0
 
