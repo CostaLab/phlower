@@ -875,12 +875,16 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
 
 
     cumsums = list(map(lambda i: [np.cumsum(i[dims[0]]), np.cumsum(i[dims[1]]), np.cumsum(i[dims[2]])], mat_coord_Hspace))
+    is_first = True
     for i, cluster in enumerate(retain_clusters):
         #print(i, cluster)
         v = [i for i in np.where(cluster_list == cluster)[0]]
+        if len(v) == 0:
+            continue
         idx = v[0] ## for legend
         cumsum = cumsums[idx]
-        if i == 0:
+        if is_first: ## only plot once.
+            is_first = False
             fig = go.Figure(data=go.Scatter3d(x=cumsum[0],
                                               y=cumsum[1],
                                               z=cumsum[2],
@@ -971,6 +975,8 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
     for i, cluster in enumerate(retain_clusters):
         #print(i, cluster)
         v = [i for i in np.where(cluster_list == cluster)[0]]
+        if len(v) == 0:
+            continue
         idx = v[0] ## for legend
         cumsum = cumsums[idx]
 
@@ -1023,9 +1029,12 @@ def M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
         cluster_list = np.array(cluster_list)
 
 
+    is_first = True
     for i, cluster in enumerate(retain_clusters):
         #print(i, cluster)
         v = [i for i in np.where(cluster_list == cluster)[0]]
+        if len(v) == 0:
+            continue
         idx = v[0] # for legend
         if sample_ratio < 1: ## need at least 1
             np.random.seed(2022)
@@ -1036,7 +1045,8 @@ def M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
                            'z': [mat_coor_flatten_trajectory[ii][dims[2]] for ii in v],
                            'cluster': [cluster for ii in v],
                           })
-        if i == 0:
+        if is_first:
+            is_first = False
             fig = go.Figure(data=[go.Scatter3d(x=df['x'],
                                                y=df['y'],
                                                z=df['z'],
@@ -1120,6 +1130,8 @@ def M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
     for i, cluster in enumerate(retain_clusters):
         #print(i, cluster)
         v = [i for i in np.where(cluster_list == cluster)[0]]
+        if len(v) == 0:
+            continue
         idx = v[0] # for legend
         if sample_ratio < 1: ## need at least 1
             np.random.seed(2022)

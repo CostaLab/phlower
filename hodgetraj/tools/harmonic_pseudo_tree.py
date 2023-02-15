@@ -71,7 +71,7 @@ def get_root_bins(ddf, node_name, start, end):
 
     return sorted(root_bins)
 
-def create_detail_tree(htree, root, ddf):
+def create_detail_tree(adata, htree, root, ddf):
     travel_edges = list(nx.bfs_tree(htree, root).edges())
     fate_tree = nx.DiGraph()
     root = None
@@ -110,6 +110,7 @@ def create_detail_tree(htree, root, ddf):
 
     fate_tree = add_node_info(fate_tree, ddf, root)
     fate_tree = relabel_tree(fate_tree, root)
+    fate_tree = manual_root(adata, fate_tree, '0_0')
 
     return fate_tree
 
@@ -184,6 +185,25 @@ def add_node_info(fate_tree, ddf, root):
     nx.set_node_attributes(fate_tree, d_u, "u")
     nx.set_node_attributes(fate_tree, d_cumsum, "cumsum")
     return fate_tree
+
+
+def manual_root(adata, fate_tree, root, top_n=10):
+    """
+    manually add new the root of the tree
+    """
+    items = _edge_mid_attribute(adata).items()
+    edges = [k for k,v in sorted(items, key=lambda x:x[1])[:top_n]]
+    fate_tree.add_node('root')
+    fate_tree.add_edge('root', root)
+    ## update attribute
+    fate_tree.nodes['root']['ecount'] = [(e, 1) for e in edges]
+    fate_tree.nodes['root']['pos']    = np.mean([_edge_mid_points(adata)[e] for e in edges], axis=0)
+    fate_tree.nodes['root']['u']      = np.mean([_edge_mid_attribute(adata)[e] for e in edges], axis=0)
+    fate_tree.nodes['root']['cumsum'] = np.array([])
+
+    return fate_tree
+
+
 
 def create_branching_tree(pairwise_bdict):
     inv_bdict = {}
