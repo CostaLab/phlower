@@ -202,6 +202,7 @@ def plot_fate_tree_embedding(adata: AnnData,
                              bg_node_color='grey',
                              node_size=30,
                              alpha=0.8,
+                             label_attr = None,
                              with_labels=False,
                              ax=None,
                              **args,
@@ -214,9 +215,13 @@ def plot_fate_tree_embedding(adata: AnnData,
                            node_size=bg_node_size,
                            node_color=bg_node_color,
                            alpha=alpha, **args)
+
+    labels = nx.get_node_attributes(adata.uns[fate_tree], label_attr)
+    labels = None if len(labels) == 0 else labels
     nx.draw(adata.uns[fate_tree],
             pos=nx.get_node_attributes(adata.uns[fate_tree], 'pos'),
             node_size=node_size,
+            labels=labels,
             with_labels=with_labels,
             ax=ax)
 #endf plot_fate_tree_embedding
@@ -229,6 +234,7 @@ def plot_stream_tree_embedding(adata: AnnData,
                              bg_node_color='grey',
                              node_size=30,
                              alpha=0.8,
+                             label_attr=None,
                              with_labels=True,
                              ax=None,
                              **args,
@@ -241,9 +247,13 @@ def plot_stream_tree_embedding(adata: AnnData,
                            node_size=bg_node_size,
                            node_color=bg_node_color,
                            alpha=alpha, **args)
+
+    labels = nx.get_node_attributes(adata.uns[stream_tree], label_attr)
+    labels = None if len(labels) == 0 else labels
     nx.draw(adata.uns[stream_tree],
             pos=nx.get_node_attributes(adata.uns[stream_tree], 'pos'),
             node_size=node_size,
+            labels=labels,
             with_labels=with_labels,
             ax=ax)
 #endf plot_fate_tree_embedding

@@ -26,6 +26,89 @@ from ..external.stream_extra import (add_pos_to_graph,
                                      calculate_pseudotime,
                                      )
 
+def get_leaves_index(fate_tree):
+    """
+    Get labels of all leaves
+    """
+    nodes = [x for x in fate_tree.nodes() if fate_tree.out_degree(x)==0 and fate_tree.in_degree(x)==1]
+    index = [x.split('_')[0] for x in nodes]
+    return index
+
+
+def max_node_series_type(counter, leaves_index):
+    """
+    For the fate_tree, check each trajectory branch maximum celltypes
+    """
+
+    name_group = {key:key.split("_")[0] for key in counter}
+    inv_bdict = {}
+    for k, v in name_group.items():
+        inv_bdict[v] = inv_bdict.get(v, []) + [k]
+
+    max_dict = {}
+    for k, vs in inv_bdict.items():
+        s = Counter()
+        for v in vs:
+            s += counter[v]
+        maxx = max(s, key=s.get)
+        if k in leaves_index:
+            max_dict[k] = maxx
+    return max_dict, {k:v for k,v in inv_bdict.items() if k in leaves_index}
+
+
+
+def get_nodes_celltype_counts(adata,
+                              graph_name = "X_dm_ddhodge_g_triangulation_circle",
+                              tree_name = "fate_tree",
+                              edge_attr = "ecount",
+                              cluster = "group"
+                              ):
+
+    """
+    get the celltype counts for each node in the tree
+    """
+    if cluster not in adata.obs.columns:
+        raise ValueError(f"{cluster} not in adata.obs.columns")
+
+    clusters = adata.obs[cluster].values
+    d_nodes_counter = {}
+    elist = np.array([(x[0], x[1]) for x in adata.uns[graph_name].edges()])
+    for node in adata.uns[tree_name].nodes():
+        counts = adata.uns[tree_name].nodes[node][edge_attr]
+        node_counter = defaultdict(int)
+        for k,v in counts:
+            node1 = clusters[elist[k][0]]
+            node2 = clusters[elist[k][1]]
+            node_counter[node1] += v
+            node_counter[node2] += v
+        d_nodes_counter[node] = node_counter
+    return d_nodes_counter
+
+
+
+def trim_derailment_nodes(adata,
+                          graph_name = "X_dm_ddhodge_g_triangulation_circle",
+                          tree_name = "fate_tree",
+                          edge_attr = "ecount",
+                          cluster = "group",
+                          iscopy:bool = False,
+                          ):
+    """
+    check each branch, if the ends encounter derailment, delete that one.
+    """
+    adata = adata.copy() if iscopy else adata
+
+    d_nodes_counter = get_nodes_celltype_counts(adata, graph_name, tree_name, edge_attr, cluster)
+    leaves_index = get_leaves_index(adata.uns[tree_name])
+    max_dict, inv_bdict  = max_node_series_type(d_nodes_counter, leaves_index)
+    for k, vs in inv_bdict.items():
+        for v in vs[::-1]:
+            if max_dict[k] not in d_nodes_counter[v]:
+                adata.uns[tree_name].remove_node(v)
+                print("del", v)
+            else:
+                break
+    return adata if iscopy else None
 
 
 def add_origin_to_stream(adata, fate_tree='fate_tree', stream_tree="stream_tree"):
@@ -76,7 +159,12 @@ def get_root_bins(ddf, node_name, start, end):
 
     return sorted(root_bins)
 
-def create_detail_tree(adata, htree, root, ddf):
+def create_detail_tree(adata, htree, root, ddf,
+                       graph_name = "X_dm_ddhodge_g_triangulation_circle",
+                       tree_name = "fate_tree",
+                       edge_attr = "ecount",
+                       cluster = "group",
+                       trim_end=True):
     travel_edges = list(nx.bfs_tree(htree, root).edges())
     fate_tree = nx.DiGraph()
     root = None
@@ -118,8 +206,12 @@ def create_detail_tree(adata, htree, root, ddf):
     fate_tree = manual_root(adata, fate_tree, '0_0')
     fate_tree.nodes['root']['original'] = (('root', ), 0)
 
-    return fate_tree
+    adata.uns[tree_name] = fate_tree
+    ## trim the tree ends
+    if trim_end:
+        trim_derailment_nodes(adata, graph_name, tree_name, edge_attr, cluster)
 
+    return adata.uns[tree_name]
 
 
 def relabel_tree(fate_tree, root):
@@ -615,7 +707,7 @@ def _edge_mid_attribute(adata: AnnData,
                        node_attribute = 'u',
                        ):
     """
-    return middle time of all edges
+    return attribute of all edges
     """
     #assert() attribute type
     elist = np.array([(x[0], x[1]) for x in adata.uns[graph_name].edges()])
