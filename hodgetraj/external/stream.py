@@ -14,11 +14,34 @@ from .stream_extra import *
 ##TODO: use kde information to merge the buckets
 ##TODO: if duplicated nodes is an issue, we can calculate center of each vertex, if set the node to the nearest vertex.
 
+
+def tree_label_dict(adata,
+                    tree = "stream",
+                    from_ = "label",
+                    to_ = 'original'
+                    ):
+    htree = adata.uns[tree]
+    d1= nx.get_node_attributes(adata.uns[tree], from_)
+    d2 = nx.get_node_attributes(adata.uns[tree], to_)
+
+    dd = {v:d2[k] for k,v in d1.items()}
+    return dd
+
+
+
+def assign_root(adata,
+                root='root',
+                tree='stream_tree'
+                ):
+    return adata.uns[tree].nodes['root']['label']
+
+
 def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preference=None,
                    fig_size=(7,4.5),fig_legend_ncol=1,fig_legend_order = None,
                    vmin=None,vmax=None,alpha=0.8,
                    pad=1.08,w_pad=None,h_pad=None,
                    show_text=True,show_graph=True,
+                   text_attr = 'original',
                    save_fig=False,fig_path=None,fig_format='pdf',
                    plotly=False):
     """Generate stream plot at single cell level (aka, subway map plots)
@@ -28,7 +51,7 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
     adata: AnnData
         Annotated data matrix.
     root: `str`, optional (default: 'S0'):
-        The starting node
+        The starting node, temporialy abandoned cause it can be decided automatically.
     color: `list` optional (default: None)
         Column names of observations (adata.obs.columns) or variable names(adata.var_names). A list of names to be plotted.
     dist_scale: `float`,optional (default: 1)
@@ -75,6 +98,13 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
         Store the coordinates of nodes ('nodes') and edges ('edges') in subwaymap plot.
     """
     print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03")
+
+    root = assign_root(adata)
+
+    dd = {}
+    if text_attr == "original":
+        dd = tree_label_dict(adata,tree = "stream_tree",from_ = "label",to_ = 'original')
+
 
     if(fig_path is None):
         fig_path = adata.uns['workdir']
@@ -151,7 +181,7 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
                                            mode='text',
                                            opacity=1,
                                            marker=dict(size=1.5*mpl.rcParams['lines.markersize'],color='#767070'),
-                                           text=[ft_node_label[x] for x in stream_nodes.keys()],
+                                           text=[ft_node_label[x] if not dd else str(dd.get(ft_node_label[x],ft_node_label[x])) for x in stream_nodes.keys()],
                                            textposition="bottom center",
                                            name='states',
                                            showlegend=False),)
@@ -205,8 +235,9 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
                                       c = 'black',alpha=1)
             if(show_text):
                 for node_i in stream_tree.nodes():
-                    ax_i.text(stream_nodes[node_i][0],stream_nodes[node_i][1],ft_node_label[node_i],
+                    ax_i.text(stream_nodes[node_i][0],stream_nodes[node_i][1],ft_node_label[node_i] if not dd else str(dd.get(ft_node_label[node_i],ft_node_label[node_i])),
                               color='black',fontsize=0.9*mpl.rcParams['font.size'],
+                              weight="bold",
                                ha='left', va='bottom')
             ax_i.set_xlabel("pseudotime",labelpad=2)
             ax_i.spines['left'].set_visible(False)
@@ -244,7 +275,7 @@ def plot_stream(adata,root='S0',color = None,preference=None,dist_scale=0.9,
     adata: AnnData
         Annotated data matrix.
     root: `str`, optional (default: 'S0'):
-        The starting node
+        The starting node, temporialy abandoned cause it can be decided automatically.
     color: `list` optional (default: None)
         Column names of observations (adata.obs.columns) or variable names(adata.var_names). A list of names to be plotted.
     preference: `list`, optional (default: None):
@@ -290,6 +321,8 @@ def plot_stream(adata,root='S0',color = None,preference=None,dist_scale=0.9,
     None
     """
     print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03")
+    root = assign_root(adata)
+
     if(fig_path is None):
         fig_path = adata.uns['workdir']
     fig_size = mpl.rcParams['figure.figsize'] if fig_size is None else fig_size

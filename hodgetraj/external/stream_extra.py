@@ -223,9 +223,9 @@ def project_point_to_line_segment_matrix(XP,p):
 
 
 
-def add_stream_sc_pos(adata,root='S0',dist_scale=1,dist_pctl=95,preference=None):
+def add_stream_sc_pos(adata,root='S0',dist_scale=1,dist_pctl=95,preference=None, label_attr='label'):
     stream_tree = adata.uns['stream_tree']
-    label_to_node = {value: key for key,value in nx.get_node_attributes(stream_tree,'label').items()}
+    label_to_node = {value: key for key,value in nx.get_node_attributes(stream_tree, label_attr).items()}
 
     root_node = label_to_node[root]
     dict_bfs_pre = dict(nx.bfs_predecessors(stream_tree,root_node))
@@ -241,7 +241,7 @@ def add_stream_sc_pos(adata,root='S0',dist_scale=1,dist_pctl=95,preference=None)
         br_id = stream_tree.edges[edge]['id']
         id_cells = np.where(adata.obs['branch_id']==br_id)[0]
         # cells_pos_x = stream_tree.nodes[root_node]['pseudotime'].iloc[id_cells]
-        cells_pos_x = adata.obs[stream_tree.nodes[root_node]['label']+'_pseudotime'].iloc[id_cells]
+        cells_pos_x = adata.obs[stream_tree.nodes[root_node][label_attr]+'_pseudotime'].iloc[id_cells]
         np.random.seed(100)
         cells_pos_y = node_pos_st[1] + dist_scale*adata.obs.iloc[id_cells,]['branch_dist']*np.random.choice([1,-1],size=id_cells.shape[0])
         cells_pos = np.array((cells_pos_x,cells_pos_y)).T
@@ -284,9 +284,9 @@ def add_stream_sc_pos(adata,root='S0',dist_scale=1,dist_pctl=95,preference=None)
 
 
 
-def calculate_shift_distance(adata,root='S0',dist_pctl=95,preference=None):
+def calculate_shift_distance(adata,root='S0',dist_pctl=95,preference=None, label_attr='label'):
     stream_tree = adata.uns['stream_tree']
-    dict_label_node = {value: key for key,value in nx.get_node_attributes(stream_tree,'label').items()}
+    dict_label_node = {value: key for key,value in nx.get_node_attributes(stream_tree,label_attr).items()}
     root_node = dict_label_node[root]
     ##shift distance for each branch
     dict_edge_shift_dist = dict()
@@ -468,7 +468,8 @@ def arrowed_spines(
 def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_scale=0.9,
                                factor_num_win=10,factor_min_win=2.0,factor_width=2.5,
                                factor_nrow=200,factor_ncol=400,
-                               log_scale=False,factor_zoomin=100.0):
+                               log_scale=False,factor_zoomin=100.0,
+                               label_attr='label'):
     from warnings import simplefilter
     simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
     simplefilter("ignore", category=FutureWarning)
@@ -476,13 +477,13 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
     list_ann_numeric = [k for k,v in dict_ann.items() if is_numeric_dtype(v)]
 
     stream_tree = adata.uns['stream_tree']
-    label_to_node = {value: key for key,value in nx.get_node_attributes(stream_tree,'label').items()}
+    label_to_node = {value: key for key,value in nx.get_node_attributes(stream_tree,label_attr).items()}
     if(preference!=None):
         preference_nodes = [label_to_node[x] for x in preference]
     else:
         preference_nodes = None
     dict_branches = {x: stream_tree.edges[x] for x in stream_tree.edges()}
-    dict_node_state = nx.get_node_attributes(stream_tree,'label')
+    dict_node_state = nx.get_node_attributes(stream_tree,label_attr)
 
     root_node = label_to_node[root]
     bfs_edges = bfs_edges_modified(stream_tree,root_node,preference=preference_nodes)
@@ -1168,20 +1169,21 @@ def cal_stream_polygon_numeric(adata,dict_ann,root='S0',preference=None, dist_sc
 
 def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scale=0.9,
                               factor_num_win=10,factor_min_win=2.0,factor_width=2.5,
-                              log_scale=False,factor_zoomin=100.0):
+                              log_scale=False,factor_zoomin=100.0,
+                              label_attr='label'):
 
     from warnings import simplefilter
     simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
     list_ann_string = [k for k,v in dict_ann.items() if is_string_dtype(v)]
 
     stream_tree = adata.uns['stream_tree']
-    label_to_node = {value: key for key,value in nx.get_node_attributes(stream_tree,'label').items()}
+    label_to_node = {value: key for key,value in nx.get_node_attributes(stream_tree,label_attr).items()}
     if(preference!=None):
         preference_nodes = [label_to_node[x] for x in preference]
     else:
         preference_nodes = None
     dict_branches = {x: stream_tree.edges[x] for x in stream_tree.edges()}
-    dict_node_state = nx.get_node_attributes(stream_tree,'label')
+    dict_node_state = nx.get_node_attributes(stream_tree,label_attr)
 
     root_node = label_to_node[root]
     bfs_edges = bfs_edges_modified(stream_tree,root_node,preference=preference_nodes)

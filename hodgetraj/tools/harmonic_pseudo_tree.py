@@ -28,6 +28,10 @@ from ..external.stream_extra import (add_pos_to_graph,
 
 
 
+def add_origin_to_stream(adata, fate_tree='fate_tree', stream_tree="stream_tree"):
+    assert(set(adata.uns[stream_tree].nodes()).issubset( set(adata.uns[fate_tree].nodes())))
+    for node in adata.uns[stream_tree].nodes():
+        adata.uns[stream_tree].nodes[node]['original'] = adata.uns[fate_tree].nodes[node]['original'][0]
 
 
 def create_bstream_tree(adata: AnnData,
@@ -50,6 +54,7 @@ def create_bstream_tree(adata: AnnData,
         layouts = np.array([layouts[x] for x in range(max(layouts.keys()) + 1)])
     project_cells_to_g_fate_tree(adata, layout_name=layout_name)
     calculate_pseudotime(adata)
+    add_origin_to_stream(adata)
 
     return adata if iscopy else None
 #endf create_stream_tree
@@ -111,6 +116,7 @@ def create_detail_tree(adata, htree, root, ddf):
     fate_tree = add_node_info(fate_tree, ddf, root)
     fate_tree = relabel_tree(fate_tree, root)
     fate_tree = manual_root(adata, fate_tree, '0_0')
+    fate_tree.nodes['root']['original'] = (('root', ), 0)
 
     return fate_tree
 
@@ -584,7 +590,12 @@ def dic_avg_attribute(df, attr='edge_mid_pos', bin_idx='edge_bins'):
     return dic
 
 
+def _edge_two_ends(adata: AnnData,
+                   graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
+                   ):
 
+    elist = np.array([(x[0], x[1]) for x in adata.uns[graph_name].edges()])
+    return {i:v for i, v in enumerate(elist)}
 
 def _edge_mid_points(adata: AnnData,
                     graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
