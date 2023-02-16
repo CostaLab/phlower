@@ -185,6 +185,10 @@ def create_detail_tree(adata, htree, root, ddf,
         if t2 == -1: ## to the ends
             rest_ubins = sorted([i for i in set(ddf[n1[0]]['ubin']) if i > t1])
             #print(rest_ubins)
+            if len(rest_ubins) == 0:
+                fate_tree.add_edge((n0, t1), (n1, t2))
+                continue
+
             curr_tm = rest_ubins[0]
             fate_tree.add_edge((n0, t1), (n1, curr_tm))
             for tm in rest_ubins[1:]:
@@ -194,7 +198,9 @@ def create_detail_tree(adata, htree, root, ddf,
             #for tm in range(t1, t2):
             ubin_sets = [set(ddf[x]['ubin']) for x in n1]
             rest_ubins = [i for i in set.union(*ubin_sets) if  t1 < i <= t2]
-            #print(rest_ubins)
+            if len(rest_ubins) == 0:
+                fate_tree.add_edge(((n0, t1)), ((n1, t2))) ## keep the original edges
+                continue
             curr_tm = rest_ubins[0]
             fate_tree.add_edge(((n0, t1)), ((n1, curr_tm)))
             for tm in rest_ubins[1:]:
@@ -339,6 +345,11 @@ def add_branching(tm, val, htree, htree_roots):
         up_leaves = {j for i in roots[in_roots] for j in i}
         subleaves = set(val) - up_leaves
         all_leaves = tuple(up_leaves | subleaves)
+        if(up_leaves == set(all_leaves)):
+            #htree.nodes[tuple(all_leaves)]['time'] = tm ##please consider order
+            #pass
+            return htree, htree_roots
+
         htree.add_node(tuple(all_leaves))
         htree.nodes[tuple(all_leaves)]['leaves'] = tuple(all_leaves)
         htree.nodes[tuple(all_leaves)]['time'] = tm
@@ -466,9 +477,9 @@ def harmonic_trajs_bins(adata: AnnData,
         ## bins by the node attribute rank
         df_left['rank'] = df_left['edge_mid_u'].rank()
         bins = np.linspace(df_left['rank'].min(), df_left['rank'].max(), bin_number+1)
-        df_left['bins'] = pd.cut(df_left['rank'], bins , include_lowest=True)
-        d_bins = {v:i for  i, v in enumerate(sorted(set(df_left.bins)))}
-        df_left["edge_bins"] = df_left['bins'].apply(lambda x: d_bins[x])
+        #df_left['bins'] = pd.cut(df_left['rank'], bins , include_lowest=True)
+        #d_bins = {v:i for  i, v in enumerate(sorted(set(df_left.bins)))}
+        #df_left["edge_bins"] = df_left['bins'].apply(lambda x: d_bins[x])
         bins_df_dict[cluster] = df_left
 
     return bins_df_dict
@@ -679,8 +690,13 @@ def dic_avg_attribute(df, attr='edge_mid_pos', bin_idx='edge_bins'):
     dic = {}
     for i in set(df[bin_idx]):
         dic[i] = np.average(df[df[bin_idx] == i][attr].tolist(), axis=0)
-    return dic
+##TODO
+    # for loop inner: dic[i] = np.average(df[df[bin_idx] == i][attr].tolist(), axis=0)
+    #data/sz753404/miniconda3/envs/schema/lib/python3.9/site-packages/hodgetraj/tools/harmonic_pseudo_tree.py:686: UserWarning:
+    #Boolean Series key will be reindexed to match DataFrame index.
 
+
+    return dic
 
 def _edge_two_ends(adata: AnnData,
                    graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',

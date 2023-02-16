@@ -70,6 +70,13 @@ def feature_mat_coor_flatten_trajectory_direction(adata: AnnData,
 
 
 
+def get_featuresidx(adata: AnnData,
+                    features: List[str] = None,
+                    ):
+    featuresidx = [np.where(adata.var_names == feature)[0][0] for feature in features]
+    return featuresidx
+
+
 
 def feature_harmonic_multiply(adata: AnnData,
                                 features : Union[str, List[str]] = None,
@@ -95,7 +102,7 @@ def feature_harmonic_multiply(adata: AnnData,
     dics = {}
     for i in trange(len(features), desc='features correlation'):
         feature = features[i]
-        edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidxs[i]] for y in x], feature)
+        edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidxs[i]] for y in x])
         traj_score = np.multiply(adata.uns[full_traj_matrix_flatten], edges_score[None, :])
         scores = np.multiply(evec,  edges_score[None, :]).T
         dics[features[i]] = scores
@@ -287,7 +294,6 @@ def feature_statistic_cluster3(adata: AnnData,
 
 def G_features_edges(G: nx.DiGraph,
                      feature_nodes=None,
-                     feature: str = None,
                     ):
     A = np.subtract.outer(feature_nodes, feature_nodes)
     feature_edge_score = [A[i,j] for i,j in G.edges()]
