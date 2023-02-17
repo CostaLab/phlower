@@ -95,6 +95,7 @@ def trim_derailment_nodes(adata,
                           ):
     """
     check each branch, if the ends encounter derailment, delete that one.
+    The standard is: if no cell presents in the maximum cell type remove this node
     """
     adata = adata.copy() if iscopy else adata
 
@@ -122,6 +123,10 @@ def create_bstream_tree(adata: AnnData,
                        layout_name: str = 'X_dm_ddhodge_g',
                        iscopy: bool = False,
                        ):
+    """
+    create stream_tree from fate_tree
+    run a bunch of STREAM function for the STREAM plotting
+    """
 
     adata = adata.copy() if iscopy else adata
     g = adata.uns[fate_tree]
@@ -145,6 +150,8 @@ def create_bstream_tree(adata: AnnData,
 def get_root_bins(ddf, node_name, start, end):
     """
     get the root bins
+    e.g. start = 0, end = 4
+    just check bins 0,1,2,3, if there's entry in any df, return subset of (0,1,2,3)
     """
     all_nodes = set(node_name)
     root_bins = []
@@ -165,14 +172,27 @@ def create_detail_tree(adata, htree, root, ddf,
                        edge_attr = "ecount",
                        cluster = "group",
                        trim_end=True):
+    """
+    Start from the htree, which is only store root, branching point and leaves
+    0. add a global root from the top n minimum pseudo time
+    1. expand the tree to add pseudo time bins in the middle.
+    2. add detail information about each node
+        a) ecount: each edge counts in this bin
+        b) pos: average position calculated from the middle coordinate of an edge in layout space
+        c) u: pseudo time mean from ddhodge
+        d) cumsum: cumsum embeddings.
+    3. relabel from the trajetory name to digit_pseudotime, and store the trajectories merge info in the `original` attribute
+    4. if trim_end, trim the end of the tree if there's no cell in the maximum cell type
+
+    """
     travel_edges = list(nx.bfs_tree(htree, root).edges())
     fate_tree = nx.DiGraph()
     root = None
     for i, edges in enumerate(travel_edges):
         n0 = edges[0]
         n1 = edges[1]
-        t1 = htree.nodes[n0].get('time', -1)
-        t2 = htree.nodes[n1].get('time', -1)
+        t1 = htree.nodes[n0].get('time', -1) ## -1 if leaves
+        t2 = htree.nodes[n1].get('time', -1) ## -1 if leaves
         if i == 0: #root
             curr_tm = 0
             # look up all merged trajectoris, see if the time point exists
@@ -182,10 +202,9 @@ def create_detail_tree(adata, htree, root, ddf,
                 curr_tm = tm
             root = (n0, 0)
 
-        if t2 == -1: ## to the ends
+        if t2 == -1: ## leaf expand to the end
             rest_ubins = sorted([i for i in set(ddf[n1[0]]['ubin']) if i > t1])
-            #print(rest_ubins)
-            if len(rest_ubins) == 0:
+            if len(rest_ubins) == 0: # this is the last leaf
                 fate_tree.add_edge((n0, t1), (n1, t2))
                 continue
 
@@ -194,11 +213,11 @@ def create_detail_tree(adata, htree, root, ddf,
             for tm in rest_ubins[1:]:
                 fate_tree.add_edge(((n1, curr_tm)), ((n1, tm)))
                 curr_tm = tm
-        else: ## middle branches
+        else: ## between two branching point
             #for tm in range(t1, t2):
             ubin_sets = [set(ddf[x]['ubin']) for x in n1]
             rest_ubins = [i for i in set.union(*ubin_sets) if  t1 < i <= t2]
-            if len(rest_ubins) == 0:
+            if len(rest_ubins) == 0: # if no ubin in between, just add the edge
                 fate_tree.add_edge(((n0, t1)), ((n1, t2))) ## keep the original edges
                 continue
             curr_tm = rest_ubins[0]
@@ -222,7 +241,8 @@ def create_detail_tree(adata, htree, root, ddf,
 
 def relabel_tree(fate_tree, root):
     """
-    relabel a tree to be astring due to its complicated name giving rise to error of function pairwise_distances_argmin_min
+    relabel a tree to be a string due to its complicated name giving rise to error of function pairwise_distances_argmin_min
+    keep the old into original nodes attribute
     """
     travel_nodes = list(nx.bfs_tree(fate_tree, root).nodes())
     all_pre = sorted(list({i[0] for i in  travel_nodes}), key=lambda x:len(x), reverse=True)
@@ -241,6 +261,9 @@ def relabel_tree(fate_tree, root):
     return renamed_tree
 
 def add_node_info(fate_tree, ddf, root):
+    """
+    traverse the tree nodes, combine the ubin info from each trajecotry group
+    """
 
     travel_nodes = list(nx.bfs_tree(fate_tree, root).nodes())
 
@@ -294,6 +317,7 @@ def add_node_info(fate_tree, ddf, root):
 def manual_root(adata, fate_tree, root, top_n=10):
     """
     manually add new the root of the tree
+    And add the same info as others, cumsum is not avaliable since it's not from trjaectories
     """
     items = _edge_mid_attribute(adata).items()
     edges = [k for k,v in sorted(items, key=lambda x:x[1])[:top_n]]
@@ -310,6 +334,9 @@ def manual_root(adata, fate_tree, root, top_n=10):
 
 
 def create_branching_tree(pairwise_bdict):
+    """
+    Create a tree with only root, branching points and leaves.
+    """
     inv_bdict = {}
     for k, v in pairwise_bdict.items():
         inv_bdict[v] = inv_bdict.get(v, []) + [k]
@@ -319,6 +346,8 @@ def create_branching_tree(pairwise_bdict):
 
     htree_roots = []
     htree = nx.DiGraph()
+
+    # bottom up to create the tree.
     merged_list = merge_common_list(list(inv_bdict[max_merge]))
     for sublist in merged_list:
         for node in sublist:
@@ -377,6 +406,12 @@ def add_branching(tm, val, htree, htree_roots):
 
 
 def merge_common_list(lst):
+    """
+    Merge common elements in a list of list
+    Example:
+        input: L = [['a','b','c'],['b','d','e'],['k'],['o','p'],['e','f'],['p','a'],['d','g']]
+        output: L = [['a','b','c','d','e','f','g','o','p'],['k']]
+    """
     def to_graph(lst):
         G = nx.Graph()
         for part in lst:
@@ -458,28 +493,18 @@ def harmonic_trajs_bins(adata: AnnData,
         sub_idx = np.random.choice(range(len(traj_edge_idxs)), min(kde_sample_n, len(traj_edge_idxs)), replace=False)
         npcumsum = np.vstack(cumsum_list)[sub_idx, :]
         nptraj_edge_idxs = traj_edge_idxs[sub_idx]
-        #print("1  ", nptraj_edge_idxs)
         #kde estimate
         kde = gaussian_kde(nptraj_edge_idxs)(nptraj_edge_idxs)
-        kde_keep = np.where(kde > np.quantile(kde, min_kde_quant_rm))[0]
-        #print("kde keep", kde_keep.shape)
-        #print("cumsum", npcumsum)
         # keep by np.quantile
-        #print(nptraj_edge_idxs)
+        kde_keep = np.where(kde > np.quantile(kde, min_kde_quant_rm))[0]
+
         df_left = pd.DataFrame({'edge_idx': nptraj_edge_idxs[kde_keep]})
-        #print(df_left)
-        #print(npcumsum[kde_keep])
         df_left['cumsum'] =  list(npcumsum[kde_keep])
 
         df_left['edge_mid_u'] = df_left['edge_idx'].map(_edge_mid_attribute(adata, graph_name, node_attribute))
         df_left['edge_mid_pos'] = df_left['edge_idx'].map(_edge_mid_points(adata, graph_name, layout_name))
-
-        ## bins by the node attribute rank
+        ## rank each edge by its pseudo time
         df_left['rank'] = df_left['edge_mid_u'].rank()
-        bins = np.linspace(df_left['rank'].min(), df_left['rank'].max(), bin_number+1)
-        #df_left['bins'] = pd.cut(df_left['rank'], bins , include_lowest=True)
-        #d_bins = {v:i for  i, v in enumerate(sorted(set(df_left.bins)))}
-        #df_left["edge_bins"] = df_left['bins'].apply(lambda x: d_bins[x])
         bins_df_dict[cluster] = df_left
 
     return bins_df_dict
@@ -487,15 +512,51 @@ def harmonic_trajs_bins(adata: AnnData,
 
 
 def time_sync_bins(ddf, attr='edge_mid_u', min_bin_number=5):
-    maxx, minn, longest_key = max_min_attribute(ddf, attr)
-    avg_cut = avg_cut_bins(ddf[longest_key][attr].min(), ddf[longest_key][attr].max(), maxx, minn, min_bin_number)
+    """
+    1. get the longest bin size
+    """
+    def _max_min_attribute(ddf, attr='edge_mid_u'):
+        """
+        return max and min of the attribute
+        max from the smallest range df
+        """
+        minn = -1
+        maxx = 1e100
+        longest = 0
+        longest_key = None
+        for key, df in ddf.items():
+            dfmax = df[attr].max()
+            dfmin = df[attr].min()
+            minn = max(minn, dfmin)
+            maxx = min(maxx, dfmax)
+            if dfmax - dfmin > longest:
+                longest = dfmax - dfmin
+                longest_key = key
+
+        return maxx, minn, longest_key
+    #endf max_min_attribute
+
+    def _avg_cut_bins(dfmin, dfmax, maxx, minn, min_bin_number=5):
+        bins_number = int(min_bin_number * (dfmax - dfmin) / (maxx - minn))
+        avg_cut = np.linspace(dfmin, dfmax, bins_number+2)[1:-1]
+        return avg_cut
+    #endf avg_cut_bins
+
+    ## get maximum and minimum pseudo time trajectory group and its key
+    maxx, minn, longest_key = _max_min_attribute(ddf, attr)
+    ## based on the minimum numbers of bins, to get the bin cut posistion for the longest trajectory group, as a reference for all ther rest
+    avg_cut = _avg_cut_bins(ddf[longest_key][attr].min(), ddf[longest_key][attr].max(), maxx, minn, min_bin_number)
+    ## for each trajectory group, get the bin index for each edge, and the average pseudo time
     for key, df in ddf.items():
         df = u_bins_df(df, avg_cut=avg_cut)
         ddf[key] = df
     return ddf
 
 
-def pairwise_branching_dict(ddf, bin_attr='ubin', edge_attr='edge_idx', bottom_up=True):
+def _pairwise_branching_dict(ddf, bin_attr='ubin', edge_attr='edge_idx', bottom_up=True):
+    """
+    deprecated function. use pairwise_hbranching_dict2 instead
+    """
     keys = list(ddf.keys())
     pairs = itertools.combinations(keys, 2)
     pairwise_bdict = {}
@@ -510,10 +571,23 @@ def pairwise_branching_dict(ddf, bin_attr='ubin', edge_attr='edge_idx', bottom_u
         #pairwise_bdict[(k1,k2)] =find_cut_point(cosine_list)
         pairwise_bdict[(k1,k2)] =find_cut_point_bu(cosine_list) if bottom_up else find_cut_point(cosine_list)
     return pairwise_bdict
+#endf _pairwise_branching_dict
 
 
 
-def pairwise_hbranching_dict(ddf, bin_attr='ubin', cumsum_attr='cumsum', bottom_up=True):
+def pairwise_hbranching_dict(ddf,
+                             bin_attr='ubin',
+                             cumsum_attr='cumsum',
+                             random_seed=2022,
+                             sample_num=100,
+                             cut_threshold=1,
+                             bottom_up=True,
+                             ):
+    """
+    for each pair of two trajectory group, find its branching point.
+    1. get normailzed distance for two nodes, normalize factor is the average pairwise distance of that node(cumsum embeddings)
+    2. find the cut point see if normalized distance of two nodes @ cut_threshold
+    """
     keys = list(ddf.keys())
     pairs = itertools.combinations(keys, 2)
     pairwise_bdict = {}
@@ -524,8 +598,13 @@ def pairwise_hbranching_dict(ddf, bin_attr='ubin', cumsum_attr='cumsum', bottom_
         for i in range(max(df1[bin_attr].max(), df2[bin_attr].max())):
             list1 = df1[df1[bin_attr] == i][cumsum_attr]
             list2 = df2[df2[bin_attr] == i][cumsum_attr]
-            dist_list.append(norm_distance(list1, list2))
-        pairwise_bdict[(k1,k2)] = find_cut_point_bu(dist_list, cut_threshold=1, increase=True) if bottom_up else find_cut_point(dist_list, cut_threshold=1, increase=True)
+            dist_list.append(norm_distance(list1, list2, random_seed=random_seed, sample_num=sample_num))
+
+        if bottom_up:
+            pairwise_bdict[(k1,k2)] = find_cut_point_bu(dist_list, cut_threshold=cut_threshold, increase=True)
+        else:
+            pairwise_bdict[(k1,k2)] = find_cut_point(dist_list, cut_threshold=cut_threshold, increase=True)
+
     return pairwise_bdict
 
 
@@ -538,7 +617,6 @@ def norm_distance(list1, list2, random_seed=2022, sample_num=100):
     2. get the average as normlized distance in list1 and list2
     """
     np.random.seed(random_seed)
-
 
     if len(list1)==0 or len(list2)==0:
         return np.nan
@@ -563,6 +641,9 @@ def norm_distance(list1, list2, random_seed=2022, sample_num=100):
 
 
 def df_attr_counter(ddf, keys, attr='edge_idx', bin_attr='ubin', which_bin=10):
+    """
+    given a ubin, Counter(edges_idx)
+    """
     list_attr = []
     for key in keys:
         df = ddf[key]
@@ -571,56 +652,26 @@ def df_attr_counter(ddf, keys, attr='edge_idx', bin_attr='ubin', which_bin=10):
     return Counter(list_attr)
 
 
-def max_min_attribute(ddf, attr='edge_mid_u'):
-    """
-    return max and min of the attribute
-    max from the smallest range df
-    """
-    minn = -1
-    maxx = 1e100
-    longest = 0
-    longest_key = None
-    for key, df in ddf.items():
-        dfmax = df[attr].max()
-        dfmin = df[attr].min()
-        minn = max(minn, dfmin)
-        maxx = min(maxx, dfmax)
-        if dfmax - dfmin > longest:
-            longest = dfmax - dfmin
-            longest_key = key
-
-    return maxx, minn, longest_key
-
-
-
-def avg_cut_bins(dfmin, dfmax, maxx, minn, min_bin_number=5):
-    bins_number = int(min_bin_number * (dfmax - dfmin) / (maxx - minn))
-    avg_cut = np.linspace(dfmin, dfmax, bins_number+2)[1:-1]
-    return avg_cut
-
-
-
 
 def u_bins_df(df, attr='edge_mid_u', min_bin_number=5, avg_cut=None):
     """
     1. calculate the number of bins
+    for all trajectory groups, we ensure, average pseudo time for each the pseudo index is almost the same.
     """
     dfmin = df[attr].min()
     dfmax = df[attr].max()
     df.sort_values(by='rank', inplace=True)
 
-    #print(avg_cut)
-    avg_cut = list(avg_cut)
+    ## adjust avg_cut list for the current df
+    avg_cut = copy.deepcopy(list(avg_cut))
     if avg_cut[0] < dfmin:
         avg_cut[0] = dfmin
     for i in range(1, len(avg_cut)):
-        #print(i)
         if avg_cut[i] > dfmax:
             avg_cut[i] = dfmax
             # delete avg_cut from index i
             avg_cut = avg_cut[:i+1]
             break
-
 
     ## cut the bins
     start_idx = 0
@@ -640,16 +691,12 @@ def u_bins_df(df, attr='edge_mid_u', min_bin_number=5, avg_cut=None):
     df['ubin'] = 0
     df['umean'] = 0
     for idx, (start, end) in enumerate(cut_pairs):
-        #print(idx)
-        #print(start, end)
         if start == end:
             continue
-        #df['ubin'][start:end]= idx
         df.loc[df.index[start:end], 'ubin'] = idx
-        #df['umean'][start:end]= df['edge_mid_u'][start:end].mean()
         df.loc[df.index[start:end], 'umean'] = df['edge_mid_u'][start:end].mean()
-        #print(bins_number)
     return df
+#endf u_bins_df
 
 
 

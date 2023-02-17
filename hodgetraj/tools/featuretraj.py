@@ -12,6 +12,7 @@ from typing import Union
 from .graphconstr import adjedges, edges_on_path
 from .dimensionreduction import run_umap, run_pca
 from .clustering import dbscan, leiden, louvain
+from .trajectory import M_create_matrix_coordinates_trajectory_Hspace
 from ..util import pairwise, find_knee, tuple_increase, pearsonr_2D
 
 
@@ -28,7 +29,7 @@ def feature_mat_coor_flatten_trajectory(adata: AnnData,
         raise ValueError(f'Feature {feature} not in adata.var_names')
 
     featureidx = np.where(adata.var_names == feature)[0]
-    edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidx] for y in x], feature)
+    edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidx] for y in x])
     traj_score = np.multiply(adata.uns[full_traj_matrix_flatten], edges_score[None, :])
     # speed up
     #mat_coor_flatten_trajectory = [np.einsum("ij, jk -> ik", adata.uns[evector_name][0:max(dims)+1, :],  mat) for mat in traj_score] #most time consuming
@@ -51,7 +52,7 @@ def feature_mat_coor_flatten_trajectory_direction(adata: AnnData,
 
     featureidx = np.where(adata.var_names == feature)[0]
 
-    edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidx] for y in x], feature)
+    edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidx] for y in x])
 
     elist = adata.uns[graph_name].edges()
     elist_set = set(list(elist))
@@ -68,6 +69,43 @@ def feature_mat_coor_flatten_trajectory_direction(adata: AnnData,
     return mat_coor_flatten_trajectory
 
 
+
+def feature_cumsum_direction(adata: AnnData,
+                             feature : str = None,
+                             graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
+                             evector_name: str = 'X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector',
+                             full_traj_matrix_flatten: str = 'full_traj_matrix_flatten',
+                             full_traj_matrix: str = 'full_traj_matrix',
+                             u_attribute = 'u',
+                             eigen_n = 2,
+                             dims = [0,1],
+                             ):
+
+    pass
+
+    m_full_traj_matrix = adata.uns[full_traj_matrix]
+    mat_coord_Hspace = M_create_matrix_coordinates_trajectory_Hspace(adata.uns[evector_name][0:eigen_n, :], adata.uns[full_traj_matrix])
+    cumsums = list(map(lambda i: [np.cumsum(j) for j in i ], mat_coord_Hspace))
+    cumsums = np.array(cumsums)
+
+    elist = adata.uns[graph_name].edges()
+    elist_set = set(list(elist))
+
+    featureidx = np.where(adata.var_names == feature)[0]
+    edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidx] for y in x])
+    if u_attribute is not None:
+        u=nx.get_node_attributes(adata.uns[graph_name], u_attribute)
+        direction = [-1 if (u[e]-u[a])>0 else 1 for a,e in elist]
+        edges_score= np.array([i*j for i,j in zip(edges_score, direction)])
+
+    traj_score = np.multiply(cumsums, edges_score[None, :])
+
+    mat_coor_flatten_trajectory = (adata.uns[evector_name][0:max(dims)+1, :] @ traj_score.T).T #most time consuming
+    return mat_coord_flatten_trajectory
+
+
+
+#endf feature_cumsum_direction
 
 
 def get_featuresidx(adata: AnnData,
@@ -135,7 +173,7 @@ def feature_correlation_cluster(adata: AnnData,
     dics = {}
     for i in trange(len(features), desc='features statistic cluster'):
         feature = features[i]
-        edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidxs[i]] for y in x], feature)
+        edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidxs[i]] for y in x])
         traj_score = np.multiply(adata.uns[full_traj_matrix_flatten], edges_score[None, :])
         dic = {}
         #multiplied = evec @ adata.uns[full_traj_matrix_flatten].T
@@ -175,7 +213,7 @@ def feature_statistic_cluster(adata: AnnData,
     dics = {}
     for i in trange(len(features), desc='features statistic cluster'):
         feature = features[i]
-        edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidxs[i]] for y in x], feature)
+        edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidxs[i]] for y in x])
         traj_score = np.multiply(adata.uns[full_traj_matrix_flatten], edges_score[None, :])
         dic = {}
         multiplied = evec @ traj_score.T
@@ -226,7 +264,7 @@ def feature_statistic_cluster2(adata: AnnData,
         dics = {}
         for i in trange(len(features), desc='features statistic cluster'):
             feature = features[i]
-            edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidxs[i]] for y in x], feature)
+            edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidxs[i]] for y in x])
             traj_score = np.multiply(adata.uns[full_traj_matrix_flatten], edges_score[None, :])
             dic = {}
             for cluster in clusters:
@@ -237,7 +275,7 @@ def feature_statistic_cluster2(adata: AnnData,
     else:
         #from multiprocessing import Pool
         from pathos.multiprocessing import ProcessingPool as Pool
-        edges_scores = [G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidx] for y in x], feature) for featureidx, feature in zip(featureidxs, features)]
+        edges_scores = [G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidx] for y in x]) for featureidx, feature in zip(featureidxs, features)]
         traj_scores = [np.multiply(adata.uns[full_traj_matrix_flatten], edges_score[None, :]) for edges_score in edges_scores]
         with Pool(n_jobs) as p:
             return {k:v for k,v in  p.uimap(task_statistics, features, [evec]*len(features), traj_scores, [l_trajs_clusters]*len(features), [clusters]*len(features), [st]*len(features))}
@@ -273,7 +311,7 @@ def feature_statistic_cluster3(adata: AnnData,
         dics = {}
         for i in trange(len(features), desc='features statistic cluster'):
             feature = features[i]
-            edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidxs[i]] for y in x], feature)
+            edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidxs[i]] for y in x])
             traj_score = np.multiply(adata.uns[full_traj_matrix_flatten], edges_score[None, :])
             dic = {}
             for cluster in clusters:
@@ -285,7 +323,7 @@ def feature_statistic_cluster3(adata: AnnData,
         #from multiprocessing import Pool
         from pathos.multiprocessing import ProcessingPool as Pool
         from joblib import Parallel, delayed
-        edges_scores = [G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidx] for y in x], feature) for featureidx, feature in zip(featureidxs, features)]
+        edges_scores = [G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidx] for y in x]) for featureidx, feature in zip(featureidxs, features)]
         traj_scores = [np.multiply(adata.uns[full_traj_matrix_flatten], edges_score[None, :]) for edges_score in edges_scores]
         return {k: v for k,v in zip(Parallel(n_jobs=n_jobs)(delayed(task_statistics)(feature, evec, traj_score, l_trajs_clusters, clusters, st) for feature, traj_score in zip(features, traj_scores)))}
 
