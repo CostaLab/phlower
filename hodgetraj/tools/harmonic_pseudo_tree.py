@@ -86,7 +86,7 @@ def get_nodes_celltype_counts(adata,
 
 
 
-def trim_derailment_nodes(adata,
+def trim_derailed_nodes(adata,
                           graph_name = "X_dm_ddhodge_g_triangulation_circle",
                           tree_name = "fate_tree",
                           edge_attr = "ecount",
@@ -234,7 +234,7 @@ def create_detail_tree(adata, htree, root, ddf,
     adata.uns[tree_name] = fate_tree
     ## trim the tree ends
     if trim_end:
-        trim_derailment_nodes(adata, graph_name, tree_name, edge_attr, cluster)
+        trim_derailed_nodes(adata, graph_name, tree_name, edge_attr, cluster)
 
     return adata.uns[tree_name]
 
@@ -336,6 +336,15 @@ def manual_root(adata, fate_tree, root, top_n=10):
 def create_branching_tree(pairwise_bdict):
     """
     Create a tree with only root, branching points and leaves.
+    1. check the largest merge points
+        a) if there's shared trajectory group, merge together
+        b) else, keep the different merge sets.
+        c) add all merged sets into list htree_roots.
+    2. go to the 2nd largest branching point
+        a) there's shared trajectory group, merge together
+        b) check the merged sets see if it can add new branch for the largest merge sets
+        c) if there's nothing to merge, continue add to the merge list htree_roots
+    3. continue, until all time points included.
     """
     inv_bdict = {}
     for k, v in pairwise_bdict.items():
@@ -363,6 +372,20 @@ def create_branching_tree(pairwise_bdict):
         #print(key, vals)
         for val in vals:
             htree, htree_roots = add_branching(key, val, htree, htree_roots)
+    print(htree_roots)
+
+    if len(htree_roots) > 1: ## something not merged yet
+        all_leaves = tuple({leaf for rt in htree_roots for leaf in rt})
+        htree.add_node(all_leaves)
+        tm = max(min(inv_bdict.keys()) - 1, 0)
+        htree.nodes[tuple(all_leaves)]['leaves'] = tuple(all_leaves)
+        htree.nodes[tuple(all_leaves)]['time'] = tm
+
+        for rt in htree_roots:
+            htree.add_edge(all_leaves, rt)
+        htree_roots = [all_leaves,]
+
+
     root = htree_roots[0]
     return htree, root
 
@@ -629,6 +652,7 @@ def norm_distance(list1, list2, random_seed=2022, sample_num=100):
     l2 = np.vstack(list2)
     dl1 = sklearn.metrics.pairwise_distances(l1)
     dl2 = sklearn.metrics.pairwise_distances(l2)
+    ## This is obtianing the averge distance of a distance matrix, add twice of trace, minus 1
     dm1 = (dl1.sum() - np.trace(dl1))/(2* np.power(dl1.shape[0], 2)) + 0.00001
     dm2 = (dl2.sum() - np.trace(dl2))/(2* np.power(dl2.shape[0], 2)) + 0.00001
 
