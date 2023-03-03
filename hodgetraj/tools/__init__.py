@@ -24,6 +24,11 @@ from .fate_tree import (
 from .dimensionreduction import (
         run_pca,
         run_umap,
+        run_mds,
+        run_kernelpca,
+        run_lda,
+        run_isomap,
+        run_tsne,
         )
 
 from .viz import (
@@ -57,4 +62,4 @@ from .harmonic_pseudo_tree import *
 ### for test
 from .graphconstr import *
 from .fate_tree import *
-
+from .hodgedecomp import *

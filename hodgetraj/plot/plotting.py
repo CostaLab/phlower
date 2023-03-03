@@ -6,6 +6,7 @@ import networkx as nx
 import seaborn as sns
 import matplotlib.pyplot as plt
 from anndata import AnnData
+from itertools import chain
 from collections import defaultdict
 from typing import Iterable, List, Union, Optional, Set, Tuple, TypeVar
 from ..tools.trajectory import M_create_matrix_coordinates_trajectory_Hspace
@@ -457,7 +458,14 @@ def nxdraw_score(adata: AnnData,
                  cmap = plt.cm.get_cmap('viridis'),
                  **args
     ):
-    u_color = np.fromiter(nx.get_node_attributes(adata.uns['X_dm_ddhodge_g'], 'u').values(), dtype='float')
+    u_color = None
+    if color in set(chain.from_iterable(d.keys() for *_, d in adata.uns['X_dm_ddhodge_g'].nodes(data=True))):
+        u_color = np.fromiter(nx.get_node_attributes(adata.uns['X_dm_ddhodge_g'], color).values(), dtype='float')
+    elif color in adata.obs:
+        u_color = adata.obs[color].values
+
+    ##TODO assert digital
+
     if directed:
         nx.draw_networkx(adata.uns[graph_name], adata.obsm[layout_name], node_color=u_color, cmap=cmap, font_size=font_size, **args)
     else:
@@ -902,9 +910,9 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                                                   color=color_palette[i],
                                                   width=2
                                               ),
-                                              legendgroup=cluster,
+                                              legendgroup=str(cluster),
                                               showlegend=show_legend,
-                                              name = cluster,
+                                              name = str(cluster),
                                               mode='lines'
                                           ))
         else:
@@ -915,9 +923,9 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                                 color=color_palette[i],
                                 width=2
                             ),
-                            legendgroup=cluster,
+                            legendgroup=str(cluster),
                             showlegend=show_legend,
-                            name = cluster,
+                            name = str(cluster),
                             mode='lines'
             )
         if sample_ratio < 1:
@@ -932,9 +940,9 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                                 color=color_palette[i],
                                 width=2
                             ),
-                            name = cluster,
+                            name = str(cluster),
                             showlegend=False,
-                            legendgroup=cluster,
+                            legendgroup=str(cluster),
                             mode='lines'
             )
     fig.update_layout(
@@ -1061,7 +1069,7 @@ def M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
                                                y=df['y'],
                                                z=df['z'],
                                                mode='markers',
-                                               name=cluster,
+                                               name=str(cluster),
                                                showlegend = show_legend,
                                                marker=dict(
                                                     size=node_size,
@@ -1074,7 +1082,7 @@ def M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
                               y=df['y'],
                               z=df['z'],
                               mode='markers',
-                              name=cluster,
+                              name=str(cluster),
                               showlegend = show_legend,
                               marker=dict(size=node_size,
                                           color=color_palette[i],                # set color to an array/list of desired values

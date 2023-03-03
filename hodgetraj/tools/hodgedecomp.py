@@ -151,9 +151,9 @@ def L1Norm_decomp(adata: AnnData,
     d = harmonic_projection_matrix_with_w(L1.astype(float), eigen_num, check_symmetric = check_symmetric)
     end = time.time()
     print((end-start), " sec")
-    adata.uns['X_dm_ddhodge_g_triangulation_circle_L1Norm'] = L1all
-    adata.uns['X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector'] = d['v']
-    adata.uns['X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_value'] = d['w']
+    adata.uns[f'{graph_name}_L1Norm'] = L1all
+    adata.uns[f'{graph_name}_L1Norm_decomp_vector'] = d['v']
+    adata.uns[f'{graph_name}_L1Norm_decomp_value'] = d['w']
     #adata.uns['X_dm_ddhodge_g_triangulation_circle_B1'] = B1
     #adata.uns['X_dm_ddhodge_g_triangulation_circle_B2'] = B2
 
