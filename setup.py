@@ -1,14 +1,13 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='hodgetraj',
+    name='phlower',
     version='0.1.2',
     description='hodge decomposition trajectory',
-    url='https://github.com/CostaLab/hodgeTrajectory',
+    url='https://github.com/CostaLab/phlower',
     author='Mingbo Cheng',
     author_email='chengmingbo@gmail.com',
     license='BSD 2-clause',
-    #packages=['hodgetraj'],
     install_requires=['numpy',
                       'matplotlib',
                       'seaborn',

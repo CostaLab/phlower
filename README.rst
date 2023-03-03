@@ -1,8 +1,8 @@
-hodgeTrajectory
+phlower
 ========
 
 --------
-Hodge decomposition for trajectory analysis
+PHLOWER：graPh Hodge Laplacian inferring trajectOries floWs of cEll diffeRentiation
 --------
 
 
@@ -17,5 +17,5 @@ pip install .
 
 .. code:: python
 
-import hodgetraj
+import phlower
 

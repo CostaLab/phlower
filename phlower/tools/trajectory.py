@@ -293,16 +293,16 @@ def M_create_matrix_coordinates_trajectory_Hspace(H, M_full):
 
 
 def M_create_matrix_coordinates_trajectory_Hspace_dm(mat_coord_Hspace, reductioin='pca'):
-    #mat_coord_Hspace = hodgetraj.tl.M_create_matrix_coordinates_trajectory_Hspace(adata.uns[evector_name][0:20], adata.uns[full_traj_matrix])
-    #hodgetraj.pl.M_plot_trajectory_harmonic_lines(dm_mat_list, adata.uns['annotation'], sample_ratio=0.1)
+    #mat_coord_Hspace = phlower.tl.M_create_matrix_coordinates_trajectory_Hspace(adata.uns[evector_name][0:20], adata.uns[full_traj_matrix])
+    #phlower.pl.M_plot_trajectory_harmonic_lines(dm_mat_list, adata.uns['annotation'], sample_ratio=0.1)
 
     trajs_pos = [i.shape[1] for i in mat_coord_Hspace]
 
     h_mat = np.hstack(mat_coord_Hspace).T
     if reductioin == 'pca':
-        dm_mat = hodgetraj.tl.run_pca(h_mat)
+        dm_mat = run_pca(h_mat)
     elif reductioin == 'umap':
-        dm_mat = hodgetraj.tl.run_umap(h_mat)
+        dm_mat = run_umap(h_mat)
 
     last = 0
     dm_mat_list = []
