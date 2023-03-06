@@ -1,4 +1,4 @@
-phlower
+phlower <img src="figures/phlower_logo_white_bg.png" align="right" width="120" />
 ========
 
 --------
