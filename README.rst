@@ -1,7 +1,7 @@
 phlower  
 ========
 
-.. image:: https://github.com/CostaLab/phlower/blob/main/figures/phlower_log.svg
+.. image:: https://github.com/CostaLab/phlower/blob/main/figures/phlower_logo.svg
    :alt: phlower logo
    :width: 20%
    :align: right
