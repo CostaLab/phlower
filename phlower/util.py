@@ -232,6 +232,22 @@ def networkx_edge_to_df(G):
                 edges[key].append(value)
     return pd.DataFrame(edges)
 
+def is_node_attr_existing(G, attr):
+    for node in G.nodes:
+        node_dict = G.nodes[node]
+        if attr in node_dict:
+            return True
+    return False
+
+def is_edge_attr_existing(G, attr):
+    for edge in G.edges:
+        edge_dict = G.edges[edge]
+        if attr in edge_dict:
+            return True
+    return False
+
+
+
 
 def networkx_node_df_to_ebunch(df, nodename='node'):
 

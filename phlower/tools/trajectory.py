@@ -12,7 +12,7 @@ from typing import Union
 from .graphconstr import adjedges, edges_on_path
 from .dimensionreduction import run_umap, run_pca
 from .clustering import dbscan, leiden, louvain
-from ..util import pairwise, find_knee, tuple_increase
+from ..util import pairwise, find_knee, tuple_increase, is_node_attr_existing
 
 
 def random_climb_knn(adata,
@@ -29,16 +29,34 @@ def random_climb_knn(adata,
 
     adata = adata.copy() if iscopy else adata
 
+    if graph_name not in adata.uns:
+        raise ValueError(f"{graph_name} not in adata.uns")
+    if A not in adata.uns:
+        raise ValueError(f"{A} not in adata.uns")
+    if W not in adata.uns:
+        raise ValueError(f"{W} not in adata.uns")
+    if not is_node_attr_existing(adata.uns[graph_name], attr):
+        raise ValueError(f"{attr} not in adata.uns[{graph_name}]")
+
+    if n <=0:
+        raise ValueError(f"{n}: number of trajectories should be > 0 ")
+    if n <100:
+        print(f"{n}: number of trajectories would be better when >= 100")
+
+
+
+
+
     g = adata.uns[graph_name]
     knn_edges = adjedges(adata.uns[A], adata.uns[W], knn_edges_k)
     knn_edges = [tuple_increase(i,j) for (i,j) in knn_edges]
     knn_trajs = G_random_climb_knn(g, knn_edges, attr=attr, roots_ratio=roots_ratio, n=n, seeds=seeds)
     if traj_name is None:
         traj_name = f"knn_trajs"
+
     adata.uns[traj_name] = knn_trajs
 
     return adata if iscopy else None
-
 
 
 def full_trajectory_matrix(adata: AnnData,
@@ -50,7 +68,13 @@ def full_trajectory_matrix(adata: AnnData,
                            ):
     adata = adata.copy() if iscopy else adata
 
+    if graph_name not in adata.uns:
+        raise ValueError(f"{graph_name} not in adata.uns")
+
+
     if isinstance(trajs, str):
+        if trajs not in adata.uns:
+            raise ValueError(f"{trajs} not in adata.uns")
         trajs = adata.uns[trajs]
 
     g = adata.uns[graph_name]
@@ -69,12 +93,18 @@ def trajs_dm(adata,
              M_flatten: Union[str, np.ndarray] = "full_traj_matrix_flatten",
              embedding = 'umap',
              eig_num: int = 2,
-             clustering_method: str = "dbscan",
              iscopy=False,
              **args,
              ):
 
     adata = adata.copy() if iscopy else adata
+
+    if evector_name not in adata.uns:
+        raise ValueError(f"{evector_name} not in adata.uns")
+
+    if eig_num < 2:
+        raise ValueError(f"eig_num is {eig_num}, should be >= 2")
+
     if isinstance(M_flatten, str):
         M_flatten = adata.uns[M_flatten]
 
@@ -94,9 +124,6 @@ def trajs_dm(adata,
     return adata if iscopy else None
 #endf trajs_dm
 
-
-
-#endf set_harmonic_dm
 
 def trajs_clustering(adata, embedding = 'trajs_dm', clustering_method: str = "dbscan", iscopy=False, oname_basis='', **args,):
     adata = adata.copy() if iscopy else adata
