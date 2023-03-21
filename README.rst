@@ -1,6 +1,11 @@
-phlower <img src="figures/phlower_logo_white_bg.png" align="right" width="120" />
+phlower  
 ========
 
+.. image:: https://github.com/CostaLab/phlower/blob/main/figures/phlower_logo.svg
+   :alt: phlower logo
+   :width: 20%
+   :align: right
+   
 --------
 PHLOWER：graPh Hodge Laplacian inferring trajectOries floWs of cEll diffeRentiation
 --------

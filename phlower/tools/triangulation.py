@@ -5,7 +5,7 @@ import networkx as nx
 from anndata import AnnData
 from scipy.sparse import linalg, csr_matrix
 from scipy.spatial import Delaunay,distance
-from ..util import tuple_increase, top_n_from, is_in_2sets
+from ..util import tuple_increase, top_n_from, is_in_2sets, is_node_attr_existing
 
 
 def construct_trucated_delaunay(adata:AnnData,
@@ -16,6 +16,10 @@ def construct_trucated_delaunay(adata:AnnData,
                                 ):
     if iscopy:
         adata = adata.copy()
+
+    if graph_name not in adata.uns:
+        raise ValueError(f"{graph_name} not in adata.uns")
+
 
     edges = truncated_delaunay(adata.obsm[graph_name], trunc_quantile=trunc_quantile, trunc_times=trunc_times)
     adata.uns[f'{graph_name}_triangulation'] = reset_edges(adata.uns[graph_name], edges, keep_old=False)
@@ -38,6 +42,24 @@ def construct_circle_delaunay(adata:AnnData,
                               ):
     if iscopy:
         adata = adata.copy()
+
+    if graph_name not in adata.uns:
+        raise ValueError(f"{graph_name} not in adata.uns")
+    if layout_name not in adata.obsm:
+        raise ValueError(f"{layout_name} not in adata.obsm")
+    if cluster_name not in adata.obs:
+        raise ValueError(f"{cluster_name} not in adata.obs")
+    if not is_node_attr_existing(adata.uns[graph_name], node_attr):
+        raise ValueError(f"{node_attr} not in adata.uns[{graph_name}]")
+
+    if quant >=1 or quant <=0:
+        raise ValueError(f"quant:{quant} should between (0,1)")
+
+    if start_n <1 or start_n >= len(adata.obs.index) :
+        raise ValueError(f"start_n:{start_n} should between (1, {len(adata.obs.index)})")
+    if end_n <1 or end_n >= len(adata.obs.index) :
+        raise ValueError(f"end_n:{end_n} should between (1, {len(adata.obs.index)})")
+
 
     layouts = adata.obsm[layout_name]
     group = adata.obs[cluster_name]
@@ -69,6 +91,8 @@ def truncated_delaunay(position, trunc_quantile=0.75, trunc_times=3):
     trunc_quantile: quantile value for the tunc of the Delaunay output
     trunc_times: distance of trunc_quantile x trunc_times will be removed
     """
+    if trunc_quantile >=1 or trunc_quantile <=0:
+        raise ValueError(f"trunc_quantile:{trunc_quantile} should between (0,1)")
 
 
     if type(position) == dict:
