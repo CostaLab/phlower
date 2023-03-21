@@ -459,8 +459,8 @@ def nxdraw_score(adata: AnnData,
                  **args
     ):
     u_color = None
-    if color in set(chain.from_iterable(d.keys() for *_, d in adata.uns['X_dm_ddhodge_g'].nodes(data=True))):
-        u_color = np.fromiter(nx.get_node_attributes(adata.uns['X_dm_ddhodge_g'], color).values(), dtype='float')
+    if color in set(chain.from_iterable(d.keys() for *_, d in adata.uns[graph_name].nodes(data=True))):
+        u_color = np.fromiter(nx.get_node_attributes(adata.uns[graph_name], color).values(), dtype='float')
     elif color in adata.obs:
         u_color = adata.obs[color].values
 
@@ -474,7 +474,7 @@ def nxdraw_score(adata: AnnData,
     if colorbar:
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin = min(u_color), vmax=max(u_color)))
         sm._A = []
-        plt.colorbar(sm)
+        plt.colorbar(sm, ax=plt.gca())
 #endf nxdraw_score
 
 
@@ -693,7 +693,7 @@ def G_plot_triangle_density(g:nx.Graph,
     if colorbar:
         sm = plt.cm.ScalarMappable(cmap=plt.cm.jet, norm=plt.Normalize(vmin=min(n_color), vmax=max(n_color)))
         sm.set_array([])
-        plt.colorbar(sm)
+        plt.colorbar(sm, ax=plt.gca())
 #endf plot_triangle_density
 
 

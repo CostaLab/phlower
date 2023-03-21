@@ -118,6 +118,7 @@ def curl(g, weight_attr="weight"):
 def L1Norm_decomp(adata: AnnData,
                   graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
                   eigen_num: int = 100,
+                  L1_mode = "RW",
                   check_symmetric: bool = True,
                   isnorm = True,
                   iscopy: bool = False,
@@ -134,7 +135,7 @@ def L1Norm_decomp(adata: AnnData,
 
     #L1all = create_normalized_l1(B1, B2, mode="RW")
     if isnorm:
-        L1all = create_normalized_l1(B1, B2, mode="RW")
+        L1all = create_normalized_l1(B1, B2, mode=L1_mode)
         L1 = L1all[0]
         #if not scipy.linalg.issymmetric(L1):
             #L1 = np.tril(L1) + np.triu(L1.T, 1)

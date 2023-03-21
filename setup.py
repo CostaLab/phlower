@@ -24,7 +24,7 @@ setup(
                       "colorcet",
                       'umap-learn',
                       'scanpy',
-                      'pygraphviz',
+                      #'pygraphviz',
                       'anndata',
                       ],
     classifiers=[

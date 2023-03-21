@@ -245,3 +245,60 @@ def reset_edges(g:nx.Graph, edges, keep_old=False) -> nx.Graph:
     return ng
 
 
+
+
+
+def circumcircle_radius(a, b, c):
+    """
+    Calculates the radius of the circumcircle of a triangle given the distances between three points.
+    Input: a, b, and c are the distances between the three points as scalars.
+    Output: a scalar representing the radius of the circumcircle.
+    """
+    import math
+    s = (a + b + c) / 2
+    R = a*b*c / (4*math.sqrt(s*(s-a)*(s-b)*(s-c)))
+    return R
+
+def find_tri_combinations(G):
+    import itertools
+    triangles = []
+    for nodes in itertools.combinations(G.nodes(), 3):
+        # Check if the three nodes form a triangle
+        if G.has_edge(nodes[0], nodes[1]) and G.has_edge(nodes[1], nodes[2]) and G.has_edge(nodes[2], nodes[0]):
+            triangles.append(nodes)
+    return triangles
+
+
+def distance_tri(e_df, distance, *tri):
+    a,b,c = tri
+    #idxs =
+    idx1 = e_df.index[(e_df.source == a) & (e_df.target == b)][0] if len(e_df.index[(e_df.source == a) & (e_df.target == b)])>0 else e_df.index[(e_df.source == b) & (e_df.target == a)][0]
+    idx2 = e_df.index[(e_df.source == a) & (e_df.target == c)][0] if len(e_df.index[(e_df.source == a) & (e_df.target == c)])>0 else e_df.index[(e_df.source == c) & (e_df.target == a)][0]
+    idx3 = e_df.index[(e_df.source == b) & (e_df.target == c)][0] if len(e_df.index[(e_df.source == b) & (e_df.target == c)])>0 else e_df.index[(e_df.source == c) & (e_df.target == b)][0]
+    d1 = e_df.iloc[idx1][distance]
+    d2 = e_df.iloc[idx2][distance]
+    d3 = e_df.iloc[idx3][distance]
+
+    return float(d1),float(d2),float(d3)
+
+def edges_tri(e_df, *tri):
+    a,b,c = tri
+    #idxs =
+    idx1 = e_df.index[(e_df.source == a) & (e_df.target == b)][0] if len(e_df.index[(e_df.source == a) & (e_df.target == b)])>0 else e_df.index[(e_df.source == b) & (e_df.target == a)][0]
+    idx2 = e_df.index[(e_df.source == a) & (e_df.target == c)][0] if len(e_df.index[(e_df.source == a) & (e_df.target == c)])>0 else e_df.index[(e_df.source == c) & (e_df.target == a)][0]
+    idx3 = e_df.index[(e_df.source == b) & (e_df.target == c)][0] if len(e_df.index[(e_df.source == b) & (e_df.target == c)])>0 else e_df.index[(e_df.source == c) & (e_df.target == b)][0]
+
+    e1 = int(e_df.iloc[idx1]['source']), int(e_df.iloc[idx1]['target'])
+    e2 = int(e_df.iloc[idx2]['source']), int(e_df.iloc[idx2]['target'])
+    e3 = int(e_df.iloc[idx3]['source']), int(e_df.iloc[idx3]['target'])
+
+
+    return e1, e2, e3
+
+
+def mean_tri_coor(coor, *tri):
+    a,b,c = tri
+    #idxs =
+    x = np.mean([coor[a], coor[b], coor[c]], axis=0)
+
+    return x
