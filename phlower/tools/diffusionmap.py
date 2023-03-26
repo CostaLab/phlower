@@ -66,8 +66,7 @@ def  diffusionMaps(R,k=7,sigma=None):
     Ms = Dinv @ np.exp(logW) @ Dinv ##
     ## https://jlmelville.github.io/smallvis/spectral.html row normalisation
     #e = eigen(Ms,symmetric=TRUE)
-    #e = np.linalg.eigh(Ms) ## eigen decomposition of P'
-    e = np.linalg.eigsh(Ms) ## eigen decomposition of P'
+    e = np.linalg.eigh(Ms) ## eigen decomposition of P'
     evalue= e[0][::-1]
     evec = np.flip(e[1], axis=1)
     s = np.sum(np.sqrt(rs) * evec[:,0]) # scaling
