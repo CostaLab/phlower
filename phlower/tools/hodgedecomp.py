@@ -119,6 +119,7 @@ def L1Norm_decomp(adata: AnnData,
                   graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
                   eigen_num: int = 100,
                   L1_mode = "RW",
+                  mysym = 'a',
                   check_symmetric: bool = True,
                   isnorm = True,
                   iscopy: bool = False,
@@ -143,10 +144,24 @@ def L1Norm_decomp(adata: AnnData,
             #L1 =  np.maximum(L1, L1.T)
     else:
         L1all = create_l1(B1, B2)
-        L1 = L1all[0]
+        L1 = L1all[0].toarray()
     #if not scipy.linalg.issymmetric(L1):
     #    L1 = (L1 + L1.T) / 2
         #L1all[0] = L1
+
+    if mysym == 'a+at':
+        L1 = 1/2*(L1 + L1.T)
+    elif mysym == 'max':
+        L1 = np.maximum(L1, L1.T)
+    elif mysym == 'min':
+        L1 = np.minimum(L1, L1.T)
+    elif mysym == 'a':
+        L1 = L1
+    elif mysym == 'upper':
+        L1 = np.triu(L1) + np.triu(L1.T, 1)
+    elif mysym == 'lower':
+        L1 = np.tril(L1) + np.tril(L1.T, -1)
+
 
     start = time.time()
     d = harmonic_projection_matrix_with_w(L1.astype(float), eigen_num, check_symmetric = check_symmetric)

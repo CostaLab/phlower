@@ -410,6 +410,30 @@ def nxdraw_holes(adata: AnnData,
                  is_arrow = True,
                  ax = None,
                  **args):
+    """
+    plot holes from eigen decomposition of L1
+
+    Parameters
+    ----
+    graph_name: graph_name of the starts ends connected graph
+    layout_name: layout name show the graph
+    evector_name: eigen vector of L1
+    title: title of the plot
+    edge_value: list, the value of edges, if not None, use edge_value to plot the edge
+    vector_dim: int, the dimension of the eigen vector to plot
+    font_size: int, the size of the font
+    node_size: int, the size of the node
+    width: int, the width of the edge
+    edge_cmap: matplotlib colormap, the colormap of the edge
+    with_labels: bool, show the label of the node if True
+    with_potential: None or length of 2 list, use potential u to calculate the direction of an edge,
+                    eigen values * -1 if uend - ustart > 0 else eigen values * 1
+    flip: bool, flip the direction of an edge
+    is_arrow:bool, show directed graph if True else undirected
+    is_norm: bool, normalize the eigen value to [0,1]
+    is_abs: bool, take absolute value of eigen value
+    ax: matplotlib axis, the axis to plot
+    """
 
     ax = ax or plt.gca()
     H = adata.uns[evector_name][vector_dim]
