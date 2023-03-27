@@ -116,6 +116,16 @@ def add_origin_to_stream(adata, fate_tree='fate_tree', stream_tree="stream_tree"
     assert(set(adata.uns[stream_tree].nodes()).issubset( set(adata.uns[fate_tree].nodes())))
     for node in adata.uns[stream_tree].nodes():
         adata.uns[stream_tree].nodes[node]['original'] = adata.uns[fate_tree].nodes[node]['original'][0]
+        ##node type, branch, leaf, root
+        in_degree = adata.uns[fate_tree].in_degree(node)
+        out_degree = adata.uns[fate_tree].out_degree(node)
+        node_type = "leaf"
+        if in_degree == 0 and out_degree == 1:
+            node_type = "root"
+        elif in_degree > 0 and out_degree > 0:
+            node_type = "branch"
+        adata.uns[stream_tree].nodes[node]['node_type'] = node_type
+
 
 
 def create_bstream_tree(adata: AnnData,
@@ -145,7 +155,7 @@ def create_bstream_tree(adata: AnnData,
     add_origin_to_stream(adata)
 
     return adata if iscopy else None
-#endf create_stream_tree
+#endf create_bstream_tree
 
 def get_root_bins(ddf, node_name, start, end):
     """

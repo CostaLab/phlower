@@ -10,6 +10,7 @@ from ..util import tuple_increase, top_n_from, is_in_2sets, is_node_attr_existin
 
 def construct_trucated_delaunay(adata:AnnData,
                                 graph_name:str='X_dm_ddhodge_g',
+                                layout_name:str='X_dm_ddhodge_g',
                                 trunc_quantile:float=0.75,
                                 trunc_times:float=3,
                                 iscopy:bool=False,
@@ -20,8 +21,11 @@ def construct_trucated_delaunay(adata:AnnData,
     if graph_name not in adata.uns:
         raise ValueError(f"{graph_name} not in adata.uns")
 
+    if layout_name not in adata.obsm:
+        raise ValueError(f"{layout_name} not in adata.obsm")
 
-    edges = truncated_delaunay(adata.obsm[graph_name], trunc_quantile=trunc_quantile, trunc_times=trunc_times)
+
+    edges = truncated_delaunay(adata.obsm[layout_name], trunc_quantile=trunc_quantile, trunc_times=trunc_times)
     adata.uns[f'{graph_name}_triangulation'] = reset_edges(adata.uns[graph_name], edges, keep_old=False)
 
     return adata if iscopy else None
