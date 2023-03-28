@@ -67,7 +67,7 @@ def ddhodge(
 
     d = {}
     if basis:
-        pc = adata.obsm[basis].iloc[:, 0:npc]
+        pc = adata.obsm[basis][:, 0:npc]
         d = diffusionGraphDM(pc,roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma)
     else:
         d = diffusionGraph(adata.X.T.todense() if scipy.sparse.issparse(adata.X.T) else adata.X.T ,roots=roots,k=k,npc=npc,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma)

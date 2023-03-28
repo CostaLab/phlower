@@ -59,5 +59,4 @@ from .harmonic_pseudo_tree import *
 
 ### for test
 from .graphconstr import *
-from .fate_tree import *
 from .hodgedecomp import *
