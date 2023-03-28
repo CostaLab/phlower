@@ -178,6 +178,7 @@ def get_root_bins(ddf, node_name, start, end):
 
 def create_detail_tree(adata, htree, root, ddf,
                        graph_name = "X_dm_ddhodge_g_triangulation_circle",
+                       layout_name = "X_dm_ddhodge_g",
                        tree_name = "fate_tree",
                        edge_attr = "ecount",
                        cluster = "group",
@@ -238,7 +239,7 @@ def create_detail_tree(adata, htree, root, ddf,
 
     fate_tree = add_node_info(fate_tree, ddf, root)
     fate_tree = relabel_tree(fate_tree, root)
-    fate_tree = manual_root(adata, fate_tree, '0_0')
+    fate_tree = manual_root(adata,graph_name, layout_name, fate_tree, '0_0')
     fate_tree.nodes['root']['original'] = (('root', ), 0)
 
     adata.uns[tree_name] = fate_tree
@@ -324,19 +325,19 @@ def add_node_info(fate_tree, ddf, root):
     return fate_tree
 
 
-def manual_root(adata, fate_tree, root, top_n=10):
+def manual_root(adata, graph_name, layout_name, fate_tree, root, top_n=10):
     """
     manually add new the root of the tree
     And add the same info as others, cumsum is not avaliable since it's not from trjaectories
     """
-    items = _edge_mid_attribute(adata).items()
+    items = _edge_mid_attribute(adata, graph_name).items()
     edges = [k for k,v in sorted(items, key=lambda x:x[1])[:top_n]]
     fate_tree.add_node('root')
     fate_tree.add_edge('root', root)
     ## update attribute
     fate_tree.nodes['root']['ecount'] = [(e, 1) for e in edges]
-    fate_tree.nodes['root']['pos']    = np.mean([_edge_mid_points(adata)[e] for e in edges], axis=0)
-    fate_tree.nodes['root']['u']      = np.mean([_edge_mid_attribute(adata)[e] for e in edges], axis=0)
+    fate_tree.nodes['root']['pos']    = np.mean([_edge_mid_points(adata, graph_name, layout_name)[e] for e in edges], axis=0)
+    fate_tree.nodes['root']['u']      = np.mean([_edge_mid_attribute(adata, graph_name)[e] for e in edges], axis=0)
     fate_tree.nodes['root']['cumsum'] = np.array([])
 
     return fate_tree
