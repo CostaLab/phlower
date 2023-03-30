@@ -1,3 +1,7 @@
+##TODO
+## remove noise clusters labelled by -1
+
+
 import random
 import networkx as nx
 import numpy as np
