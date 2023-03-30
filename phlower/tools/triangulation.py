@@ -8,6 +8,9 @@ from scipy.spatial import Delaunay,distance
 from ..util import tuple_increase, top_n_from, is_in_2sets, is_node_attr_existing
 
 
+##TODO
+## decide a larger trunc_quantile to avoid isolated island of graph
+
 def construct_trucated_delaunay(adata:AnnData,
                                 graph_name:str='X_dm_ddhodge_g',
                                 layout_name:str='X_dm_ddhodge_g',
@@ -25,7 +28,7 @@ def construct_trucated_delaunay(adata:AnnData,
         raise ValueError(f"{layout_name} not in adata.obsm")
 
 
-    edges = truncated_delaunay(adata.obsm[layout_name], trunc_quantile=trunc_quantile, trunc_times=trunc_times)
+    edges = truncated_delaunay(adata.uns[graph_name].nodes,  adata.obsm[layout_name], trunc_quantile=trunc_quantile, trunc_times=trunc_times)
     adata.uns[f'{graph_name}_triangulation'] = reset_edges(adata.uns[graph_name], edges, keep_old=False)
 
     return adata if iscopy else None
@@ -85,7 +88,7 @@ def construct_circle_delaunay(adata:AnnData,
 #endf construct_circle_delaunay
 
 
-def truncated_delaunay(position, trunc_quantile=0.75, trunc_times=3):
+def truncated_delaunay(nodes, position, trunc_quantile=0.75, trunc_times=3):
     """
     delaunay on a layout, then remove edges > trunc_quantile * trunc_times
 
@@ -106,8 +109,19 @@ def truncated_delaunay(position, trunc_quantile=0.75, trunc_times=3):
     tri_edges =[[ti(a,b),ti(a,c),ti(b,c)] for a,b,c in tri.simplices]
     tri_edges = list(set([item for sublist in tri_edges for item in sublist])) # flatten
     edges_distance = [distance.euclidean(tuple(position[a]),tuple(position[b])) for (a,b) in tri_edges]
-    threshold = np.quantile(edges_distance, trunc_quantile) * trunc_times
-    keep_edges = [tri_edges[i] for i in range(len(tri_edges)) if edges_distance[i] < threshold]
+    while True: ## only connected graph approved
+        threshold = np.quantile(edges_distance, trunc_quantile) * trunc_times
+        keep_edges = [tri_edges[i] for i in range(len(tri_edges)) if edges_distance[i] < threshold]
+        tmpG = nx.Graph()
+        tmpG.add_nodes_from(nodes)
+        tmpG.add_edges_from(keep_edges)
+        if nx.is_connected(nx.Graph(keep_edges)):
+            break
+        else:
+            trunc_quantile += 0.05
+            threshold = np.quantile(edges_distance, trunc_quantile) * trunc_times
+        if trunc_quantile > 1:
+            raise ValueError("cannot find a connected graph")
     return keep_edges
 
 
