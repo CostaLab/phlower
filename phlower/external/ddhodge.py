@@ -67,6 +67,8 @@ def ddhodge(
 
     d = {}
     if basis:
+        if isinstance(adata.obsm[basis], pd.DataFrame): ## fixed wrong type
+            adata.obsm[basis] = adata.obsm[basis].to_numpy()
         pc = adata.obsm[basis][:, 0:npc]
         d = diffusionGraphDM(pc,roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma)
     else:
