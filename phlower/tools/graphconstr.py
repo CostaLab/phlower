@@ -184,10 +184,13 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
 
   if verbose:
     print(datetime.now(), "edge weight...")
+
   edge_weight = solve(
     divop(g).T@divop(g) + lmda * np.diag([1]*len(g.edges())),
     -gradop(g)@div_o,
   )
+
+
   attrw_dict = {(x[0], x[1]):{"weight":y} for x,y in zip(g.edges(), edge_weight)}
   nx.set_edge_attributes(g, attrw_dict)
 

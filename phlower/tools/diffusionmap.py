@@ -40,7 +40,7 @@ def affinity(R, k=7, sigma=None, log=False, normalize=False):
     return np.exp(logW)
 
 
-def  diffusionMaps(R,k=7,sigma=None, verbose=False):
+def  diffusionMaps(R,k=7,sigma=None, verbose=False, eig_k=100):
     """
     Diffusion map(Coifman, 2005)
     https://en.wikipedia.org/wiki/Diffusion_map
@@ -75,7 +75,8 @@ def  diffusionMaps(R,k=7,sigma=None, verbose=False):
     if verbose:
         print(datetime.now(), "Eigen decomposition...")
 
-    e = linalg.eigsh(Ms) ## eigen decomposition of P'
+    e = linalg.eigsh(Ms, k=eig_k) ## eigen decomposition of P'
+    #e = np.linalg.eigh(Ms) ## eigen decomposition of P'
     evalue= e[0][::-1]
     evec = np.flip(e[1], axis=1)
     s = np.sum(np.sqrt(rs) * evec[:,0]) # scaling

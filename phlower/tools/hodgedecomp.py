@@ -10,7 +10,6 @@ from numpy.linalg import qr,solve,lstsq
 from .incidence import *
 from ..util import find_knee
 
-
 def lexsort_rows(array: np.ndarray) -> np.ndarray:
     array = np.array(array)
     return array[np.lexsort(np.rot90(array))]
@@ -37,11 +36,12 @@ def triangle_list(G: nx.Graph) -> np.ndarray:
     return lexsort_rows(result)
 
 
-def gradop(g:nx.DiGraph) -> csc_matrix : ## construct B1.T matrix, node to edge matrix
+#def gradop(g:nx.DiGraph) -> csc_matrix : ## construct B1.T matrix, node to edge matrix
+def gradop(g:nx.DiGraph): ## construct B1.T matrix, node to edge matrix
   return nx.incidence_matrix(g, oriented=True).T
 
-
-def divop(g:nx.DiGraph) -> csc_matrix:
+#-> csc_matrix
+def divop(g:nx.DiGraph) :
     return -1 * gradop(g).T
 
 
