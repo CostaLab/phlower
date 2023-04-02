@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from datetime import datetime
 
 
 def logsumexp(x):
@@ -38,7 +39,7 @@ def affinity(R, k=7, sigma=None, log=False, normalize=False):
     return np.exp(logW)
 
 
-def  diffusionMaps(R,k=7,sigma=None):
+def  diffusionMaps(R,k=7,sigma=None, verbose=False):
     """
     Diffusion map(Coifman, 2005)
     https://en.wikipedia.org/wiki/Diffusion_map
@@ -55,6 +56,9 @@ def  diffusionMaps(R,k=7,sigma=None):
         eig: eigenvalues
     """
     k=k-1 ## k is R version minus 1 for the index
+    if verbose:
+        print(datetime.now(), "Affinity matrix construction...")
+
     logW = affinity(R,k,sigma,log=True,normalize=False)
     rs = np.exp([logsumexp(logW[i,:]) for i in range(logW.shape[0])]) ## dii=\sum_j w_{i,j}
     #L=D-W, dii = \sum_j w_{ij}
@@ -66,6 +70,10 @@ def  diffusionMaps(R,k=7,sigma=None):
     Ms = Dinv @ np.exp(logW) @ Dinv ##
     ## https://jlmelville.github.io/smallvis/spectral.html row normalisation
     #e = eigen(Ms,symmetric=TRUE)
+
+    if verbose:
+        print(datetime.now(), "Eigen decomposition...")
+
     e = np.linalg.eigh(Ms) ## eigen decomposition of P'
     evalue= e[0][::-1]
     evec = np.flip(e[1], axis=1)

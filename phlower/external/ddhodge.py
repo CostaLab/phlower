@@ -4,6 +4,7 @@
 import numpy as np
 import pandas as pd
 import networkx as nx
+from datetime import datetime
 from typing import Union
 from anndata import AnnData
 import scipy
@@ -23,6 +24,7 @@ def ddhodge(
         sigma: float = None,
         layout: str = 'neato',
         iscopy: bool = False,
+        verbose: bool = True,
         ):
 
     """
@@ -70,9 +72,9 @@ def ddhodge(
         if isinstance(adata.obsm[basis], pd.DataFrame): ## fixed wrong type
             adata.obsm[basis] = adata.obsm[basis].to_numpy()
         pc = adata.obsm[basis][:, 0:npc]
-        d = diffusionGraphDM(pc,roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma)
+        d = diffusionGraphDM(pc,roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose)
     else:
-        d = diffusionGraph(adata.X.T.todense() if scipy.sparse.issparse(adata.X.T) else adata.X.T ,roots=roots,k=k,npc=npc,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma)
+        d = diffusionGraph(adata.X.T.todense() if scipy.sparse.issparse(adata.X.T) else adata.X.T ,roots=roots,k=k,npc=npc,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose)
         adata.obsm['X_dm'] = d['dm']
         basis = 'X_dm'
 
@@ -84,9 +86,11 @@ def ddhodge(
     adata.uns[f'{basis}_ddhodge_phi'] = d['phi']
     adata.uns[f'{basis}_ddhodge_eig'] = d['eig']
     if layout:
-        print('calculate layouts')
+        if verbose:
+            print(datetime.now(), 'calculate layouts')
         layouts = nx.nx_pydot.graphviz_layout(d['g'], prog=layout)
         adata.obsm[f'{basis}_ddhodge_g'] = np.array([layouts[i] for i in range(len(layouts))])
-    print('done')
+    if verbose:
+        print(datetime.now(), 'done')
 
     return adata if iscopy else None

@@ -4,6 +4,7 @@ import igraph
 import networkx as nx
 import numpy as np
 import pandas as pd
+from datetime import datetime
 from itertools import chain
 from typing import Iterable, List, Tuple, TypeVar
 from numpy.linalg import solve
@@ -99,7 +100,7 @@ def adjedges(A, W, k=4):
 #endf adjedges
 
 #" dm cells x dimensions
-def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None):
+def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False):
   """
   transition matrix is calculate by eigen decomposition outcome
 
@@ -130,9 +131,12 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None):
   if all(np.array(roots)==False):
     raise Exception("there should but some True cells as root")
 
+  if verbose:
+    print(datetime.now(), "distance_matrix")
   # Euclid distance matrix
   R = distance_matrix(dm, dm)
-  print("Diffusionmaps: ")
+  if verbose:
+    print(datetime.now(), "Diffusionmaps: ")
   d = diffusionMaps(R,j,sigma) #0:Psi, 1:Phi, 2:eig
   print("done.")
   # Diffusion distance matrix
@@ -157,7 +161,8 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None):
   g_o = graph_altmat(A)
 
   #return(g_o)
-  print("Rewiring: ")
+  if verbose:
+    print(datetime.now(), "Rewiring: ")
   div_o = div(g_o)
   # u_o = drop(potential(g_o)) # time consuming
   # k-NN graph using diffusion distance
@@ -176,6 +181,9 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None):
   # igraph.E(g).weight = gradop(g)@Lgi@div_s
   # Pulling back the original divergeggnce using pruned graph
 
+
+  if verbose:
+    print(datetime.now(), "edge weight...")
   edge_weight = solve(
     divop(g).T@divop(g) + lmda * np.diag([1]*len(g.edges())),
     -gradop(g)@div_o,
@@ -183,15 +191,17 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None):
   attrw_dict = {(x[0], x[1]):{"weight":y} for x,y in zip(g.edges(), edge_weight)}
   nx.set_edge_attributes(g, attrw_dict)
 
+  if verbose:
+    print(datetime.now(), "grad...")
   edge_weight = grad(g, weight_attr='weight')
   attrw_dict = {(x[0], x[1]):{"weight":y} for x,y in zip(g.edges(), edge_weight)}
   nx.set_edge_attributes(g, attrw_dict)
 
-
   # drop edges with 0 weights and flip edges with negative weights
   g = graph_altmat(as_altmat(g, 'weight'))
 
-
+  if verbose:
+    print(datetime.now(), "ddhodge done.")
   print("done.")
   attru_dict = {x:{"u":y} for x,y in zip(g.nodes(), potential(g))}
   nx.set_node_attributes(g, attru_dict)
@@ -207,7 +217,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None):
 
 
 ## X: column observations,row features
-def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None):
+def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False):
   """
   Parameter
   -------------
@@ -230,7 +240,7 @@ def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None):
   npc = min(100, Y.shape[0]-1, Y.shape[1]-1) if not npc else min(100, Y.shape[0]-1, Y.shape[1] -1, npc)
   pc = run_pca(Y, npc)
 
-  dic = diffusionGraphDM(pc, roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma)
+  dic = diffusionGraphDM(pc, roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose)
   return dic
 #endf diffusionGraph
 
