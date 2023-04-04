@@ -136,15 +136,15 @@ def L1Norm_decomp(adata: AnnData,
 
     #L1all = create_normalized_l1(B1, B2, mode="RW")
     if isnorm:
-        L1all = create_normalized_l1(B1, B2, mode=L1_mode)
-        L1 = L1all[0]
+        L1 = create_normalized_l1(B1, B2, mode=L1_mode)
+        #L1 = L1all[0]
         #if not scipy.linalg.issymmetric(L1):
             #L1 = np.tril(L1) + np.triu(L1.T, 1)
             #L1 = 1/2*(L1 + L1.T)
             #L1 =  np.maximum(L1, L1.T)
     else:
-        L1all = create_l1(B1, B2)
-        L1 = L1all[0].toarray()
+        L1 = create_l1(B1, B2)
+        #L1 = L1all[0].toarray()
     #if not scipy.linalg.issymmetric(L1):
     #    L1 = (L1 + L1.T) / 2
         #L1all[0] = L1
@@ -167,7 +167,7 @@ def L1Norm_decomp(adata: AnnData,
     d = harmonic_projection_matrix_with_w(L1.astype(float), eigen_num, check_symmetric = check_symmetric)
     end = time.time()
     print((end-start), " sec")
-    adata.uns[f'{graph_name}_L1Norm'] = L1all
+    #adata.uns[f'{graph_name}_L1Norm'] = L1all
     adata.uns[f'{graph_name}_L1Norm_decomp_vector'] = d['v']
     adata.uns[f'{graph_name}_L1Norm_decomp_value'] = d['w']
     #adata.uns['X_dm_ddhodge_g_triangulation_circle_B1'] = B1

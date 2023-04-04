@@ -126,7 +126,7 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
     color_palette: color palette for show cluster_list
     **args: args for scatter
     """
-    mat_coor_flatten_trajectory = [adata.uns[evector_name][0:max(dims)+1, :] @ mat for mat in adata.uns[full_traj_matrix_flatten]]
+    mat_coor_flatten_trajectory = [adata.uns[evector_name][0:max(dims)+1, :] @ mat for mat in adata.uns[full_traj_matrix_flatten].toarray()]
     M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
                                          cluster_list = list(adata.uns[clusters]),
                                          retain_clusters = retain_clusters,
@@ -175,7 +175,7 @@ def plot_trajectory_harmonic_points(adata: AnnData,
     color_palette: color palette for show cluster_list
     **args: args for scatter
     """
-    mat_coor_flatten_trajectory = [adata.uns[evector_name][0:max(dims)+1, :] @ mat for mat in adata.uns[full_traj_matrix_flatten]]
+    mat_coor_flatten_trajectory = [adata.uns[evector_name][0:max(dims)+1, :] @ mat for mat in adata.uns[full_traj_matrix_flatten].toarray()]
     M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
                                       cluster_list = list(adata.uns[clusters]),
                                       retain_clusters = retain_clusters,

@@ -5,6 +5,7 @@
 import random
 import networkx as nx
 import numpy as np
+import scipy
 from tqdm import trange
 from anndata import AnnData
 from typing import List
@@ -112,7 +113,7 @@ def trajs_dm(adata,
     if isinstance(M_flatten, str):
         M_flatten = adata.uns[M_flatten]
 
-    mat_coor_flatten_trajectory = [adata.uns[evector_name][0:eig_num, :] @ mat for mat in M_flatten]
+    mat_coor_flatten_trajectory = [adata.uns[evector_name][0:eig_num, :] @ mat for mat in M_flatten.toarray()]
 
     adata.uns['trajs_harmonic_dm'] = np.vstack(mat_coor_flatten_trajectory)
 
@@ -312,7 +313,7 @@ def L_flatten_trajectory_matrix(H_full) -> np.ndarray:
     import from https://git.rwth-aachen.de/netsci/trajectory-outlier-detection-flow-embeddings/
     """
     flattened = map(lambda mat_tmp: mat_tmp.sum(axis=1), H_full)
-    return np.array(list(flattened)).squeeze()
+    return scipy.sparse.csr_matrix(np.array(list(flattened)).squeeze())
 
 
 def M_create_matrix_coordinates_trajectory_Hspace(H, M_full):

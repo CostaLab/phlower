@@ -97,23 +97,9 @@ def create_edge_triangle_incidence_matrix(elist, tlist):
 
 def create_l1(B1, B2):
     L1 = (B1.T @ B1 + B2 @ B2.T)
-    if B2.shape[1] > 0:
-        d1 = np.sum(np.abs(B2), axis=1)
-        d1 = np.asarray(d1.flatten())[0]
-        D1 = np.diag(np.maximum(1, d1))
-        D1inv = np.diag(np.divide(1, np.diag(D1)))
-    else:
-        num_edges = B1.shape[1]
-        D1 = np.eye(num_edges)
-        D1inv = D1
+    #L1 = B1.T.dot(B1) + B2.dot(B2.T)
 
-    #d0weighted = np.maximum(1, np.sum(np.abs(B1 * D1), axis=1))
-    d0weighted = np.maximum(1, np.sum(np.abs(B1 @ D1), axis=1))
-    d0weighted = np.reshape(d0weighted, (d0weighted.size))
-    D0weighted = np.diag(d0weighted)
-    D0weightedinv = np.diag(np.divide(1, d0weighted))
-
-    return L1, D1, D1inv, D0weighted, D0weightedinv
+    return L1 #, D1, D1inv, D0weighted, D0weightedinv
 
 
 
@@ -121,18 +107,18 @@ def create_normalized_l1(B1, B2, mode="RW"):
     if B2.shape[1] > 0:
         d1 = np.sum(np.abs(B2), axis=1)
         d1 = np.asarray(d1.flatten())[0]
-        D1 = np.diag(np.maximum(1, d1))
-        D1inv = np.diag(np.divide(1, np.diag(D1)))
+        D1 = scipy.sparse.diags(np.maximum(1, d1), 0, format="csr")
+        D1inv = scipy.sparse.diags(np.divide(1, D1.diagonal()), 0, format="csr")
     else:
         num_edges = B1.shape[1]
-        D1 = np.eye(num_edges)
+        D1 = scipy.sparse.eye(num_edges)
         D1inv = D1
 
-    #d0weighted = np.maximum(1, np.sum(np.abs(B1 * D1), axis=1))
     d0weighted = np.maximum(1, np.sum(np.abs(B1 @ D1), axis=1))
     d0weighted = np.reshape(d0weighted, (d0weighted.size))
-    D0weighted = np.diag(d0weighted)
-    D0weightedinv = np.diag(np.divide(1, d0weighted))
+    d0weighted = np.array(d0weighted).flatten()
+    D0weighted = scipy.sparse.diags(d0weighted, 0, format="csr")
+    D0weightedinv = scipy.sparse.diags(np.divide(1, d0weighted), 0, format="csr")
 
     # assemble normalized Laplacian
     #L1 = D1*B1.T*1/2*D0weightedinv*B1 + B2*1/3*B2.T*D1inv
@@ -146,7 +132,7 @@ def create_normalized_l1(B1, B2, mode="RW"):
     L1 = L1_node + L1_edge
     if mode == "sym":
         L1 = np.sqrt(D1inv) * L1 * np.sqrt(D1inv)
-    return L1, D1, D1inv, D0weighted, D0weightedinv
+    return L1
 
 
 def create_weighted_edge_triangle_incidence_matrix(G, elist, tlist, weight_attr="weight"):
