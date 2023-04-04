@@ -16,7 +16,7 @@ def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, chec
     L1 : csr_matrix of type float
     number_of_holes : int
     """
-    if (not check_symmetric) or scipy.linalg.issymmetric(L1):
+    if (not check_symmetric) or scipy.linalg.issymmetric(L1.toarray()):
         w, v = linalg.eigsh(L1, k=number_of_holes,
                         v0=np.ones(L1.shape[0]), which='SM')
     else:
