@@ -107,8 +107,11 @@ def trajs_dm(adata,
     if evector_name not in adata.uns:
         raise ValueError(f"{evector_name} not in adata.uns")
 
-    #if eig_num < 2:
-    #    raise ValueError(f"eig_num is {eig_num}, should be >= 2")
+    if eig_num < 1:
+        raise ValueError(f"eig_num is {eig_num}, should be >= 1")
+    elif eig_num == 2:
+        print("eig_num is 2, use itsself as embedding")
+        embedding = 'self'
 
     if isinstance(M_flatten, str):
         M_flatten = adata.uns[M_flatten]
@@ -122,6 +125,8 @@ def trajs_dm(adata,
         dm = run_umap(mat_coor_flatten_trajectory)
     elif embedding == "pca":
         dm = run_pca(mat_coor_flatten_trajectory, n_components=2)
+    elif embedding == "self":
+        dm = np.vstack(mat_coor_flatten_trajectory)
     else:
         raise ValueError("embedding method not supported, only umap and pca are supported for now")
     adata.uns["trajs_dm"] = dm
