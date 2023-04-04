@@ -107,8 +107,8 @@ def trajs_dm(adata,
     if evector_name not in adata.uns:
         raise ValueError(f"{evector_name} not in adata.uns")
 
-    if eig_num < 2:
-        raise ValueError(f"eig_num is {eig_num}, should be >= 2")
+    #if eig_num < 2:
+    #    raise ValueError(f"eig_num is {eig_num}, should be >= 2")
 
     if isinstance(M_flatten, str):
         M_flatten = adata.uns[M_flatten]
