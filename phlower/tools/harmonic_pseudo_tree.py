@@ -344,7 +344,19 @@ def manual_root(adata, graph_name, layout_name, fate_tree, root, top_n=10):
 
 
 
-def create_branching_tree(pairwise_bdict):
+def linear_tree(pairwise_bdict, keys):
+    """
+    linear tree assume that you only have one cluster
+    """
+    pass
+    htree_roots = list(keys)
+    htree = nx.DiGraph()
+    htree = htree.add_node((htree_roots[0], ))
+    return htree, htree_roots[0]
+
+
+
+def create_branching_tree(pairwise_bdict, keys=None):
     """
     Create a tree with only root, branching points and leaves.
     1. check the largest merge points
@@ -357,6 +369,11 @@ def create_branching_tree(pairwise_bdict):
         c) if there's nothing to merge, continue add to the merge list htree_roots
     3. continue, until all time points included.
     """
+
+    ## there's only one traject cluster
+    if len(pairwise_bdict) == 0:
+        return linear_tree(pairwise_bdict, keys)
+
     inv_bdict = {}
     for k, v in pairwise_bdict.items():
         inv_bdict[v] = inv_bdict.get(v, []) + [k]
