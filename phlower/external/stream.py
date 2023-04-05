@@ -114,7 +114,16 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
         color = ['group']
         #color = ['label']
     ###remove duplicate keys
+
+    for acolor in color:
+        if acolor not in adata.obs.columns:
+            pass
+        else:
+            print("warning: change {acolor} to type string if not!")
+            adata.obs[acolor] = adata.obs[acolor].astype(str)
+
     color = list(dict.fromkeys(color))
+
 
     dict_ann = dict()
     for ann in color:
@@ -330,6 +339,15 @@ def plot_stream(adata,root='S0',color = None,preference=None,dist_scale=0.9,
     if(color is None):
         #color = ['label']
         color = ['group']
+
+    for acolor in color:
+        if acolor not in adata.obs.columns:
+            pass
+        else:
+            print("warning: change {acolor} to type string if not!")
+            adata.obs[acolor] = adata.obs[acolor].astype(str)
+
+
     ###remove duplicate keys
     color = list(dict.fromkeys(color))
 

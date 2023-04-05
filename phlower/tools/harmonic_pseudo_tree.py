@@ -238,10 +238,18 @@ def create_detail_tree(adata, htree, root, ddf,
                 curr_tm = tm
 
 
+    ## consider only 1 trajectory group
     if len(travel_edges) == 0:
-        pass
-
-
+        n0_node = tuple(htree.nodes)
+        n0 = n0_node[0]
+        end = max(ddf[n0].ubin)
+        curr_tm = 0
+        rest_ubins = get_root_bins(ddf, [n0], 0, end)
+        for tm in rest_ubins[1:]:
+            fate_tree.add_edge(((n0_node, curr_tm)), ((n0_node, tm)))
+            curr_tm = tm
+        root = (n0_node, 0)
+    #print(fate_tree.nodes())
 
     fate_tree = add_node_info(fate_tree, ddf, root)
     fate_tree = relabel_tree(fate_tree, root)
@@ -357,6 +365,7 @@ def linear_tree(pairwise_bdict, keys):
     pass
     htree_roots = list(keys)
     htree = nx.DiGraph()
+    #htree.add_node((htree_roots[0], ))
     htree.add_node(htree_roots[0])
     return htree, htree_roots[0]
 
