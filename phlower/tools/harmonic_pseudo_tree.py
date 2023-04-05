@@ -237,6 +237,11 @@ def create_detail_tree(adata, htree, root, ddf,
                 fate_tree.add_edge(((n1, curr_tm)), ((n1, tm)))
                 curr_tm = tm
 
+
+    if len(travel_edges) == 0:
+
+
+
     fate_tree = add_node_info(fate_tree, ddf, root)
     fate_tree = relabel_tree(fate_tree, root)
     fate_tree = manual_root(adata,graph_name, layout_name, fate_tree, '0_0')
@@ -351,7 +356,7 @@ def linear_tree(pairwise_bdict, keys):
     pass
     htree_roots = list(keys)
     htree = nx.DiGraph()
-    htree = htree.add_node((htree_roots[0], ))
+    htree.add_node((htree_roots[0], ))
     return htree, htree_roots[0]
 
 
