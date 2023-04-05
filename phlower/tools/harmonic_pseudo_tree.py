@@ -1,3 +1,4 @@
+import re
 import math
 import copy
 import sklearn
@@ -242,7 +243,7 @@ def create_detail_tree(adata, htree, root, ddf,
     if len(travel_edges) == 0:
         n0_node = tuple(htree.nodes)
         n0 = n0_node[0]
-        end = max(ddf[n0].ubin)
+        end = max(ddf[n0].ubin) + 1
         curr_tm = 0
         rest_ubins = get_root_bins(ddf, [n0], 0, end)
         for tm in rest_ubins[1:]:
@@ -505,7 +506,7 @@ def merge_common_list(lst):
 def harmonic_trajs_bins(adata: AnnData,
                         graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
                         evector_name="X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
-                        eigen_n = 20,
+                        eigen_n = -1,
                         layout_name: str = 'X_dm_ddhodge_g',
                         full_traj_matrix = 'full_traj_matrix',
                         trajs_clusters = 'trajs_clusters',
@@ -519,9 +520,16 @@ def harmonic_trajs_bins(adata: AnnData,
                         ):
     """
     return bins of each trajectory clustere edges
+    if eigen_n < 1 use knee_eigen to find eigen_n
     """
     np.random.seed(random_seed)
 
+    if eigen_n < 1:
+        print("eigen_n < 1, use knee_eigen to find the number of eigen vectors to use")
+        if "eigen_value_knee" in adata.uns.keys():
+            eigen_n = adata.uns["eigen_value_knee"]
+        else:
+            eigen_n = knee_eigen(adata, eigens=re.sub(r"_vector$", r"_value", evector_name) , plot=False)
 
     m_full_traj_matrix = adata.uns[full_traj_matrix]
     trajs_use = min(trajs_use, len(m_full_traj_matrix))

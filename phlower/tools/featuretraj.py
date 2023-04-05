@@ -77,11 +77,18 @@ def feature_cumsum_direction(adata: AnnData,
                              full_traj_matrix_flatten: str = 'full_traj_matrix_flatten',
                              full_traj_matrix: str = 'full_traj_matrix',
                              u_attribute = 'u',
-                             eigen_n = 2,
+                             eigen_n = -1,
                              dims = [0,1],
                              ):
 
-    pass
+    if eigen_n < 1:
+        print("eigen_n < 1, use knee_eigen to find the number of eigen vectors to use")
+        if "eigen_value_knee" in adata.uns.keys():
+            eigen_n = adata.uns["eigen_value_knee"]
+        else:
+            eigen_n = knee_eigen(adata, eigens=re.sub(r"_vector$", r"_value", evector_name) , plot=False)
+
+
 
     m_full_traj_matrix = adata.uns[full_traj_matrix]
     mat_coord_Hspace = M_create_matrix_coordinates_trajectory_Hspace(adata.uns[evector_name][0:eigen_n, :], adata.uns[full_traj_matrix])

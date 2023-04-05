@@ -1,7 +1,7 @@
 ##TODO
 ## remove noise clusters labelled by -1
 
-
+import re
 import random
 import networkx as nx
 import numpy as np
@@ -97,26 +97,34 @@ def trajs_dm(adata,
              evector_name: str = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
              M_flatten: Union[str, np.ndarray] = "full_traj_matrix_flatten",
              embedding = 'umap',
-             eig_num: int = 2,
+             eigen_n: int = -1,
              iscopy=False,
              **args,
              ):
+    """
+    eigen_n: the number of eigen vectors to use, if -1, use find_knee out
+    """
 
     adata = adata.copy() if iscopy else adata
 
     if evector_name not in adata.uns:
         raise ValueError(f"{evector_name} not in adata.uns")
 
-    if eig_num < 1:
-        raise ValueError(f"eig_num is {eig_num}, should be >= 1")
-    elif eig_num == 2:
-        print("eig_num is 2, use itsself as embedding")
+    if eigen_n < 1:
+        print("eigen_n < 1, use knee_eigen to find the number of eigen vectors to use")
+        if "eigen_value_knee" in adata.uns.keys():
+            eigen_n = adata.uns["eigen_value_knee"]
+        else:
+            eigen_n = knee_eigen(adata, eigens=re.sub(r"_vector$", r"_value", evector_name) , plot=False)
+
+    elif eigen_n == 2:
+        print("eigen_n is 2, use itsself as embedding")
         embedding = 'self'
 
     if isinstance(M_flatten, str):
         M_flatten = adata.uns[M_flatten]
 
-    mat_coor_flatten_trajectory = [adata.uns[evector_name][0:eig_num, :] @ mat for mat in M_flatten.toarray()]
+    mat_coor_flatten_trajectory = [adata.uns[evector_name][0:eigen_n, :] @ mat for mat in M_flatten.toarray()]
 
     adata.uns['trajs_harmonic_dm'] = np.vstack(mat_coor_flatten_trajectory)
 
