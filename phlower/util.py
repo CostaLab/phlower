@@ -196,7 +196,7 @@ def find_knee(x,y, plot=False):
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots(1,1)
         sns.lineplot(x=x, y=y, ax=ax, sort=False)
-        ax.scatter(x=x[idx_of_best_point], y=y[idx_of_best_point], color='red')
+        ax.scatter(x=x[idx_of_best_point-1], y=y[idx_of_best_point-1], color='red')
 
     return idx_of_best_point
 
