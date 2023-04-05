@@ -357,7 +357,7 @@ def linear_tree(pairwise_bdict, keys):
     pass
     htree_roots = list(keys)
     htree = nx.DiGraph()
-    htree.add_node((htree_roots[0], ))
+    htree.add_node(htree_roots[0])
     return htree, htree_roots[0]
 
 
