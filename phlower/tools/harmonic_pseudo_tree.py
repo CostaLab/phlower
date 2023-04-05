@@ -239,6 +239,7 @@ def create_detail_tree(adata, htree, root, ddf,
 
 
     if len(travel_edges) == 0:
+        pass
 
 
 
