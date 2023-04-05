@@ -8,9 +8,6 @@ from scipy.spatial import Delaunay,distance
 from ..util import tuple_increase, top_n_from, is_in_2sets, is_node_attr_existing
 
 
-##TODO
-## decide a larger trunc_quantile to avoid isolated island of graph
-
 def construct_trucated_delaunay(adata:AnnData,
                                 graph_name:str='X_dm_ddhodge_g',
                                 layout_name:str='X_dm_ddhodge_g',
