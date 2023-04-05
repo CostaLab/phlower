@@ -349,3 +349,25 @@ def M_create_matrix_coordinates_trajectory_Hspace_dm(mat_coord_Hspace, reductioi
 
     return dm_mat_list
 
+
+
+def detect_short_trajectory_groups(adata, trajectories='knn_trajs', cluster_name="h_trajs_clusters", min_len=10, verbose=False):
+    """
+    after clustering, if there are some trajectory groups are too short, list them
+    """
+
+    all_clusters = set(adata.uns[cluster_name])
+    ret_list = []
+    if verbose:
+        print("List trajectories clusters with median length <= 10")
+    for cluster in all_clusters:
+        cluster_i = np.where(np.array(adata.uns[cluster_name]) == cluster)[0]
+        median_len = np.median([len(adata.uns[trajectories][i]) for i in cluster_i])
+        if verbose:
+            print(f"Cluster {cluster} length: {median_len}")
+        if median_len <= min_len:
+            ret_list.append(cluster)
+    return ret_list
+
+
+
