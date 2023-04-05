@@ -189,7 +189,7 @@ def find_knee(x,y, plot=False):
             continue
         d[idx] = round(np.abs(i/ev[idx-1]), 2)
 
-    idx_of_best_point = max(d, key=d.get) - 1
+    idx_of_best_point = max(d, key=d.get)
 
     if plot:
         import seaborn as sns
