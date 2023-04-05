@@ -67,6 +67,7 @@ def plot_trajectory_harmonic_lines(adata: AnnData,
                                    markerscale=4,
                                    ax = None,
                                    sample_ratio = 0.1,
+                                   xylabel=True,
                                    color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                    **args):
     """
@@ -94,6 +95,7 @@ def plot_trajectory_harmonic_lines(adata: AnnData,
                                      markerscale = markerscale,
                                      ax = ax,
                                      sample_ratio = sample_ratio,
+                                     xylabel=xylabel,
                                      color_palette = color_palette,
                                      **args)
 
@@ -987,6 +989,7 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
                                    markerscale=4,
                                    ax = None,
                                    sample_ratio = 1,
+                                   xylabel = True,
                                    color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                    **args):
     """
@@ -1002,7 +1005,7 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
     color_palette: color palette for show cluster_list
     """
     assert(all(np.array(dims) < mat_coord_Hspace[0].shape[0])) ## dims is in the range of the dimension of the data
-    assert(len(dims) >=2)
+    assert(len(dims) ==2)
     if len(retain_clusters) == 0:
         retain_clusters = set(cluster_list)
     #print(retain_clusters)
@@ -1031,6 +1034,10 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
         for idx in v[1:]:
             cumsum = cumsums[idx]
             sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, **args) #
+
+    if xylabel:
+        ax.set_xlabel(f"H{dims[0]}")
+        ax.set_ylabel(f"H{dims[1]}")
 
     if show_legend:
         leg = ax.legend(loc=legend_loc, bbox_to_anchor=bbox_to_anchor)

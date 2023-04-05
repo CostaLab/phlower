@@ -181,6 +181,16 @@ def find_knee(x,y, plot=False):
     vec_to_line = vec_from_first - vec_from_first_parallel
     distToLine = np.sqrt(np.sum(vec_to_line ** 2, axis=1))
     idx_of_best_point = np.argmax(distToLine)
+
+    ev = y
+    d = {}
+    for idx, i in enumerate(ev):
+        if idx ==0:
+            continue
+        d[idx] = round(np.abs(i/ev[idx-1]), 2)
+
+    idx_of_best_point = max(d, key=d.get) - 1
+
     if plot:
         import seaborn as sns
         import matplotlib.pyplot as plt

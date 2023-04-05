@@ -177,6 +177,7 @@ def L1Norm_decomp(adata: AnnData,
 
 def knee_eigen(adata: AnnData,
                eigens: Union[str, np.ndarray] = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_value",
+               plot = False,
                iscopy = False,
                ):
 
@@ -188,7 +189,7 @@ def knee_eigen(adata: AnnData,
 
     x = range(1, len(eigens) + 1)
     y = eigens
-    idx = find_knee(x, y)
+    idx = find_knee(x, y, plot = plot)
     adata.uns['eigen_value_knee'] = idx
     print("knee eigen value is ", idx)
 
