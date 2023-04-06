@@ -205,8 +205,7 @@ def create_detail_tree(adata, htree, root, ddf,
         n1 = edges[1]
         t1 = htree.nodes[n0].get('time', -1) ## -1 if leaves
         t2 = htree.nodes[n1].get('time', -1) ## -1 if leaves
-
-
+        max_bin =  max(get_root_bins(ddf, n0, 0, t1+1))
 
         if i == 0: #root
             curr_tm = 0
@@ -219,29 +218,30 @@ def create_detail_tree(adata, htree, root, ddf,
 
         if t2 == -1: ## leaf expand to the end
 
+
             rest_ubins = sorted([i for i in set(ddf[n1[0]]['ubin']) if i > t1])
             if len(rest_ubins) == 0: # this is the last leaf
-                fate_tree.add_edge((n0, t1), (n1, t2))
+                fate_tree.add_edge((n0, max_bin), (n1, t2))
                 continue
             if i == 0: ## connect root end with the rest
-                fate_tree.add_edge(((n0, curr_tm)), ((n0, t1)))
+                fate_tree.add_edge(((n0, curr_tm)), ((n0, max_bin)))
 
 
 
             curr_tm = rest_ubins[0]
-            fate_tree.add_edge((n0, t1), (n1, curr_tm))
+            fate_tree.add_edge((n0, max_bin), (n1, curr_tm))
             for tm in rest_ubins[1:]:
                 fate_tree.add_edge(((n1, curr_tm)), ((n1, tm)))
                 curr_tm = tm
         else: ## between two branching point
             #for tm in range(t1, t2):
             ubin_sets = [set(ddf[x]['ubin']) for x in n1]
-            rest_ubins = [i for i in set.union(*ubin_sets) if  t1 < i <= t2]
+            rest_ubins = [i for i in set.union(*ubin_sets) if  max_bin < i <= t2]
             if len(rest_ubins) == 0: # if no ubin in between, just add the edge
-                fate_tree.add_edge(((n0, t1)), ((n1, t2))) ## keep the original edges
+                fate_tree.add_edge(((n0, max_bin)), ((n1, t2))) ## keep the original edges
                 continue
             curr_tm = rest_ubins[0]
-            fate_tree.add_edge(((n0, t1)), ((n1, curr_tm)))
+            fate_tree.add_edge(((n0, max_bin)), ((n1, curr_tm)))
             for tm in rest_ubins[1:]:
                 fate_tree.add_edge(((n1, curr_tm)), ((n1, tm)))
                 curr_tm = tm
