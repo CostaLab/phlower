@@ -205,6 +205,9 @@ def create_detail_tree(adata, htree, root, ddf,
         n1 = edges[1]
         t1 = htree.nodes[n0].get('time', -1) ## -1 if leaves
         t2 = htree.nodes[n1].get('time', -1) ## -1 if leaves
+
+
+
         if i == 0: #root
             curr_tm = 0
             # look up all merged trajectoris, see if the time point exists
@@ -219,6 +222,9 @@ def create_detail_tree(adata, htree, root, ddf,
             if len(rest_ubins) == 0: # this is the last leaf
                 fate_tree.add_edge((n0, t1), (n1, t2))
                 continue
+            if i == 0: ## connect root end with the rest
+                fate_tree.add_edge(((n0, curr_tm)), ((n0, rest_ubins[0])))
+
 
             curr_tm = rest_ubins[0]
             fate_tree.add_edge((n0, t1), (n1, curr_tm))
@@ -237,6 +243,10 @@ def create_detail_tree(adata, htree, root, ddf,
             for tm in rest_ubins[1:]:
                 fate_tree.add_edge(((n1, curr_tm)), ((n1, tm)))
                 curr_tm = tm
+
+
+            
+
 
 
     ## consider only 1 trajectory group
