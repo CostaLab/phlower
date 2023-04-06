@@ -223,7 +223,7 @@ def create_detail_tree(adata, htree, root, ddf,
                 fate_tree.add_edge((n0, t1), (n1, t2))
                 continue
             if i == 0: ## connect root end with the rest
-                fate_tree.add_edge(((n0, curr_tm)), ((n0, rest_ubins[0])))
+                fate_tree.add_edge(((n0, curr_tm)), ((n1, rest_ubins[0])))
 
 
             curr_tm = rest_ubins[0]
