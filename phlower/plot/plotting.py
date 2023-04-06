@@ -814,6 +814,8 @@ def G_plot_density_grid(G,
                       sample_n=10000,
                       figsize=(20,16),
                       title_prefix='cluster_',
+                      sharex = True,
+                      sharey = True,
                       bg_alpha = 0.5,
                       node_size = 2,
                       **args
@@ -846,7 +848,7 @@ def G_plot_density_grid(G,
 
     r,c = get_uniform_multiplication(cluster_n)
     r = r - 1 if (r-1)*c == cluster_n else r
-    fig, axes = plt.subplots(r,c, sharex=False, sharey=False,)
+    fig, axes = plt.subplots(r,c, sharex=sharex, sharey=sharey,)
     fig.set_size_inches(figsize[0], figsize[1])
     for a, cluster in enumerate(retain_clusters):
         i = int(a/c)
