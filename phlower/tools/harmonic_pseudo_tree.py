@@ -218,12 +218,14 @@ def create_detail_tree(adata, htree, root, ddf,
             root = (n0, 0)
 
         if t2 == -1: ## leaf expand to the end
+
             rest_ubins = sorted([i for i in set(ddf[n1[0]]['ubin']) if i > t1])
             if len(rest_ubins) == 0: # this is the last leaf
                 fate_tree.add_edge((n0, t1), (n1, t2))
                 continue
-            #if i == 0: ## connect root end with the rest
-            #    fate_tree.add_edge(((n0, curr_tm)), ((n1, rest_ubins[0])))
+            if i == 0: ## connect root end with the rest
+                fate_tree.add_edge(((n0, curr_tm)), ((n0, t1)))
+
 
 
             curr_tm = rest_ubins[0]
