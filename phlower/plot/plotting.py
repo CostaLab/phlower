@@ -274,7 +274,7 @@ def plot_fate_tree(adata: AnnData,
     layout_prog: may ‘dot’, ‘twopi’, ‘fdp’, ‘sfdp’, ‘circo’
     """
     ax = plt.gca() if ax is None else ax
-    pos =nx.nx_pydot.graphviz_layout(adata.uns[fate_tree], prog=layout_prog)
+    pos =nx.nx_pydot.graphviz_layout(adata.uns[fate_tree].to_undirected(), prog=layout_prog)
     nx.draw(adata.uns[fate_tree], pos, with_labels=with_labels, ax=ax, **args)
 
 
