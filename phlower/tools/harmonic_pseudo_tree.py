@@ -530,6 +530,7 @@ def harmonic_trajs_bins(adata: AnnData,
             eigen_n = adata.uns["eigen_value_knee"]
         else:
             eigen_n = knee_eigen(adata, eigens=re.sub(r"_vector$", r"_value", evector_name) , plot=False)
+    print("eigen_n:", eigen_n)
 
     m_full_traj_matrix = adata.uns[full_traj_matrix]
     trajs_use = min(trajs_use, len(m_full_traj_matrix))
