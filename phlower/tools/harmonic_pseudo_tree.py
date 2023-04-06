@@ -142,8 +142,8 @@ def create_bstream_tree(adata: AnnData,
     adata = adata.copy() if iscopy else adata
     g = adata.uns[fate_tree]
     g_pos   = adata.uns[fate_tree].to_undirected()
-    dic_br  =  extract_branches(g_pos.to_undirected())
-    dic_br  =  add_branch_info(g_pos.to_undirected(), dic_br)
+    dic_br  =  extract_branches(g_pos)
+    dic_br  =  add_branch_info(g_pos, dic_br)
     g_br    =  construct_stream_tree(dic_br, g_pos)
 
     adata.uns['g_fate_tree'] = g_pos
