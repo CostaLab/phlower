@@ -190,7 +190,7 @@ def connect_starts_ends_with_Delaunay(g,
     n=len(g.nodes())
     o=np.sort(values)
     early=np.where(values<=o[round(n*quant)])[0]
-    later=np.where(values>=o[round(n*(1-quant))])[0]
+    later=np.where(values>=o[min(round(n*(1-quant)), n-1)])[0]
 
     #node_attr='u'
     #start_n = 10
