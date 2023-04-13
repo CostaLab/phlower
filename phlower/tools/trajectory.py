@@ -116,7 +116,9 @@ def trajs_dm(adata,
             eigen_n = adata.uns["eigen_value_knee"]
         else:
             eigen_n = knee_eigen(adata, eigens=re.sub(r"_vector$", r"_value", evector_name) , plot=False)
-
+    if eigen_n == 1: ##TODO, if == 1 use first eigenvector is compatible or not
+        print("eigen_n == 1 is too small, change to 2, use itsself as embedding")
+        embedding = 'self'
     elif eigen_n == 2:
         print("eigen_n is 2, use itsself as embedding")
         embedding = 'self'
@@ -321,11 +323,11 @@ def G_full_trajectory_matrix(graph: nx.Graph, mat_traj, elist, elist_dict, edge_
         mat_vec_e.append(mat_temp)
     return mat_vec_e
 
-def L_flatten_trajectory_matrix(H_full) -> np.ndarray:
+def L_flatten_trajectory_matrix(M_full) -> np.ndarray:
     """
     import from https://git.rwth-aachen.de/netsci/trajectory-outlier-detection-flow-embeddings/
     """
-    flattened = map(lambda mat_tmp: mat_tmp.sum(axis=1), H_full)
+    flattened = map(lambda mat_tmp: mat_tmp.sum(axis=1), M_full)
     return scipy.sparse.csr_matrix(np.array(list(flattened)).squeeze())
 
 

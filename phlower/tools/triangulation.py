@@ -112,7 +112,7 @@ def truncated_delaunay(nodes, position, trunc_quantile=0.75, trunc_times=3):
         tmpG = nx.Graph()
         tmpG.add_nodes_from(nodes)
         tmpG.add_edges_from(keep_edges)
-        if nx.is_connected(nx.Graph(keep_edges)):
+        if nx.is_connected(tmpG):
             break
         else:
             trunc_quantile += 0.05

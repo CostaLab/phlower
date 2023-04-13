@@ -12,7 +12,7 @@ from scipy.spatial import distance_matrix
 from scipy.sparse import csc_matrix, csr_matrix
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-from .diffusionmap import diffusionMaps, affinity, affinity, logsumexp
+from .diffusionmap import diffusionMaps, affinity, logsumexp
 from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl
 from .dimensionreduction import run_pca
 

@@ -82,7 +82,7 @@ def ddhodge(
     adata.uns[f'{basis}_ddhodge_g'] = d['g']
     adata.uns[f'{basis}_ddhodge_A'] = d['A']
     adata.uns[f'{basis}_ddhodge_W'] = d['W']
-    #adata.uns[f'{basis}_ddhodge_psi'] = d['psi']
+    adata.uns[f'{basis}_ddhodge_psi'] = d['psi']
     #adata.uns[f'{basis}_ddhodge_phi'] = d['phi']
     adata.uns[f'{basis}_ddhodge_eig'] = d['eig']
     if layout:

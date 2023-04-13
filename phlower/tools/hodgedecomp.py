@@ -118,13 +118,34 @@ def curl(g, weight_attr="weight"):
 def L1Norm_decomp(adata: AnnData,
                   graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
                   eigen_num: int = 100,
-                  L1_mode = "RW",
+                  L1_mode = "sym",
                   mysym = 'a',
                   check_symmetric: bool = True,
                   isnorm = True,
                   iscopy: bool = False,
         ):
 
+    """
+    graph hodge laplacian decomposition
+    if sym:
+        call eigsh to for symmetric matrix eigen decomposition
+
+        L_1^s = D_2^{-1/2} L_1_norm D_2^{1/2}
+        eigen vector of which is D_2^{-1/2} u_r
+    else:
+        call eigs to for non-symmetric matrix eigen decomposition, and only keep the real part of eigen values and vectors
+        L1_norm = D_2 B_1^\top D_1^{-1} B_1 + B_2 D_3 B_2^\top D_2^{-1}
+
+    Parameters
+    ----------
+    adata: AnnData
+    graph_name: str, graph name for the graph with many holes
+    eigen_num: int, number of eigenvalues to be calculated
+    L1_mode: str, "sym" or "RW"
+    check_symmetric: bool, check if the matrix is symmetric
+    isnorm: bool, normalize the graph hodge laplacian
+    iscopy: bool, copy the adata or not
+    """
     if iscopy:
         adata = adata.copy()
 
@@ -135,20 +156,22 @@ def L1Norm_decomp(adata: AnnData,
     B2 = create_edge_triangle_incidence_matrix(elist, tlist)
 
     #L1all = create_normalized_l1(B1, B2, mode="RW")
+    D2=None
     if isnorm:
-        L1 = create_normalized_l1(B1, B2, mode=L1_mode)
-        #L1 = L1all[0]
+        L1all = create_normalized_l1(B1, B2, mode=L1_mode)
+        L1 = L1all[0]
+        D2 = L1all[1]
         #if not scipy.linalg.issymmetric(L1):
             #L1 = np.tril(L1) + np.triu(L1.T, 1)
             #L1 = 1/2*(L1 + L1.T)
             #L1 =  np.maximum(L1, L1.T)
     else:
-        L1 = create_l1(B1, B2)
+        L1all = create_l1(B1, B2)
+        L1 = L1all[0]
+        D2 = L1all[1]
         #L1 = L1all[0].toarray()
-    #if not scipy.linalg.issymmetric(L1):
-    #    L1 = (L1 + L1.T) / 2
-        #L1all[0] = L1
 
+    ##TODO: for testing, remove this block after
     if mysym == 'a+at':
         L1 = 1/2*(L1 + L1.T)
     elif mysym == 'max':
@@ -164,15 +187,21 @@ def L1Norm_decomp(adata: AnnData,
 
 
     start = time.time()
+    if L1_mode == "sym": #there's no need to check the symmetry of L1
+        check_symmetric = False
     d = harmonic_projection_matrix_with_w(L1.astype(float), eigen_num, check_symmetric = check_symmetric)
     end = time.time()
+
+    ## u_R = D_2^(-1/2) * u
+    ## u_L^\top = u^\top * D_1^(-1/2)
     print((end-start), " sec")
+
+
     #adata.uns[f'{graph_name}_L1Norm'] = L1all
-    adata.uns[f'{graph_name}_L1Norm_decomp_vector'] = d['v']
-    adata.uns[f'{graph_name}_L1Norm_decomp_value'] = d['w']
+    adata.uns[f'{graph_name}_L1Norm_decomp_vector'] = d['v'] if L1_mode == "RW" else d['v'] @ np.sqrt(D2)
+    adata.uns[f'{graph_name}_L1Norm_decomp_value'] = d['w'] if L1_mode == "RW" else d['w']
     #adata.uns['X_dm_ddhodge_g_triangulation_circle_B1'] = B1
     #adata.uns['X_dm_ddhodge_g_triangulation_circle_B2'] = B2
-
     return adata if iscopy else None
 
 def knee_eigen(adata: AnnData,

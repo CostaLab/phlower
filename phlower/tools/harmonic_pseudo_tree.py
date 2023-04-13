@@ -247,10 +247,6 @@ def create_detail_tree(adata, htree, root, ddf,
                 curr_tm = tm
 
 
-            
-
-
-
     ## consider only 1 trajectory group
     if len(travel_edges) == 0:
         n0_node = tuple(htree.nodes)

@@ -1,4 +1,4 @@
-## import from https://git.rwth-aachen.de/netsci/trajectory-outlier-detection-flow-embeddings/
+## imported and adjusted from https://git.rwth-aachen.de/netsci/trajectory-outlier-detection-flow-embeddings/
 import networkx as nx
 import numpy as np
 from scipy.sparse import csc_matrix, linalg, csr_matrix
@@ -15,8 +15,14 @@ def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, chec
     ----------
     L1 : csr_matrix of type float
     number_of_holes : int
+
+    Return
+    ----------
+    dict
+        w: eigen values
+        v: eigen vectors rows
     """
-    if (not check_symmetric) or scipy.linalg.issymmetric(L1.toarray()):
+    if (not check_symmetric) or scipy.linalg.issymmetric(L1.toarray(), atol=1e-08, rtol=1e-05):
         w, v = linalg.eigsh(L1, k=number_of_holes,
                         v0=np.ones(L1.shape[0]), which='SM')
     else:
@@ -97,42 +103,53 @@ def create_edge_triangle_incidence_matrix(elist, tlist):
 
 def create_l1(B1, B2):
     L1 = (B1.T @ B1 + B2 @ B2.T)
-    #L1 = B1.T.dot(B1) + B2.dot(B2.T)
 
-    return L1 #, D1, D1inv, D0weighted, D0weightedinv
-
-
-
-def create_normalized_l1(B1, B2, mode="RW"):
     if B2.shape[1] > 0:
-        d1 = np.sum(np.abs(B2), axis=1)
-        d1 = np.asarray(d1.flatten())[0]
-        D1 = scipy.sparse.diags(np.maximum(1, d1), 0, format="csr")
-        D1inv = scipy.sparse.diags(np.divide(1, D1.diagonal()), 0, format="csr")
+        d2 = np.sum(np.abs(B2), axis=1)
+        d2 = np.asarray(d2.flatten())[0]
+        D2 = scipy.sparse.diags(np.maximum(1, d2), 0, format="csr")
     else:
         num_edges = B1.shape[1]
-        D1 = scipy.sparse.eye(num_edges)
-        D1inv = D1
+        D2 = scipy.sparse.eye(num_edges)
+    #L1 = B1.T.dot(B1) + B2.dot(B2.T)
+    return L1, D2
 
-    d0weighted = np.maximum(1, np.sum(np.abs(B1 @ D1), axis=1))
-    d0weighted = np.reshape(d0weighted, (d0weighted.size))
-    d0weighted = np.array(d0weighted).flatten()
-    D0weighted = scipy.sparse.diags(d0weighted, 0, format="csr")
-    D0weightedinv = scipy.sparse.diags(np.divide(1, d0weighted), 0, format="csr")
+
+
+def create_normalized_l1(B1, B2, mode="sym"):
+    if B2.shape[1] > 0:
+        d2 = np.sum(np.abs(B2), axis=1)
+        d2 = np.asarray(d2.flatten())[0]
+        D2 = scipy.sparse.diags(np.maximum(1, d2), 0, format="csr")
+        D2inv = scipy.sparse.diags(np.divide(1, D2.diagonal()), 0, format="csr")
+    else:
+        num_edges = B1.shape[1]
+        D2 = scipy.sparse.eye(num_edges)
+        D2inv = D2
+
+    d1weighted = np.maximum(1, np.sum(np.abs(B1 @ D2), axis=1))
+    d1weighted = np.reshape(d1weighted, (d1weighted.size))
+    d1weighted = np.array(d1weighted).flatten()
+    D1weighted = scipy.sparse.diags(d1weighted, 0, format="csr")
+    D1weightedinv = scipy.sparse.diags(np.divide(1, d1weighted), 0, format="csr")
 
     # assemble normalized Laplacian
-    #L1 = D1*B1.T*1/2*D0weightedinv*B1 + B2*1/3*B2.T*D1inv
-    L1_node = ((D1 @ B1.T * (1/2)) @ (D0weightedinv)) @ B1
+    #L1 = D2*B1.T*1/2*D1weightedinv*B1 + B2*1/3*B2.T*D2inv
+    L1_node = ((D2 @ B1.T * (1/2)) @ (D1weightedinv)) @ B1
 
     if B2.shape[1] > 0:
-        L1_edge = B2 * 1/3 @ B2.T @ D1inv
+        L1_edge = B2 * 1/3 @ B2.T @ D2inv
     else:
         L1_edge = 0
 
     L1 = L1_node + L1_edge
     if mode == "sym":
-        L1 = np.sqrt(D1inv) * L1 * np.sqrt(D1inv)
-    return L1
+        #L1 = np.sqrt(D2inv) * L1 * np.sqrt(D2inv) ## from the gitlab: https://git.rwth-aachen.de/netsci/trajectory-outlier-detection-flow-embeddings
+        ## L_1^S = D_2^{-1/2} L_1 D_2^{1/2}
+        ## u_R = D_2^{1/2} u_1
+        ## u_L^T = u_1^T D_2^{-1/2}
+        L1 = np.sqrt(D2inv) * L1 * np.sqrt(D2)
+    return L1, D2
 
 
 def create_weighted_edge_triangle_incidence_matrix(G, elist, tlist, weight_attr="weight"):
