@@ -290,7 +290,7 @@ def G_full_trajectory_matrix(graph: nx.Graph, mat_traj, elist, elist_dict, edge_
     mat_vec_e = []
     for count, j in enumerate(mat_traj):
         if len(j) == 0:
-            print(f"{count}: No Trajectory")
+            #print(f"{count}: No Trajectory")
             continue
 
         data = []

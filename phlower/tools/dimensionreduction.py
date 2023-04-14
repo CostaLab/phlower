@@ -1,11 +1,14 @@
 import umap.umap_ as umap
 import scipy
+import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.manifold import MDS, TSNE, Isomap
 from sklearn.decomposition import KernelPCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from scipy.spatial import distance_matrix
 from fa2 import ForceAtlas2
+from .diffusionmap import affinity
 
 def run_umap(mtx, random_state=2022):
     reducer = umap.UMAP(random_state=random_state)
@@ -69,10 +72,12 @@ def run_fdl(mtx,
             scalingRatio=4.0,#2.0,
             strongGravityMode=True, #False,
             gravity=2.0, #1.0
+            device = "cpu",
             # Log
             verbose=True,
             *args, **kwargs):
     """
+    adjusted from: https://github.com/dpeerlab/Harmony/blob/master/src/harmony/plot.py
     ForceAtlas2
     input dm to calculate affinity matrix
     """
@@ -81,29 +86,64 @@ def run_fdl(mtx,
 
     np.random.seed(random_state)
     R = distance_matrix(mtx, mtx)
-    affinity_mtx = phlower.tl.affinity(R, k=affinity_k,log=False, normalize=False)
-    forceatlas2 = ForceAtlas2(
-                # Behavior alternatives
-                outboundAttractionDistribution=outboundAttractionDistribution,  # Dissuade hubs
-                linLogMode=linLogMode,
-                adjustSizes=adjustSizes,  # Prevent overlap (NOT IMPLEMENTED)
-                edgeWeightInfluence=edgeWeightInfluence,
-                # Performance
-                jitterTolerance=jitterTolerance,  # Tolerance
-                barnesHutOptimize=barnesHutOptimize,
-                barnesHutTheta=barnesHutTheta,
-                multiThreaded=multiThreaded,
-                # Tuning
-                scalingRatio=scalingRatio,
-                strongGravityMode=strongGravityMode,
-                gravity=gravity,
-                # Log
-                verbose=verbose,
-                *args,
-                **kwargs)
-
+    affinity_mtx = affinity(R, k=affinity_k,log=False, normalize=False)
     init_coords = np.random.random((affinity_mtx.shape[0], 2))
-    positions = forceatlas2.forceatlas2(affinity_mtx, pos=init_coords, iterations=500)
+    if device == "cpu":
+        forceatlas2 = ForceAtlas2(
+                    # Behavior alternatives
+                    outboundAttractionDistribution=outboundAttractionDistribution,  # Dissuade hubs
+                    linLogMode=linLogMode,
+                    adjustSizes=adjustSizes,  # Prevent overlap (NOT IMPLEMENTED)
+                    edgeWeightInfluence=edgeWeightInfluence,
+                    # Performance
+                    jitterTolerance=jitterTolerance,  # Tolerance
+                    barnesHutOptimize=barnesHutOptimize,
+                    barnesHutTheta=barnesHutTheta,
+                    multiThreaded=multiThreaded,
+                    # Tuning
+                    scalingRatio=scalingRatio,
+                    strongGravityMode=strongGravityMode,
+                    gravity=gravity,
+                    # Log
+                    verbose=verbose,
+                    *args,
+                    **kwargs)
+
+        positions = forceatlas2.forceatlas2(affinity_mtx, pos=init_coords, iterations=500)
+
+    elif device == "gpu":
+        import cugraph
+        import cudf
+        offsets = cudf.Series(affinity_mtx.indptr)
+        indices = cudf.Series(affinity_mtx.indices)
+        G = cugraph.Graph()
+        G.from_cudf_adjlist(offsets, indices, None)
+        forceatlas2 = cugraph.layout.force_atlas2(
+            G,
+            max_iter=iterations,
+            pos_list=cudf.DataFrame(
+                {
+                    "vertex": np.arange(init_coords.shape[0]),
+                    "x": init_coords[:, 0],
+                    "y": init_coords[:, 1],
+                }
+            ),
+            outbound_attraction_distribution=outboundAttractionDistribution,
+            lin_log_mode=linLogMode,
+            edge_weight_influence=edgeWeightInfluence,
+            jitter_tolerance=jitterTolerance,
+            barnes_hut_optimize=barnesHutOptimize,
+            barnes_hut_theta=barnesHutTheta,
+            scaling_ratio=scalingRatio,
+            strong_gravity_mode=strongGravityMode,
+            gravity=gravity,
+            verbose=verbose,
+            *args,
+            **kwargs,
+        )
+
+        positions = forceatlas2.to_pandas().loc[:, ["x", "y"]].values
+
     positions = np.array(positions)
     return positions
 

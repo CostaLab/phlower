@@ -28,6 +28,7 @@ from .dimensionreduction import (
         run_kernelpca,
         run_lda,
         run_isomap,
+        run_fdl,
         run_tsne,
         )
 
