@@ -142,9 +142,11 @@ def run_palantir_fdl(mtx,
                      device='cpu',
                      knn=30,
                      alpha=0,
+                     edgeWeightInfluence=0.5,
                      scalingRatio=2.0,
                      gravity = 1.0,
                      random_state=2022,
+                     outboundAttractionDistribution=False,
                      strongGravityMode=False):
 
     """" Function to compute force directed layout from the affinity_matrix
@@ -167,10 +169,10 @@ def run_palantir_fdl(mtx,
     if device == 'cpu':
         forceatlas2 = ForceAtlas2(
             # Behavior alternatives
-            outboundAttractionDistribution=False,
+            outboundAttractionDistribution=outboundAttractionDistribution,  # Dissuade hubs
             linLogMode=False,
             adjustSizes=False,
-            edgeWeightInfluence=1.0,
+            edgeWeightInfluence=edgeWeightInfluence,
             # Performance
             jitterTolerance=1.0,
             barnesHutOptimize=True,
@@ -205,9 +207,9 @@ def run_palantir_fdl(mtx,
                     "y": init_coords[:, 1],
                 }
             ),
-            outbound_attraction_distribution=False,
+            outbound_attraction_distribution=outboundAttractionDistribution,
             lin_log_mode=False,
-            edge_weight_influence=1.0,
+            edge_weight_influence=edgeWeightInfluence,
             jitter_tolerance=1.0,
             barnes_hut_optimize=True,
             barnes_hut_theta=1.2,
