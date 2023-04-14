@@ -29,6 +29,7 @@ from .dimensionreduction import (
         run_lda,
         run_isomap,
         run_fdl,
+        run_palantir_fdl,
         run_tsne,
         )
 

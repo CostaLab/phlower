@@ -116,10 +116,16 @@ def truncated_delaunay(nodes, position, trunc_quantile=0.75, trunc_times=3):
         if nx.is_connected(tmpG):
             break
         else:
-            trunc_quantile += 0.05
-            threshold = np.quantile(edges_distance, trunc_quantile) * trunc_times
-        if trunc_quantile > 1:
-            raise ValueError("cannot find a connected graph")
+            trunc_quantile += 0.01
+            #threshold = np.quantile(edges_distance, trunc_quantile) * trunc_times
+
+        if trunc_quantile >= 1:
+            print("full delaunay connected graph")
+            threshold = np.quantile(edges_distance, 0.999) * trunc_times
+            keep_edges = [tri_edges[i] for i in range(len(tri_edges)) if edges_distance[i] < threshold]
+            break
+
+
     return keep_edges
 
 
