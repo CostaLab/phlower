@@ -41,6 +41,8 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
                    vmin=None,vmax=None,alpha=0.8,
                    pad=1.08,w_pad=None,h_pad=None,
                    show_text=True,show_graph=True,
+                   show_legend=True,
+                   title = None,
                    text_attr = 'original',
                    save_fig=False,fig_path=None,fig_format='pdf',
                    plotly=False):
@@ -216,11 +218,15 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
                                             if (ann+'_color' in adata.uns_keys()) and (set(adata.uns[ann+'_color'].keys()) >= set(np.unique(df_plot_shuf[ann]))) \
                                             else sns_palette
                                     )
+
                 legend_handles, legend_labels = ax_i.get_legend_handles_labels()
                 ax_i.legend(handles=legend_handles, labels=legend_labels,
                             bbox_to_anchor=(1, 0.5), loc='center left', ncol=fig_legend_ncol,
                             frameon=False,
                             )
+
+                if not show_legend:
+                    ax_i.get_legend().remove()
 
                 ### remove legend title
                 # ax_i.get_legend().texts[0].set_text("")
@@ -258,7 +264,9 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
             ax_i.tick_params(axis="x",pad=-1)
             annots = arrowed_spines(ax_i, locations=('bottom right',),
                                     lw=ax_i.spines['bottom'].get_linewidth()*1e-5)
-            ax_i.set_title(ann)
+            if title is None:
+                title = ann
+            ax_i.set_title(title)
             plt.tight_layout(pad=pad, h_pad=h_pad, w_pad=w_pad)
             if(save_fig):
                 file_path_S = os.path.join(fig_path,root)
@@ -275,6 +283,8 @@ def plot_stream(adata,root='S0',color = None,preference=None,dist_scale=0.9,
                 log_scale = False,factor_zoomin=100.0,
                 fig_size=(7,4.5),fig_legend_order=None,fig_legend_ncol=1,
                 fig_colorbar_aspect=30,
+                show_legend=True,
+                title=None,
                 vmin=None,vmax=None,
                 pad=1.08,w_pad=None,h_pad=None,
                 save_fig=False,fig_path=None,fig_format='pdf'):
@@ -440,6 +450,8 @@ def plot_stream(adata,root='S0',color = None,preference=None,dist_scale=0.9,
                       columnspacing=0.4,
                       borderaxespad=0.2,
                       handletextpad=0.3,)
+            if not show_legend:
+                ax.get_legend().remove()
         else:
             verts = dict_plot['numeric'][0]
             extent = dict_plot['numeric'][1]
@@ -476,7 +488,9 @@ def plot_stream(adata,root='S0',color = None,preference=None,dist_scale=0.9,
         ax.tick_params(axis="x",pad=-1)
         annots = arrowed_spines(ax, locations=('bottom right',),
                                 lw=ax.spines['bottom'].get_linewidth()*1e-5)
-        ax.set_title(ann)
+        if title is None:
+            title = ann
+        ax.set_title(title)
         plt.tight_layout(pad=pad, h_pad=h_pad, w_pad=w_pad)
         if(save_fig):
             file_path_S = os.path.join(fig_path,root)
