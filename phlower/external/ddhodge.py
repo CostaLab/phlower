@@ -11,6 +11,7 @@ import scipy
 from scipy.sparse import csr_matrix, issparse
 from ..tools.graphconstr import diffusionGraphDM, diffusionGraph
 
+##TODO: if the graph is not connected, need try to increase the k to get a connected graph
 def ddhodge(
         adata: AnnData,
         basis: str = 'X_pca',
@@ -48,6 +49,8 @@ def ddhodge(
         Number of nearest neighbors for diffusion graph construction.
     lmda
         Regularization parameter for edge weights.
+    layout
+        Graphviz layout to use for visualization, can be one of 'dot', 'neato', 'fdp', 'sfdp', 'twopi', 'circo'.
     """
     if basis and basis not in adata.obsm.keys():
         raise ValueError('basis not in adata.obsm.keys()')

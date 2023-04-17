@@ -679,15 +679,29 @@ def G_plot_traj(graph: nx.Graph,
         # We use a bigger node size here so that the arrows do not
         # fully reach the nodes. This makes the visualization a bit
         # better.
-        nx.draw_networkx_edges(graph,
-                               node_positions,
-                               ax=ax,
-                               edgelist=list(edges_on_path(trajectory)),
-                               node_size=10,
-                               width=edge_width,
-                               edge_color=color,
-                               arrows=True,
-                               arrowstyle='->')
+
+
+        if all(isinstance(elem, list) for elem in trajectory):
+            for a_traj in trajectory:
+                nx.draw_networkx_edges(graph,
+                                       node_positions,
+                                       ax=ax,
+                                       edgelist=list(edges_on_path(a_traj)),
+                                       node_size=10,
+                                       width=edge_width,
+                                       edge_color=color,
+                                       arrows=True,
+                                       arrowstyle='->')
+        else:
+            nx.draw_networkx_edges(graph,
+                                   node_positions,
+                                   ax=ax,
+                                   edgelist=list(edges_on_path(trajectory)),
+                                   node_size=10,
+                                   width=edge_width,
+                                   edge_color=color,
+                                   arrows=True,
+                                   arrowstyle='->')
 
     if hole_centers is not None:
         ax.scatter(x=hole_centers[:, 0], y=hole_centers[:, 1], marker='x')

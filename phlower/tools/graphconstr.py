@@ -137,7 +137,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   R = distance_matrix(dm, dm)
   if verbose:
     print(datetime.now(), "Diffusionmaps: ")
-  d = diffusionMaps(R,j,sigma) #0:Psi, 1:Phi, 2:eig
+  d = diffusionMaps(R,j,sigma, eig_k=ndc+1) #0:Psi, 1:Phi, 2:eig
   print("done.")
   # Diffusion distance matrix
   mm = d['psi']@np.diag(np.power(d['eig'], s))[:, 1:(ndc+1)]

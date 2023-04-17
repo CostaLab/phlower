@@ -161,6 +161,7 @@ def run_palantir_fdl(mtx,
         print(datetime.now(), "Computing palantir diffusion...")
     if type(mtx) != pd.DataFrame:
         mtx = pd.DataFrame(mtx)
+    ## only affinity matrix is needed, so the n_components can be anything.
     affinity_matrix = run_palantir_diffusion_maps(mtx, n_components=10, knn=knn, alpha=alpha, seed=random_state)['kernel']
 
     init_coords = np.random.random((affinity_matrix.shape[0], 2))
@@ -262,8 +263,15 @@ def run_fdl(mtx,
 
 
     np.random.seed(random_state)
+    if verbose:
+        print(datetime.now(), "Computing distance matrix...")
     R = distance_matrix(mtx, mtx)
+    if verbose:
+        print(datetime.now(), "Computing affinity matrix...")
     affinity_mtx = affinity(R, k=affinity_k,log=False, normalize=False)
+
+    if verbose:
+        print(datetime.now(), "Computing force directed layout...")
     init_coords = np.random.random((affinity_mtx.shape[0], 2))
     if device == "cpu":
         forceatlas2 = ForceAtlas2(

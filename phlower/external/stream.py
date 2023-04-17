@@ -205,7 +205,8 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
             ax_i = fig.add_subplot(1,1,1)
             if(is_string_dtype(df_plot[ann])):
                 sns_palette = sns.color_palette(cc.glasbey, n_colors=len(set(df_plot_shuf[ann]))).as_hex()
-                adata.uns[ann+'_color'] = {y:sns_palette[idx]  for idx, y in enumerate(set(df_plot_shuf[ann]))}
+                if ann+'_color' not in adata.uns:
+                    adata.uns[ann+'_color'] = {y:sns_palette[idx]  for idx, y in enumerate(set(df_plot_shuf[ann]))}
                 sc_i=sns.scatterplot(ax=ax_i,
                                     x='pseudotime', y='dist',
                                     hue=ann,hue_order = legend_order[ann],
