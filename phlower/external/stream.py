@@ -45,6 +45,7 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
                    title = None,
                    text_attr = 'original',
                    save_fig=False,fig_path=None,fig_format='pdf',
+                   s = 30,
                    plotly=False):
     """Generate stream plot at single cell level (aka, subway map plots)
 
@@ -214,6 +215,7 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
                                     hue=ann,hue_order = legend_order[ann],
                                     data=df_plot_shuf,
                                     alpha=alpha,linewidth=0,
+                                    s=s,
                                     palette= adata.uns[ann+'_color'] \
                                             if (ann+'_color' in adata.uns_keys()) and (set(adata.uns[ann+'_color'].keys()) >= set(np.unique(df_plot_shuf[ann]))) \
                                             else sns_palette

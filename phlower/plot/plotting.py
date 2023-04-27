@@ -648,6 +648,7 @@ def G_plot_traj(graph: nx.Graph,
                 plot_node=True,
                 alpha_nodes = 0.3,
                 color_palette = sns.color_palette('tab10'),
+                **args,
                 ) -> None:
 
     ax = ax or plt.gca()
@@ -691,7 +692,9 @@ def G_plot_traj(graph: nx.Graph,
                                        width=edge_width,
                                        edge_color=color,
                                        arrows=True,
-                                       arrowstyle='->')
+                                       arrowstyle='->',
+                                       **args,
+                                       )
         else:
             nx.draw_networkx_edges(graph,
                                    node_positions,
@@ -701,7 +704,9 @@ def G_plot_traj(graph: nx.Graph,
                                    width=edge_width,
                                    edge_color=color,
                                    arrows=True,
-                                   arrowstyle='->')
+                                   arrowstyle='->',
+                                   **args,
+                                   )
 
     if hole_centers is not None:
         ax.scatter(x=hole_centers[:, 0], y=hole_centers[:, 1], marker='x')
@@ -832,6 +837,7 @@ def G_plot_density_grid(G,
                       sharey = True,
                       bg_alpha = 0.5,
                       node_size = 2,
+                      colorbar=False,
                       **args
                       ):
 
@@ -864,6 +870,8 @@ def G_plot_density_grid(G,
     r = r - 1 if (r-1)*c == cluster_n else r
     fig, axes = plt.subplots(r,c, sharex=sharex, sharey=sharey,)
     fig.set_size_inches(figsize[0], figsize[1])
+    z_min = 1e100
+    z_max = -1e100
     for a, cluster in enumerate(retain_clusters):
         i = int(a/c)
         j = a%c
@@ -872,6 +880,8 @@ def G_plot_density_grid(G,
         x = cdic['x']
         y = cdic['y']
         z = cdic['z']
+        z_min = min(z_min, np.min(z))
+        z_max = max(z_max, np.max(z))
         if r == 1 and c == 1:
             nx.draw_networkx_nodes(G, layouts, ax = axes, node_size=node_size, node_color='grey', alpha=bg_alpha)
             axes.scatter(x, y, c=z, s=node_size, **args)
@@ -895,6 +905,13 @@ def G_plot_density_grid(G,
             axes[j].axis('off')
         else:
             axes[i,j].axis('off')
+
+    print("z_min, z_max", z_min, z_max)
+    if colorbar:
+        cmap = plt.get_cmap("viridis")
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin = z_min, vmax=z_max))
+        sm._A = []
+        plt.colorbar(sm, ax=plt.gca())
 
     return fig, axes
 
@@ -955,6 +972,7 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                                               legendgroup=str(cluster),
                                               showlegend=show_legend,
                                               name = str(cluster),
+                                              marker_size = 150,
                                               mode='lines'
                                           ))
         else:
@@ -1052,8 +1070,8 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
             sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, **args) #
 
     if xylabel:
-        ax.set_xlabel(f"H{dims[0]}")
-        ax.set_ylabel(f"H{dims[1]}")
+        ax.set_xlabel(f"cumsum_{dims[0]}")
+        ax.set_ylabel(f"cumsum_{dims[1]}")
 
     if show_legend:
         leg = ax.legend(loc=legend_loc, bbox_to_anchor=bbox_to_anchor)

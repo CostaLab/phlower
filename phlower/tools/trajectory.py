@@ -88,6 +88,7 @@ def full_trajectory_matrix(adata: AnnData,
     M_full = G_full_trajectory_matrix(g, map(lambda path: list(edges_on_path(path)), chain.from_iterable([trajs])), elist, elist_dict)
     adata.uns[oname_basis + "full_traj_matrix"] = M_full
     adata.uns[oname_basis + "full_traj_matrix_flatten"] = L_flatten_trajectory_matrix(M_full)
+    adata.uns[oname_basis + "full_traj_matrix_flatten_norm"] = L_flatten_trajectory_matrix_norm(M_full)
 
 
     return adata if iscopy else None
@@ -329,6 +330,11 @@ def L_flatten_trajectory_matrix(M_full) -> np.ndarray:
     """
     flattened = map(lambda mat_tmp: mat_tmp.sum(axis=1), M_full)
     return scipy.sparse.csr_matrix(np.array(list(flattened)).squeeze())
+
+def L_flatten_trajectory_matrix_norm(M_full) -> np.ndarray:
+    flattened = map(lambda mat_tmp: mat_tmp.sum(axis=1)/mat_tmp.shape[1], M_full)
+    return scipy.sparse.csr_matrix(np.array(list(flattened)).squeeze())
+
 
 
 def M_create_matrix_coordinates_trajectory_Hspace(H, M_full):
