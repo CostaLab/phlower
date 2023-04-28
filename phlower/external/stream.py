@@ -276,7 +276,7 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
                 #if(not os.path.exists(file_path_S)):
                 #    os.makedirs(file_path_S)
                 #plt.savefig(os.path.join(file_path_S,'stream_sc_' + slugify(ann) + '.' + fig_format),pad_inches=1,bbox_inches='tight')
-                plt.savefig(os.path.join(fig_path,'stream_sc_' + '.' + fig_format),pad_inches=1,bbox_inches='tight')
+                plt.savefig(os.path.join(fig_path,'stream_sc' + '.' + fig_format),pad_inches=1,bbox_inches='tight')
                 plt.close(fig)
 
 
@@ -501,5 +501,5 @@ def plot_stream(adata,root='S0',color = None,preference=None,dist_scale=0.9,
             #if(not os.path.exists(file_path_S)):
             #    os.makedirs(file_path_S)
             #plt.savefig(os.path.join(file_path_S,'stream_' + slugify(ann) + '.' + fig_format),pad_inches=1,bbox_inches='tight')
-            plt.savefig(os.path.join(fig_path,'stream_' + '.' + fig_format),pad_inches=1,bbox_inches='tight')
+            plt.savefig(os.path.join(fig_path,'stream' + '.' + fig_format),pad_inches=1,bbox_inches='tight')
             plt.close(fig)
