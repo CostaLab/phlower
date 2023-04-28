@@ -289,6 +289,7 @@ def plot_density_grid(adata: AnnData,
                       title_prefix='cluster_',
                       bg_alpha = 0.5,
                       node_size = 2,
+                      return_fig = False,
                       **args
                       ):
 
@@ -301,7 +302,7 @@ def plot_density_grid(adata: AnnData,
     if trajs_name not in adata.uns.keys():
         raise ValueError("trajs_name not in adata.uns.keys()")
 
-    G_plot_density_grid(adata.uns[graph_name],
+    fig, axes = G_plot_density_grid(adata.uns[graph_name],
                         adata.obsm[layout_name],
                         adata.uns[cluster_name],
                         adata.uns[trajs_name],
@@ -312,6 +313,7 @@ def plot_density_grid(adata: AnnData,
                         bg_alpha=bg_alpha,
                         node_size=node_size,
                         **args)
+    return None if not return_fig else (fig, axes)
 
 
 def plot_trajs_embedding(adata,
