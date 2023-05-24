@@ -10,6 +10,9 @@ from .clustering import (
         leiden,
         louvain,
         dbscan,
+        gaussianmixture,
+        spectralclustering,
+        agglomerativeclustering,
         )
 
 from .fate_tree import (
@@ -39,6 +42,7 @@ from .viz import (
 
 from .triangulation import (
         construct_trucated_delaunay,
+        construct_trucated_delaunay_knn,
         construct_circle_delaunay,
         )
 
@@ -62,3 +66,4 @@ from .harmonic_pseudo_tree import *
 ### for test
 from .graphconstr import *
 from .hodgedecomp import *
+from .triangulation import *

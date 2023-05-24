@@ -6,6 +6,7 @@ from anndata import AnnData
 from scipy.sparse import linalg, csr_matrix
 from scipy.spatial import Delaunay,distance
 from ..util import tuple_increase, top_n_from, is_in_2sets, is_node_attr_existing
+from .graphconstr import adjedges
 
 
 def construct_trucated_delaunay(adata:AnnData,
@@ -127,6 +128,82 @@ def truncated_delaunay(nodes, position, trunc_quantile=0.75, trunc_times=3):
 
 
     return keep_edges
+
+
+def construct_trucated_delaunay_knn(adata:AnnData,
+                           graph_name:str='X_dm_ddhodge_g',
+                           layout_name:str='X_dm_ddhodge_g',
+                           A= "X_dm_ddhodge_A",
+                           W= "X_dm_ddhodge_W",
+                           knn_edges_k = 40,
+                           iscopy:bool=False,
+):
+    """
+    delaunay on a layout
+    use diffusion knn edges to remove edges
+
+    Parameters
+    ---------
+    position: 2D pd.array for the running of delaunay
+    """
+    if iscopy:
+        adata = adata.copy()
+
+    if graph_name not in adata.uns:
+        raise ValueError(f"{graph_name} not in adata.uns")
+
+    if layout_name not in adata.obsm:
+        raise ValueError(f"{layout_name} not in adata.obsm")
+
+    position = adata.obsm[layout_name]
+    if type(position) == dict:
+        position = np.array([position[x] for x in range(max(position.keys()) + 1)])
+    tri = Delaunay(position)
+    ti = tuple_increase
+    tri_edges =[[ti(a,b),ti(a,c),ti(b,c)] for a,b,c in tri.simplices]
+    tri_edges = list(set([item for sublist in tri_edges for item in sublist])) # flatten
+
+    tmpG = reset_edges(adata.uns[graph_name], tri_edges, keep_old=False)
+    while not nx.is_connected(tmpG):
+        print("warn: not able to delaunay _triangulate, add gussain noisy offset!")
+        noise_sigma_ratio=0.01
+
+        rg1 = np.max(position[:, 0]) - np.min(position[:, 0])
+        rg2 = np.max(position[:, 1]) - np.min(position[:, 1])
+        m1 = np.mean(position[:, 0])
+        m2 = np.mean(position[:, 1])
+        X_noise=np.random.normal(m1, noise_sigma_ratio*rg1, size=position.shape[0])
+        Y_noise=np.random.normal(m2, noise_sigma_ratio*rg2, size=position.shape[0])
+        position[:, 0] += X_noise
+        position[:, 1] += Y_noise
+        tri = Delaunay(position)
+        ti = tuple_increase
+        tri_edges =[[ti(a,b),ti(a,c),ti(b,c)] for a,b,c in tri.simplices]
+        tri_edges = list(set([item for sublist in tri_edges for item in sublist])) # flatten
+        tmpG = reset_edges(adata.uns[graph_name], tri_edges, keep_old=False)
+
+
+    knn_edges = adjedges(adata.uns[A], adata.uns[W], knn_edges_k)
+    knn_edges = set([tuple_increase(i,j) for (i,j) in knn_edges])
+    #knn_edges |= set([tuple_increase(i,j)[::-1] for (i,j) in knn_edges])
+    keep_edges = [i for i in tri_edges if i in knn_edges]
+    while True:
+        tmpG = reset_edges(adata.uns[graph_name], keep_edges, keep_old=False)
+        if nx.is_connected(tmpG):
+            adata.uns[f'{graph_name}_triangulation'] = tmpG
+            break
+        knn_edges_k *= 2
+        knn_edges = adjedges(adata.uns[A], adata.uns[W], knn_edges_k)
+        knn_edges = set([tuple_increase(i,j) for (i,j) in knn_edges])
+        print("knn_edges_k:", knn_edges_k, len(knn_edges))
+        keep_edges = [i for i in tri_edges if i in knn_edges]
+
+
+    print("knn_k applied:", knn_edges_k)
+    return adata if iscopy else None
+#endf triangulation_delaunay_knn
+
+
 
 
 

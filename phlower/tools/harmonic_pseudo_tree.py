@@ -183,7 +183,9 @@ def create_detail_tree(adata, htree, root, ddf,
                        tree_name = "fate_tree",
                        edge_attr = "ecount",
                        cluster = "group",
-                       trim_end=True):
+                       trim_end=True,
+                       node_attribute='u',
+                       ):
     """
     Start from the htree, which is only store root, branching point and leaves
     0. add a global root from the top n minimum pseudo time
@@ -262,7 +264,7 @@ def create_detail_tree(adata, htree, root, ddf,
 
     fate_tree = add_node_info(fate_tree, ddf, root)
     fate_tree = relabel_tree(fate_tree, root)
-    fate_tree = manual_root(adata,graph_name, layout_name, fate_tree, '0_0')
+    fate_tree = manual_root(adata,graph_name, layout_name, fate_tree, '0_0', node_attribute=node_attribute)
     fate_tree.nodes['root']['original'] = (('root', ), 0)
 
     adata.uns[tree_name] = fate_tree
@@ -348,23 +350,23 @@ def add_node_info(fate_tree, ddf, root):
     return fate_tree
 
 
-def manual_root(adata, graph_name, layout_name, fate_tree, root, top_n=10):
+def manual_root(adata, graph_name, layout_name, fate_tree, root, node_attribute='u',top_n=10):
     """
     manually add new the root of the tree
     And add the same info as others, cumsum is not avaliable since it's not from trjaectories
+    ecounts is top_n mininum u of the nodes.
     """
-    items = _edge_mid_attribute(adata, graph_name).items()
+    items = _edge_mid_attribute(adata, graph_name, node_attribute=node_attribute).items()
     edges = [k for k,v in sorted(items, key=lambda x:x[1])[:top_n]]
     fate_tree.add_node('root')
     fate_tree.add_edge('root', root)
     ## update attribute
     fate_tree.nodes['root']['ecount'] = [(e, 1) for e in edges]
     fate_tree.nodes['root']['pos']    = np.mean([_edge_mid_points(adata, graph_name, layout_name)[e] for e in edges], axis=0)
-    fate_tree.nodes['root']['u']      = np.mean([_edge_mid_attribute(adata, graph_name)[e] for e in edges], axis=0)
+    fate_tree.nodes['root']['u']      = np.mean([_edge_mid_attribute(adata, graph_name, node_attribute=node_attribute)[e] for e in edges], axis=0)
     fate_tree.nodes['root']['cumsum'] = np.array([])
 
     return fate_tree
-
 
 
 def linear_tree(pairwise_bdict, keys):

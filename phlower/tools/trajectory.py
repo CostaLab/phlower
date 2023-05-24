@@ -17,6 +17,7 @@ from typing import Union
 from .graphconstr import adjedges, edges_on_path
 from .dimensionreduction import run_umap, run_pca
 from .clustering import dbscan, leiden, louvain
+from .hodgedecomp import knee_eigen
 from ..util import pairwise, find_knee, tuple_increase, is_node_attr_existing
 
 
@@ -60,6 +61,7 @@ def random_climb_knn(adata,
         traj_name = f"knn_trajs"
 
     adata.uns[traj_name] = knn_trajs
+    adata.uns['climbing_root_ratio'] = roots_ratio
 
     return adata if iscopy else None
 
