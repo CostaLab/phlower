@@ -20,7 +20,8 @@ def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
 def plot_trajectory_harmonic_lines_3d(adata: AnnData,
                                       full_traj_matrix="full_traj_matrix",
                                       clusters = "trajs_clusters",
-                                      evector_name = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+                                      graph_basis = "X_dm_ddhodge_g",
+                                      evector_name = None,
                                       retain_clusters=[],
                                       figsize = (800,800),
                                       dims = [0,1,2],
@@ -40,6 +41,14 @@ def plot_trajectory_harmonic_lines_3d(adata: AnnData,
     markerscale: legend linewidth scale to larger or smaller
     color_palette: color palette for show cluster_list
     """
+    if graph_basis and not evector_name:
+        evector_name = f"{graph_basis}_triangulation_circle_L1Norm_decomp_vector"
+    if evector_name not in adata.uns:
+        raise ValueError(f"{evector_name} not in adata.uns, please check!")
+    if full_traj_matrix not in adata.uns:
+        raise ValueError(f"{full_traj_matrix} not in adata.uns, please check!")
+
+
     mat_coord_Hspace = M_create_matrix_coordinates_trajectory_Hspace(adata.uns[evector_name][0:max(dims)+1],
                                                                      adata.uns[full_traj_matrix])
     M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
@@ -52,13 +61,11 @@ def plot_trajectory_harmonic_lines_3d(adata: AnnData,
                                         **args)
 
 
-
-
-
 def plot_trajectory_harmonic_lines(adata: AnnData,
                                    full_traj_matrix="full_traj_matrix",
                                    clusters = "trajs_clusters",
-                                   evector_name = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+                                   graph_basis = "X_dm_ddhodge_g",
+                                   evector_name = None,
                                    retain_clusters=[],
                                    dims = [0,1],
                                    show_legend=True,
@@ -82,6 +89,14 @@ def plot_trajectory_harmonic_lines(adata: AnnData,
     markerscale: legend linewidth scale to larger or smaller
     color_palette: color palette for show cluster_list
     """
+    if graph_basis and not evector_name:
+        evector_name = f"{graph_basis}_triangulation_circle_L1Norm_decomp_vector"
+    if evector_name not in adata.uns:
+        raise ValueError(f"evector_name: {evector_name} not in adata.uns, please check!")
+    if clusters not in adata.uns:
+        raise ValueError(f"clusters: {clusters} not in adata.uns, please check!")
+
+
     mat_coord_Hspace = M_create_matrix_coordinates_trajectory_Hspace(adata.uns[evector_name][0:max(dims)+1],
                                                                    adata.uns[full_traj_matrix])
 
@@ -100,11 +115,11 @@ def plot_trajectory_harmonic_lines(adata: AnnData,
                                      **args)
 
 
-
 def plot_trajectory_harmonic_points_3d(adata: AnnData,
                                        full_traj_matrix_flatten="full_traj_matrix_flatten",
                                        clusters = "trajs_clusters",
-                                       evector_name = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+                                       graph_basis = "X_dm_ddhodge_g",
+                                       evector_name = None,
                                        retain_clusters=[],
                                        dims = [0,1],
                                        node_size=2,
@@ -128,6 +143,14 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
     color_palette: color palette for show cluster_list
     **args: args for scatter
     """
+    if graph_basis and not evector_name:
+        evector_name = f"{graph_basis}_triangulation_circle_L1Norm_decomp_vector"
+    if evector_name not in adata.uns:
+        raise ValueError(f"evector_name: {evector_name} not in adata.uns, please check!")
+    if clusters not in adata.uns:
+        raise ValueError(f"clusters: {clusters} not in adata.uns, please check!")
+
+
     mat_coor_flatten_trajectory = [adata.uns[evector_name][0:max(dims)+1, :] @ mat for mat in adata.uns[full_traj_matrix_flatten].toarray()]
     M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
                                          cluster_list = list(adata.uns[clusters]),
@@ -142,12 +165,11 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
                                          )
 
 
-
-
 def plot_trajectory_harmonic_points(adata: AnnData,
                                     full_traj_matrix_flatten="full_traj_matrix_flatten",
                                     clusters = "trajs_clusters",
-                                    evector_name = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+                                    graph_basis = "X_dm_ddhodge_g",
+                                    evector_name = None,
                                     retain_clusters=[],
                                     dims = [0,1],
                                     label=True,
@@ -177,6 +199,14 @@ def plot_trajectory_harmonic_points(adata: AnnData,
     color_palette: color palette for show cluster_list
     **args: args for scatter
     """
+    if graph_basis and not evector_name:
+        evector_name = f"{graph_basis}_triangulation_circle_L1Norm_decomp_vector"
+    if evector_name not in adata.uns:
+        raise ValueError(f"evector_name: {evector_name} not in adata.uns, please check!")
+    if clusters not in adata.uns:
+        raise ValueError(f"clusters: {clusters} not in adata.uns, please check!")
+
+
     mat_coor_flatten_trajectory = [adata.uns[evector_name][0:max(dims)+1, :] @ mat for mat in adata.uns[full_traj_matrix_flatten].toarray()]
     M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
                                       cluster_list = list(adata.uns[clusters]),
@@ -194,8 +224,6 @@ def plot_trajectory_harmonic_points(adata: AnnData,
                                       color_palette = color_palette,
                                       **args
                                       )
-
-
 
 def plot_fate_tree_embedding(adata: AnnData,
                              graph_name = "X_dm_ddhodge_g",
@@ -271,6 +299,7 @@ def plot_fate_tree(adata: AnnData,
                    **args
                    ):
     """
+    re-calcuate layout of a tree and plot
     layout_prog: may ‘dot’, ‘twopi’, ‘fdp’, ‘sfdp’, ‘circo’
     """
     ax = plt.gca() if ax is None else ax
@@ -347,12 +376,34 @@ def plot_trajs_embedding(adata,
 
 
 def plot_eigen_line(adata: AnnData,
-                    evalue_name="X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_value",
+                    graph_basis = "X_dm_ddhodge_g",
+                    evalue_name=None,
                     n_eig=10,
                     step_size=1,
                     show_legend=True,
                     ax=None,
                     **args):
+    """
+    plot eigen values line to check the elbow of them
+
+    parameters
+    --------
+    adata: AnnData
+    graph_basis: graph basis for the eigen value
+    evalue_name: eigen values of stored in adata.uns get from graph_basis if None
+    n_eig: number of eigen values to plot
+    step_size: ticks for the plotting
+    """
+    if graph_basis and not evalue_name:
+        evalue_name = f"{graph_basis}_triangulation_circle_L1Norm_decomp_value"
+    if evalue_name not in adata.uns:
+        raise ValueError(f"{evalue_name} is not there, please check adata.uns")
+    if n_eig <=0:
+        print("number of eigen values should be positive, reset to 10")
+        n_eig = 10
+    if step_size <=0:
+        print("step size should be positive, reset to 1")
+        step_size = 1
     L_plot_eigen_line(adata.uns[evalue_name],
                       n_eig=n_eig,
                       step_size=step_size,
@@ -396,22 +447,23 @@ def plot_traj(adata: AnnData,
                 **args)
 
 def nxdraw_holes(adata: AnnData,
-                 graph_name: str='X_dm_ddhodge_g_triangulation_circle',
+                 graph_basis: str='X_dm_ddhodge_g',
+                 graph_name: str=None,
                  layout_name: str='X_dm_ddhodge_g_triangulation_circle',
-                 evector_name: str="X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
-                 title = "",
-                 edge_value= [],
-                 vector_dim=0,
-                 font_size=0,
-                 node_size=0.1,
-                 width=1,
+                 evector_name: str=None,
+                 title: str= "",
+                 edge_value: List[V] = [],
+                 vector_dim:int=0,
+                 font_size:int=0,
+                 node_size:float=0.1,
+                 width:int=1,
                  edge_cmap=plt.cm.RdBu_r,
-                 with_labels = False,
+                 with_labels: bool = False,
                  with_potential = ['X_dm_ddhodge', 'u'],
-                 flip = False,
-                 is_norm=False,
-                 is_abs = False,
-                 is_arrow = True,
+                 flip: bool = False,
+                 is_norm: bool=False,
+                 is_abs: bool = False,
+                 is_arrow: bool = True,
                  ax = None,
                  **args):
     """
@@ -440,6 +492,16 @@ def nxdraw_holes(adata: AnnData,
     """
 
     ax = ax or plt.gca()
+
+    if graph_basis and not (graph_name and evector_name):
+        graph_name = f"{graph_basis}_triangulation"
+        evector_name = f"{graph_basis}_triangulation_circle_L1Norm_decomp_vector"
+
+    if graph_name not in adata.uns:
+        raise ValueError(f"{graph_name} not in adata.uns, please check!")
+    if evector_name not in adata.uns:
+        raise ValueError(f"{evector_name} not in adata.uns, please check!")
+
     H = adata.uns[evector_name][vector_dim]
     if is_norm:
         H = np.abs(norm01(H)) if is_abs else norm01(H)
