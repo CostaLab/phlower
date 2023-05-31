@@ -55,9 +55,6 @@ def random_climb_knn(adata,
         print(f"{n}: number of trajectories would be better when >= 100")
 
 
-
-
-
     g = adata.uns[graph_name]
     knn_edges = adjedges(adata.uns[A], adata.uns[W], knn_edges_k)
     knn_edges = [tuple_increase(i,j) for (i,j) in knn_edges]
@@ -71,11 +68,45 @@ def random_climb_knn(adata,
     return adata if iscopy else None
 
 
+def trajs_matrix(adata: AnnData,
+                 graph_name: str = None,
+                 evector_name: str = None,
+                 embedding = 'umap',
+                 eigen_n: int = -1,
+                 trajs : Union[str, List[List[int]]] = "knn_trajs",
+                 edge_w : List = None,
+                 iscopy = False,
+                ):
+    adata = adata.copy() if iscopy else adata
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
+
+    if graph_name not in adata.uns:
+        raise ValueError(f"{graph_name} not in adata.uns")
+
+    print("projecting trajectories to eigenvectors...")
+    full_trajectory_matrix(adata,
+                           trajs=trajs,
+                           edge_w = edge_w,
+                           is_copy = False)
+    print("Embedding trajectory harmonics...")
+    trajs_dm(adata,
+             evector_name = evector_name,
+             M_flatten = "full_traj_matrix_flatten",
+             embedding = embedding,
+             eigen_n = eigen_n,
+             iscopy = False
+            )
+    return adata if iscopy else None
+#endf trajs_matrix
+
 def full_trajectory_matrix(adata: AnnData,
                            graph_name: str = None,
                            trajs : Union[str, List[List[int]]] = "knn_trajs",
                            edge_w : List = None,
-                           oname_basis : str = "",
                            iscopy = False,
                            ):
     adata = adata.copy() if iscopy else adata
@@ -95,9 +126,9 @@ def full_trajectory_matrix(adata: AnnData,
     elist = np.array([(x[0], x[1]) for x in g.edges()])
     elist_dict = {tuple(sorted(j)): i for i, j in enumerate(elist)}
     M_full = G_full_trajectory_matrix(g, map(lambda path: list(edges_on_path(path)), chain.from_iterable([trajs])), elist, elist_dict)
-    adata.uns[oname_basis + "full_traj_matrix"] = M_full
-    adata.uns[oname_basis + "full_traj_matrix_flatten"] = L_flatten_trajectory_matrix(M_full)
-    adata.uns[oname_basis + "full_traj_matrix_flatten_norm"] = L_flatten_trajectory_matrix_norm(M_full)
+    adata.uns["full_traj_matrix"] = M_full
+    adata.uns["full_traj_matrix_flatten"] = L_flatten_trajectory_matrix(M_full)
+    adata.uns["full_traj_matrix_flatten_norm"] = L_flatten_trajectory_matrix_norm(M_full)
 
 
     return adata if iscopy else None
