@@ -59,7 +59,8 @@ def max_node_series_type(counter, leaves_index):
 
 
 def get_nodes_celltype_counts(adata,
-                              graph_name = "X_dm_ddhodge_g_triangulation_circle",
+                              graph_basis = "X_pca_ddhodge_g",
+                              graph_name = None,
                               tree_name = "fate_tree",
                               edge_attr = "ecount",
                               cluster = "group"
@@ -68,8 +69,13 @@ def get_nodes_celltype_counts(adata,
     """
     get the celltype counts for each node in the tree
     """
+    if graph_basis and not graph_name:
+        graph_name = f"{graph_basis}_triangulation_circle"
+
+    if graph_name not in adata.uns:
+        raise ValueError(f"graph_name: {graph_name} not in adata.obs.columns")
     if cluster not in adata.obs.columns:
-        raise ValueError(f"{cluster} not in adata.obs.columns")
+        raise ValueError(f"cluster: {cluster} not in adata.obs.columns")
 
     clusters = adata.obs[cluster].values
     d_nodes_counter = {}
@@ -88,12 +94,12 @@ def get_nodes_celltype_counts(adata,
 
 
 def trim_derailed_nodes(adata,
-                          graph_name = "X_dm_ddhodge_g_triangulation_circle",
-                          tree_name = "fate_tree",
-                          edge_attr = "ecount",
-                          cluster = "group",
-                          iscopy:bool = False,
-                          ):
+                        graph_name = "X_pca_ddhodge_g_triangulation_circle",
+                        tree_name = "fate_tree",
+                        edge_attr = "ecount",
+                        cluster = "group",
+                        iscopy:bool = False,
+                        ):
     """
     check each branch, if the ends encounter derailment, delete that one.
     The standard is: if no cell presents in the maximum cell type remove this node
@@ -131,7 +137,7 @@ def add_origin_to_stream(adata, fate_tree='fate_tree', stream_tree="stream_tree"
 
 def create_bstream_tree(adata: AnnData,
                        fate_tree: str = 'fate_tree',
-                       layout_name: str = 'X_dm_ddhodge_g',
+                       layout_name: str = 'X_pca_ddhodge_g',
                        iscopy: bool = False,
                        ):
     """
@@ -178,8 +184,8 @@ def get_root_bins(ddf, node_name, start, end):
     return sorted(root_bins)
 
 def create_detail_tree(adata, htree, root, ddf,
-                       graph_name = "X_dm_ddhodge_g_triangulation_circle",
-                       layout_name = "X_dm_ddhodge_g",
+                       graph_name = "X_pca_ddhodge_g_triangulation_circle",
+                       layout_name = "X_pca_ddhodge_g",
                        tree_name = "fate_tree",
                        edge_attr = "ecount",
                        cluster = "group",
@@ -514,10 +520,10 @@ def merge_common_list(lst):
     return list(connected_components(G))
 
 def harmonic_trajs_bins(adata: AnnData,
-                        graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
-                        evector_name="X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+                        graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
+                        evector_name="X_pca_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
                         eigen_n = -1,
-                        layout_name: str = 'X_dm_ddhodge_g',
+                        layout_name: str = 'X_pca_ddhodge_g',
                         full_traj_matrix = 'full_traj_matrix',
                         trajs_clusters = 'trajs_clusters',
                         trajs_use = 100,
@@ -604,6 +610,7 @@ def time_sync_bins(ddf, attr='edge_mid_u', min_bin_number=5):
         return max and min of the attribute
         max from the smallest range df
         """
+        ##TODO: maxx,minn should be on one trajectory, not global
         minn = -1
         maxx = 1e100
         longest = 0
@@ -622,17 +629,21 @@ def time_sync_bins(ddf, attr='edge_mid_u', min_bin_number=5):
 
     def _avg_cut_bins(dfmin, dfmax, maxx, minn, min_bin_number=5):
         bins_number = int(min_bin_number * (dfmax - dfmin) / (maxx - minn))
+        #print("dfmax, dfmin, maxxx, minn, bins_number")
+        #print(dfmax, dfmin, maxx, minn, bins_number)
         avg_cut = np.linspace(dfmin, dfmax, bins_number+2)[1:-1]
         return avg_cut
     #endf avg_cut_bins
 
     ## get maximum and minimum pseudo time trajectory group and its key
     maxx, minn, longest_key = _max_min_attribute(ddf, attr)
+    if maxx <= minn:
+        minn = 0
     ## based on the minimum numbers of bins, to get the bin cut posistion for the longest trajectory group, as a reference for all ther rest
     avg_cut = _avg_cut_bins(ddf[longest_key][attr].min(), ddf[longest_key][attr].max(), maxx, minn, min_bin_number)
     ## for each trajectory group, get the bin index for each edge, and the average pseudo time
     for key, df in ddf.items():
-        df = u_bins_df(df, avg_cut=avg_cut)
+        df = u_bins_df(df, avg_cut=copy.deepcopy(avg_cut))
         ddf[key] = df
     return ddf
 
@@ -731,6 +742,7 @@ def df_attr_counter(ddf, keys, attr='edge_idx', bin_attr='ubin', which_bin=10):
     """
     list_attr = []
     for key in keys:
+
         df = ddf[key]
         if which_bin in df[bin_attr].unique():
             list_attr.extend([tuple(i) for i in df[df[bin_attr] == which_bin][attr] if isinstance(i, list)])
@@ -748,9 +760,25 @@ def u_bins_df(df, attr='edge_mid_u', min_bin_number=5, avg_cut=None):
     df.sort_values(by='rank', inplace=True)
 
     ## adjust avg_cut list for the current df
-    avg_cut = copy.deepcopy(list(avg_cut))
-    if avg_cut[0] < dfmin:
-        avg_cut[0] = dfmin
+    #avg_cut = copy.deepcopy(list(avg_cut))
+    avg_cut = list(avg_cut)
+
+    for i in list(range(len(avg_cut)))[::-1]:
+        if avg_cut[i] < dfmin:
+            break
+    start_idx_pos = 0
+    if i == 0 and avg_cut[0] < dfmin:
+        start_idx_pos = 1
+    elif i > 0:
+        start_idx_pos = i + 1
+
+
+
+    if avg_cut[start_idx_pos] < dfmin:
+        avg_cut[start_idx_pos] = dfmin
+
+    avg_cut = avg_cut[start_idx_pos:]
+
     for i in range(1, len(avg_cut)):
         if avg_cut[i] > dfmax:
             avg_cut[i] = dfmax
@@ -775,10 +803,11 @@ def u_bins_df(df, attr='edge_mid_u', min_bin_number=5, avg_cut=None):
     cut_pairs = pairwise(cut_idx_list)
     df['ubin'] = 0
     df['umean'] = 0
+    #print(start_idx_pos)
     for idx, (start, end) in enumerate(cut_pairs):
         if start == end:
             continue
-        df.loc[df.index[start:end], 'ubin'] = idx
+        df.loc[df.index[start:end], 'ubin'] = idx + start_idx_pos
         df.loc[df.index[start:end], 'umean'] = df['edge_mid_u'][start:end].mean()
     return df
 #endf u_bins_df
@@ -831,15 +860,15 @@ def dic_avg_attribute(df, attr='edge_mid_pos', bin_idx='edge_bins'):
     return dic
 
 def _edge_two_ends(adata: AnnData,
-                   graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
+                   graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
                    ):
 
     elist = np.array([(x[0], x[1]) for x in adata.uns[graph_name].edges()])
     return {i:v for i, v in enumerate(elist)}
 
 def _edge_mid_points(adata: AnnData,
-                    graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
-                    layout_name: str = 'X_dm_ddhodge_g',
+                    graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
+                    layout_name: str = 'X_pca_ddhodge_g',
                     ):
     """
     return middle points of all edges
@@ -851,7 +880,7 @@ def _edge_mid_points(adata: AnnData,
     return dic
 
 def _edge_mid_attribute(adata: AnnData,
-                       graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
+                       graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
                        node_attribute = 'u',
                        ):
     """

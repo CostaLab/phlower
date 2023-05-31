@@ -116,7 +116,7 @@ def curl(g, weight_attr="weight"):
 
 
 def L1Norm_decomp(adata: AnnData,
-                  graph_name: str = 'X_dm_ddhodge_g_triangulation_circle',
+                  graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
                   eigen_num: int = 100,
                   L1_mode = "sym",
                   mysym = 'a',
@@ -200,12 +200,12 @@ def L1Norm_decomp(adata: AnnData,
     #adata.uns[f'{graph_name}_L1Norm'] = L1all
     adata.uns[f'{graph_name}_L1Norm_decomp_vector'] = d['v'] if L1_mode == "RW" else d['v'] @ np.sqrt(D2)
     adata.uns[f'{graph_name}_L1Norm_decomp_value'] = d['w'] if L1_mode == "RW" else d['w']
-    #adata.uns['X_dm_ddhodge_g_triangulation_circle_B1'] = B1
-    #adata.uns['X_dm_ddhodge_g_triangulation_circle_B2'] = B2
+    #adata.uns['X_pca_ddhodge_g_triangulation_circle_B1'] = B1
+    #adata.uns['X_pca_ddhodge_g_triangulation_circle_B2'] = B2
     return adata if iscopy else None
 
 def knee_eigen(adata: AnnData,
-               eigens: Union[str, np.ndarray] = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_value",
+               eigens: Union[str, np.ndarray] = "X_pca_ddhodge_g_triangulation_circle_L1Norm_decomp_value",
                plot = False,
                iscopy = False,
                ):

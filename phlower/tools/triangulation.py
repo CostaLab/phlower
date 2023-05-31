@@ -10,8 +10,8 @@ from .graphconstr import adjedges
 
 
 def construct_trucated_delaunay(adata:AnnData,
-                                graph_name:str='X_dm_ddhodge_g',
-                                layout_name:str='X_dm_ddhodge_g',
+                                graph_name:str='X_pca_ddhodge_g',
+                                layout_name:str='X_pca_ddhodge_g',
                                 trunc_quantile:float=0.75,
                                 trunc_times:float=3,
                                 iscopy:bool=False,
@@ -33,8 +33,8 @@ def construct_trucated_delaunay(adata:AnnData,
 #end construct_trucated_delaunay
 
 def construct_circle_delaunay(adata:AnnData,
-                              graph_name:str='X_dm_ddhodge_g_triangulation',
-                              layout_name:str='X_dm_ddhodge_g',
+                              graph_name:str='X_pca_ddhodge_g_triangulation',
+                              layout_name:str='X_pca_ddhodge_g',
                               cluster_name:str='group',
                               quant=0.1,
                               node_attr='u',
@@ -131,10 +131,10 @@ def truncated_delaunay(nodes, position, trunc_quantile=0.75, trunc_times=3):
 
 
 def construct_trucated_delaunay_knn(adata:AnnData,
-                           graph_name:str='X_dm_ddhodge_g',
-                           layout_name:str='X_dm_ddhodge_g',
-                           A= "X_dm_ddhodge_A",
-                           W= "X_dm_ddhodge_W",
+                           graph_name:str='X_pca_ddhodge_g',
+                           layout_name:str='X_pca_ddhodge_g',
+                           A= "X_pca_ddhodge_A",
+                           W= "X_pca_ddhodge_W",
                            knn_edges_k = 40,
                            iscopy:bool=False,
 ):

@@ -78,8 +78,8 @@ def ddhodge(
         d = diffusionGraphDM(pc,roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose)
     else:
         d = diffusionGraph(adata.X.T.todense() if scipy.sparse.issparse(adata.X.T) else adata.X.T ,roots=roots,k=k,npc=npc,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose)
-        adata.obsm['X_dm'] = d['dm']
-        basis = 'X_dm'
+        adata.obsm['X_pca'] = d['dm']
+        basis = 'X_pca'
 
 
     adata.uns[f'{basis}_ddhodge_g'] = d['g']
@@ -95,5 +95,5 @@ def ddhodge(
         adata.obsm[f'{basis}_ddhodge_g'] = np.array([layouts[i] for i in range(len(layouts))])
     if verbose:
         print(datetime.now(), 'done')
-
+    adata.uns["graph_basis"] = f'{basis}_ddhodge_g'
     return adata if iscopy else None

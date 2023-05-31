@@ -22,9 +22,9 @@ from ..util import pairwise, find_knee, tuple_increase, is_node_attr_existing
 
 
 def random_climb_knn(adata,
-                     graph_name = "X_dm_ddhodge_g_triangulation",
-                     A = "X_dm_ddhodge_A",
-                     W = "X_dm_ddhodge_W",
+                     graph_name = "X_pca_ddhodge_g_triangulation",
+                     A = "X_pca_ddhodge_A",
+                     W = "X_pca_ddhodge_W",
                      knn_edges_k = 9,
                      attr:str='u',
                      roots_ratio:float=0.1,
@@ -67,7 +67,7 @@ def random_climb_knn(adata,
 
 
 def full_trajectory_matrix(adata: AnnData,
-                           graph_name: str = "X_dm_ddhodge_g_triangulation_circle",
+                           graph_name: str = "X_pca_ddhodge_g_triangulation_circle",
                            trajs : Union[str, List[List[int]]] = "knn_trajs",
                            edge_w : List = None,
                            oname_basis : str = "",
@@ -97,7 +97,7 @@ def full_trajectory_matrix(adata: AnnData,
 
 
 def trajs_dm(adata,
-             evector_name: str = "X_dm_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+             evector_name: str = "X_pca_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
              M_flatten: Union[str, np.ndarray] = "full_traj_matrix_flatten",
              embedding = 'umap',
              eigen_n: int = -1,
@@ -114,11 +114,11 @@ def trajs_dm(adata,
         raise ValueError(f"{evector_name} not in adata.uns")
 
     if eigen_n < 1:
-        print("eigen_n < 1, use knee_eigen to find the number of eigen vectors to use")
         if "eigen_value_knee" in adata.uns.keys():
             eigen_n = adata.uns["eigen_value_knee"]
         else:
             eigen_n = knee_eigen(adata, eigens=re.sub(r"_vector$", r"_value", evector_name) , plot=False)
+        print(f"eigen_n < 1, use knee_eigen to find the number of eigen vectors to use: {eigen_n}")
     if eigen_n == 1: ##TODO, if == 1 use first eigenvector is compatible or not
         print("eigen_n == 1 is too small, change to 2, use itsself as embedding")
         embedding = 'self'
