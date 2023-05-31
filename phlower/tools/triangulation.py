@@ -9,6 +9,52 @@ from ..util import tuple_increase, top_n_from, is_in_2sets, is_node_attr_existin
 from .graphconstr import adjedges
 
 
+def construct_delaunay(adata:AnnData,
+                       graph_name:str=None,
+                       layout_name:str=None,
+                       trunc_quantile:flatten=0.75,
+                       trunc_times:float=3,
+                       cluster_name:str='group',
+                       quant=0.1,
+                       node_attr='u',
+                       start_n=5,
+                       end_n = 5,
+                       separate_ends_triangle = False,
+                       random_seed = 2022,
+                       calc_layout:bool = False,
+                       iscopy:bool=False,
+                       ):
+
+    adata = adata.copy if iscopy else adata
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"]
+
+    if "graph_basis" in adata.uns and not layout_name:
+        layout_name = adata.uns["graph_basis"]
+
+    if graph_name not in adata.uns:
+        raise ValueError(f"{graph_name} not in adata.uns")
+
+    if layout_name not in adata.obsm:
+        raise ValueError(f"{layout_name} not in adata.obsm")
+
+    edges = truncated_delaunay(adata.uns[graph_name].nodes,  adata.obsm[layout_name], trunc_quantile=trunc_quantile, trunc_times=trunc_times)
+    adata.uns[f'{graph_name}_triangulation'] = reset_edges(adata.uns[graph_name], edges, keep_old=False)
+    construct_circle_delaunay(adata,
+                              graph_name=graph_name,
+                              layout_name=graph_name,
+                              cluster_name=cluster_name,
+                              quant=quantile,
+                              node_attr=node_attr,
+                              start_n=start_n,
+                              end_n = end_n,
+                              separate_ends_triangle = separate_ends_triangle,
+                              random_seed = random_seed,
+                              calc_layout = calc_layout,
+                              iscopy=False)
+    return adata if iscopy else None
+#end construct_delaunay
+
 def construct_trucated_delaunay(adata:AnnData,
                                 graph_name:str=None,
                                 layout_name:str=None,
