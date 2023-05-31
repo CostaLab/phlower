@@ -27,6 +27,64 @@ from ..external.stream_extra import (add_pos_to_graph,
                                      calculate_pseudotime,
                                      )
 
+
+
+def harmonic_stream_tree(adata: AnnData,
+                        graph_name: str = None,
+                        evector_name=None,
+                        layout_name: str = None,
+                        eigen_n = -1,
+                        min_bin_number = 5,
+                        cut_threshold = 1,
+                        trim_end = False,
+                        full_traj_matrix = 'full_traj_matrix',
+                        trajs_clusters = 'trajs_clusters',
+                        trajs_use = 100,
+                        retain_clusters = [],
+                        node_attribute = 'u',
+                        time_sync_u = "edge_mid_u",
+                        node_bottom_up = True,
+                        min_kde_quant_rm = 0.1,
+                        kde_sample_n = 1000,
+                        random_seed = 2022,
+                        iscopy=False,
+                        ):
+    adata = adata.copy() if iscopy else adata
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
+
+    if "graph_basis" in adata.uns.keys() and not layout_name:
+        layout_name = adata.uns["graph_basis"]
+
+
+    d =  harmonic_trajs_bins(adata = adata,
+                             graph_name = graph_name,
+                             evector_name = evector_name,
+                             layout_name = layout_name,
+                             eigen_n = eigen_n,
+                             full_traj_matrix = full_traj_matrix,
+                             trajs_clusters = trajs_clusters,
+                             trajs_use = trajs_use,
+                             retain_clusters = retain_clusters,
+                             node_attribute = node_attribute,
+                             min_kde_quant_rm = min_kde_quant_rm,
+                             kde_sample_n = kde_sample_n,
+                             random_seed = random_seed)
+    ddf = time_sync_bins(d, attr=time_sync_u, min_bin_number=min_bin_number)
+    pairwise_bdict = pairwise_hbranching_dict(ddf, bottom_up=node_bottom_up, cut_threshold=cut_threshold)
+    htree,root = create_branching_tree(pairwise_bdict, keys=None)
+    fate_tree = create_detail_tree(adata, htree, root, ddf, trim_end=trim_end, graph_name=graph_name, layout_name=layout_name)
+    adata.uns['fate_tree'] = fate_tree
+    create_bstream_tree(adata, layout_name=layout_name, iscopy=False)
+
+    return adata if iscopy else None
+#endf harmonic_stream_tree
+
+
 def get_leaves_index(fate_tree):
     """
     Get labels of all leaves
@@ -147,11 +205,10 @@ def create_bstream_tree(adata: AnnData,
     create stream_tree from fate_tree
     run a bunch of STREAM function for the STREAM plotting
     """
+    adata = adata.copy() if iscopy else adata
 
     if "graph_basis" in adata.uns.keys() and not layout_name:
         layout_name = adata.uns["graph_basis"]
-
-    adata = adata.copy() if iscopy else adata
     g = adata.uns[fate_tree]
     g_pos   = adata.uns[fate_tree].to_undirected()
     dic_br  =  extract_branches(g_pos)

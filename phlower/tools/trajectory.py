@@ -188,7 +188,7 @@ def trajs_dm(adata,
 #endf trajs_dm
 
 
-def trajs_clustering(adata, embedding = 'trajs_dm', clustering_method: str = "dbscan", iscopy=False, oname_basis='', **args,):
+def trajs_clustering(adata, embedding = 'trajs_harmonic_dm', clustering_method: str = "dbscan", iscopy=False, oname_basis='', **args,):
     adata = adata.copy() if iscopy else adata
     dm = adata.uns[embedding]
     if clustering_method == "dbscan":
