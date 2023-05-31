@@ -116,7 +116,7 @@ def curl(g, weight_attr="weight"):
 
 
 def L1Norm_decomp(adata: AnnData,
-                  graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
+                  graph_name: str = None,
                   eigen_num: int = 100,
                   L1_mode = "sym",
                   mysym = 'a',
@@ -148,6 +148,12 @@ def L1Norm_decomp(adata: AnnData,
     """
     if iscopy:
         adata = adata.copy()
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
+    if graph_name not in adata.uns.keys():
+        raise Exception(f"graph {graph_name} not found in adata.uns")
 
     elist = np.array(adata.uns[graph_name].edges())
     tlist = triangle_list(adata.uns[graph_name])
@@ -205,13 +211,16 @@ def L1Norm_decomp(adata: AnnData,
     return adata if iscopy else None
 
 def knee_eigen(adata: AnnData,
-               eigens: Union[str, np.ndarray] = "X_pca_ddhodge_g_triangulation_circle_L1Norm_decomp_value",
+               eigens: Union[str, np.ndarray] = None,
                plot = False,
                iscopy = False,
                ):
 
     if iscopy:
         adata = adata.copy()
+
+    if "graph_basis" in adata.uns.keys() and not eigens:
+        eigens = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_value"
 
     if isinstance(eigens, str):
         eigens = adata.uns[eigens]

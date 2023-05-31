@@ -22,9 +22,9 @@ from ..util import pairwise, find_knee, tuple_increase, is_node_attr_existing
 
 
 def random_climb_knn(adata,
-                     graph_name = "X_pca_ddhodge_g_triangulation",
-                     A = "X_pca_ddhodge_A",
-                     W = "X_pca_ddhodge_W",
+                     graph_name = None,
+                     A = None,
+                     W = None,
                      knn_edges_k = 9,
                      attr:str='u',
                      roots_ratio:float=0.1,
@@ -34,6 +34,11 @@ def random_climb_knn(adata,
                      seeds:int=2022):
 
     adata = adata.copy() if iscopy else adata
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation"
+        A = adata.uns["graph_basis"] + "_A"
+        W = adata.uns["graph_basis"] + "_W"
 
     if graph_name not in adata.uns:
         raise ValueError(f"{graph_name} not in adata.uns")
@@ -67,7 +72,7 @@ def random_climb_knn(adata,
 
 
 def full_trajectory_matrix(adata: AnnData,
-                           graph_name: str = "X_pca_ddhodge_g_triangulation_circle",
+                           graph_name: str = None,
                            trajs : Union[str, List[List[int]]] = "knn_trajs",
                            edge_w : List = None,
                            oname_basis : str = "",
@@ -75,9 +80,11 @@ def full_trajectory_matrix(adata: AnnData,
                            ):
     adata = adata.copy() if iscopy else adata
 
+    if "grahp_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
     if graph_name not in adata.uns:
         raise ValueError(f"{graph_name} not in adata.uns")
-
 
     if isinstance(trajs, str):
         if trajs not in adata.uns:
@@ -97,7 +104,7 @@ def full_trajectory_matrix(adata: AnnData,
 
 
 def trajs_dm(adata,
-             evector_name: str = "X_pca_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+             evector_name: str = None,
              M_flatten: Union[str, np.ndarray] = "full_traj_matrix_flatten",
              embedding = 'umap',
              eigen_n: int = -1,
@@ -109,6 +116,8 @@ def trajs_dm(adata,
     """
 
     adata = adata.copy() if iscopy else adata
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
 
     if evector_name not in adata.uns:
         raise ValueError(f"{evector_name} not in adata.uns")

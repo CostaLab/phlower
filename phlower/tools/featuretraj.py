@@ -19,14 +19,20 @@ from ..util import pairwise, find_knee, tuple_increase, pearsonr_2D
 
 def feature_mat_coor_flatten_trajectory(adata: AnnData,
                                         feature : str = None,
-                                        graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
-                                        evector_name: str = 'X_pca_ddhodge_g_triangulation_circle_L1Norm_decomp_vector',
+                                        graph_name: str = None,
+                                        evector_name: str = None,
                                         full_traj_matrix_flatten: str = 'full_traj_matrix_flatten',
                                         dims = [0,1],
                                         ):
 
     if not feature in adata.var_names:
         raise ValueError(f'Feature {feature} not in adata.var_names')
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
 
     featureidx = np.where(adata.var_names == feature)[0]
     edges_score = G_features_edges(adata.uns[graph_name], [y for x in adata.X[:, featureidx] for y in x])
@@ -40,8 +46,8 @@ def feature_mat_coor_flatten_trajectory(adata: AnnData,
 
 def feature_mat_coor_flatten_trajectory_direction(adata: AnnData,
                                                   feature : str = None,
-                                                  graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
-                                                  evector_name: str = 'X_pca_ddhodge_g_triangulation_circle_L1Norm_decomp_vector',
+                                                  graph_name: str = None,
+                                                  evector_name: str = None,
                                                   full_traj_matrix_flatten: str = 'full_traj_matrix_flatten',
                                                   u_attribute = 'u',
                                                   dims = [0,1],
@@ -49,6 +55,12 @@ def feature_mat_coor_flatten_trajectory_direction(adata: AnnData,
 
     if not feature in adata.var_names:
         raise ValueError(f'Feature {feature} not in adata.var_names')
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
 
     featureidx = np.where(adata.var_names == feature)[0]
 
@@ -72,14 +84,23 @@ def feature_mat_coor_flatten_trajectory_direction(adata: AnnData,
 
 def feature_cumsum_direction(adata: AnnData,
                              feature : str = None,
-                             graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
-                             evector_name: str = 'X_pca_ddhodge_g_triangulation_circle_L1Norm_decomp_vector',
+                             graph_name: str = None,
+                             evector_name: str = None,
                              full_traj_matrix_flatten: str = 'full_traj_matrix_flatten',
                              full_traj_matrix: str = 'full_traj_matrix',
                              u_attribute = 'u',
                              eigen_n = -1,
                              dims = [0,1],
                              ):
+
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
+
+
 
     if eigen_n < 1:
         print("eigen_n < 1, use knee_eigen to find the number of eigen vectors to use")
@@ -125,13 +146,20 @@ def get_featuresidx(adata: AnnData,
 
 def feature_harmonic_multiply(adata: AnnData,
                                 features : Union[str, List[str]] = None,
-                                graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
-                                evector_name : str = 'X_pca_ddhodge_g_triangulation_circle_L1Norm_decomp_vector',
+                                graph_name: str = None,
+                                evector_name : str = None,
                                 full_traj_matrix_flatten: str = 'full_traj_matrix_flatten',
                                 trajs_clusters: str = 'trajs_clusters',
                                 dims=list(range(0,10)),
                                 st = np.std,
                                 ):
+
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
 
     features = [features] if isinstance(features, str) else features
     features = [feature for feature in features if feature in adata.var_names]
@@ -156,13 +184,20 @@ def feature_harmonic_multiply(adata: AnnData,
 
 def feature_correlation_cluster(adata: AnnData,
                               features : Union[str, List[str]] = None,
-                              graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
-                              evector_name : str = 'X_pca_ddhodge_g_triangulation_circle_L1Norm_decomp_vector',
+                              graph_name: str = None,
+                              evector_name : str = None,
                               full_traj_matrix_flatten: str = 'full_traj_matrix_flatten',
                               trajs_clusters: str = 'trajs_clusters',
                               dim=0,
                               st = np.mean,
                               ):
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
+
 
     features = [features] if isinstance(features, str) else features
     features = [feature for feature in features if feature in adata.var_names]
@@ -195,13 +230,19 @@ def feature_correlation_cluster(adata: AnnData,
 
 def feature_statistic_cluster(adata: AnnData,
                               features : Union[str, List[str]] = None,
-                              graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
-                              evector_name : str = 'X_pca_ddhodge_g_triangulation_circle_L1Norm_decomp_vector',
+                              graph_name: str = None,
+                              evector_name : str = None,
                               full_traj_matrix_flatten: str = 'full_traj_matrix_flatten',
                               trajs_clusters: str = 'trajs_clusters',
                               dims=list(range(0,10)),
                               st = np.std,
                               ):
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
 
     features = [features] if isinstance(features, str) else features
     features = [feature for feature in features if feature in adata.var_names]
@@ -246,14 +287,20 @@ def task_statistics(feature, evec, traj_score, l_trajs_clusters, clusters, st):
 
 def feature_statistic_cluster2(adata: AnnData,
                               features : Union[str, List[str]] = None,
-                              graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
-                              evector_name : str = 'X_pca_ddhodge_g_triangulation_circle_L1Norm_decomp_vector',
+                              graph_name: str = None,
+                              evector_name : str = None,
                               full_traj_matrix_flatten: str = 'full_traj_matrix_flatten',
                               trajs_clusters: str = 'trajs_clusters',
                               dims=list(range(0,10)),
                               st = np.std,
                               n_jobs = 4,
                               ):
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
 
     features = [features] if isinstance(features, str) else features
     features = [feature for feature in features if feature in adata.var_names]
@@ -294,14 +341,20 @@ def feature_statistic_cluster2(adata: AnnData,
 
 def feature_statistic_cluster3(adata: AnnData,
                               features : Union[str, List[str]] = None,
-                              graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
-                              evector_name : str = 'X_pca_ddhodge_g_triangulation_circle_L1Norm_decomp_vector',
+                              graph_name: str = None,
+                              evector_name : str = None,
                               full_traj_matrix_flatten: str = 'full_traj_matrix_flatten',
                               trajs_clusters: str = 'trajs_clusters',
                               dims=list(range(0,10)),
                               st = np.std,
                               n_jobs = 4,
                               ):
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
 
     features = [features] if isinstance(features, str) else features
     features = [feature for feature in features if feature in adata.var_names]

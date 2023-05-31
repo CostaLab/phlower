@@ -10,14 +10,20 @@ from .graphconstr import adjedges
 
 
 def construct_trucated_delaunay(adata:AnnData,
-                                graph_name:str='X_pca_ddhodge_g',
-                                layout_name:str='X_pca_ddhodge_g',
+                                graph_name:str=None,
+                                layout_name:str=None,
                                 trunc_quantile:float=0.75,
                                 trunc_times:float=3,
                                 iscopy:bool=False,
                                 ):
     if iscopy:
         adata = adata.copy()
+
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"]
+
+    if "graph_basis" in adata.uns and not layout_name:
+        layout_name = adata.uns["graph_basis"]
 
     if graph_name not in adata.uns:
         raise ValueError(f"{graph_name} not in adata.uns")
@@ -33,8 +39,8 @@ def construct_trucated_delaunay(adata:AnnData,
 #end construct_trucated_delaunay
 
 def construct_circle_delaunay(adata:AnnData,
-                              graph_name:str='X_pca_ddhodge_g_triangulation',
-                              layout_name:str='X_pca_ddhodge_g',
+                              graph_name:str=None,
+                              layout_name:str=None,
                               cluster_name:str='group',
                               quant=0.1,
                               node_attr='u',
@@ -47,6 +53,12 @@ def construct_circle_delaunay(adata:AnnData,
                               ):
     if iscopy:
         adata = adata.copy()
+
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation"
+
+    if "graph_basis" in adata.uns and not layout_name:
+        layout_name = adata.uns["graph_basis"]
 
     if graph_name not in adata.uns:
         raise ValueError(f"{graph_name} not in adata.uns")
@@ -131,10 +143,10 @@ def truncated_delaunay(nodes, position, trunc_quantile=0.75, trunc_times=3):
 
 
 def construct_trucated_delaunay_knn(adata:AnnData,
-                           graph_name:str='X_pca_ddhodge_g',
-                           layout_name:str='X_pca_ddhodge_g',
-                           A= "X_pca_ddhodge_A",
-                           W= "X_pca_ddhodge_W",
+                           graph_name:str=None,
+                           layout_name:str=None,
+                           A= None,
+                           W= None,
                            knn_edges_k = 40,
                            iscopy:bool=False,
 ):
@@ -148,6 +160,13 @@ def construct_trucated_delaunay_knn(adata:AnnData,
     """
     if iscopy:
         adata = adata.copy()
+
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"]
+        A = f"{graph_name}_A"
+        W = f"{graph_name}_W"
+    if "graph_basis" in adata.uns and not layout_name:
+        layout_name = adata.uns["graph_basis"]
 
     if graph_name not in adata.uns:
         raise ValueError(f"{graph_name} not in adata.uns")

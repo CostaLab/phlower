@@ -20,7 +20,6 @@ def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
 def plot_trajectory_harmonic_lines_3d(adata: AnnData,
                                       full_traj_matrix="full_traj_matrix",
                                       clusters = "trajs_clusters",
-                                      graph_basis = "X_pca_ddhodge_g",
                                       evector_name = None,
                                       retain_clusters=[],
                                       figsize = (800,800),
@@ -41,8 +40,10 @@ def plot_trajectory_harmonic_lines_3d(adata: AnnData,
     markerscale: legend linewidth scale to larger or smaller
     color_palette: color palette for show cluster_list
     """
-    if graph_basis and not evector_name:
-        evector_name = f"{graph_basis}_triangulation_circle_L1Norm_decomp_vector"
+
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
+
     if evector_name not in adata.uns:
         raise ValueError(f"{evector_name} not in adata.uns, please check!")
     if full_traj_matrix not in adata.uns:
@@ -64,7 +65,6 @@ def plot_trajectory_harmonic_lines_3d(adata: AnnData,
 def plot_trajectory_harmonic_lines(adata: AnnData,
                                    full_traj_matrix="full_traj_matrix",
                                    clusters = "trajs_clusters",
-                                   graph_basis = "X_pca_ddhodge_g",
                                    evector_name = None,
                                    retain_clusters=[],
                                    dims = [0,1],
@@ -89,8 +89,8 @@ def plot_trajectory_harmonic_lines(adata: AnnData,
     markerscale: legend linewidth scale to larger or smaller
     color_palette: color palette for show cluster_list
     """
-    if graph_basis and not evector_name:
-        evector_name = f"{graph_basis}_triangulation_circle_L1Norm_decomp_vector"
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
     if evector_name not in adata.uns:
         raise ValueError(f"evector_name: {evector_name} not in adata.uns, please check!")
     if clusters not in adata.uns:
@@ -118,7 +118,6 @@ def plot_trajectory_harmonic_lines(adata: AnnData,
 def plot_trajectory_harmonic_points_3d(adata: AnnData,
                                        full_traj_matrix_flatten="full_traj_matrix_flatten",
                                        clusters = "trajs_clusters",
-                                       graph_basis = "X_pca_ddhodge_g",
                                        evector_name = None,
                                        retain_clusters=[],
                                        dims = [0,1],
@@ -143,8 +142,9 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
     color_palette: color palette for show cluster_list
     **args: args for scatter
     """
-    if graph_basis and not evector_name:
-        evector_name = f"{graph_basis}_triangulation_circle_L1Norm_decomp_vector"
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
+
     if evector_name not in adata.uns:
         raise ValueError(f"evector_name: {evector_name} not in adata.uns, please check!")
     if clusters not in adata.uns:
@@ -168,7 +168,6 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
 def plot_trajectory_harmonic_points(adata: AnnData,
                                     full_traj_matrix_flatten="full_traj_matrix_flatten",
                                     clusters = "trajs_clusters",
-                                    graph_basis = "X_pca_ddhodge_g",
                                     evector_name = None,
                                     retain_clusters=[],
                                     dims = [0,1],
@@ -199,8 +198,9 @@ def plot_trajectory_harmonic_points(adata: AnnData,
     color_palette: color palette for show cluster_list
     **args: args for scatter
     """
-    if graph_basis and not evector_name:
-        evector_name = f"{graph_basis}_triangulation_circle_L1Norm_decomp_vector"
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
+
     if evector_name not in adata.uns:
         raise ValueError(f"evector_name: {evector_name} not in adata.uns, please check!")
     if clusters not in adata.uns:
@@ -226,8 +226,8 @@ def plot_trajectory_harmonic_points(adata: AnnData,
                                       )
 
 def plot_fate_tree_embedding(adata: AnnData,
-                             graph_name = "X_pca_ddhodge_g",
-                             layout_name = "X_pca_ddhodge_g",
+                             graph_name = None,
+                             layout_name = None,
                              fate_tree: str = 'fate_tree',
                              bg_node_size=1,
                              bg_node_color='grey',
@@ -238,6 +238,11 @@ def plot_fate_tree_embedding(adata: AnnData,
                              ax=None,
                              **args,
                              ):
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"]
+
+    if "graph_basis" in adata.uns and not layout_name:
+        layout_name = adata.uns["graph_basis"]
 
     ax = plt.gca() if ax is None else ax
     nx.draw_networkx_nodes(adata.uns[graph_name],
@@ -258,8 +263,8 @@ def plot_fate_tree_embedding(adata: AnnData,
 #endf plot_fate_tree_embedding
 
 def plot_stream_tree_embedding(adata: AnnData,
-                             graph_name = "X_pca_ddhodge_g",
-                             layout_name = "X_pca_ddhodge_g",
+                             graph_name = None,
+                             layout_name = None,
                              stream_tree: str = 'stream_tree',
                              bg_node_size=1,
                              bg_node_color='grey',
@@ -270,6 +275,13 @@ def plot_stream_tree_embedding(adata: AnnData,
                              ax=None,
                              **args,
                              ):
+
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"]
+
+    if "graph_basis" in adata.uns and not layout_name:
+        layout_name = adata.uns["graph_basis"]
+
 
     ax = plt.gca() if ax is None else ax
     nx.draw_networkx_nodes(adata.uns[graph_name],
@@ -308,8 +320,8 @@ def plot_fate_tree(adata: AnnData,
 
 
 def plot_density_grid(adata: AnnData,
-                      graph_name = "X_pca_ddhodge_g_triangulation_circle",
-                      layout_name = "X_pca_ddhodge_g",
+                      graph_name = None,
+                      layout_name = None,
                       cluster_name = "trajs_clusters",
                       trajs_name = "knn_trajs",
                       retain_clusters=[],
@@ -321,6 +333,16 @@ def plot_density_grid(adata: AnnData,
                       return_fig = False,
                       **args
                       ):
+
+
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
+    if "graph_basis" in adata.uns and not layout_name:
+        layout_name = adata.uns["graph_basis"]
+
+
+
 
     if graph_name not in adata.uns.keys():
         raise ValueError("graph_name not in adata.uns.keys()")
@@ -376,7 +398,6 @@ def plot_trajs_embedding(adata,
 
 
 def plot_eigen_line(adata: AnnData,
-                    graph_basis = "X_pca_ddhodge_g",
                     evalue_name=None,
                     n_eig=10,
                     step_size=1,
@@ -394,8 +415,8 @@ def plot_eigen_line(adata: AnnData,
     n_eig: number of eigen values to plot
     step_size: ticks for the plotting
     """
-    if graph_basis and not evalue_name:
-        evalue_name = f"{graph_basis}_triangulation_circle_L1Norm_decomp_value"
+    if "graph_basis" in adata.uns and not evalue_name:
+        evalue_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_value"
     if evalue_name not in adata.uns:
         raise ValueError(f"{evalue_name} is not there, please check adata.uns")
     if n_eig <=0:
@@ -413,8 +434,8 @@ def plot_eigen_line(adata: AnnData,
 #endf
 
 def plot_traj(adata: AnnData,
-              graph_name: str = 'X_pca_ddhodge_g_triangulation',
-              layout_name: str='X_pca_ddhodge_g',
+              graph_name: str = None,
+              layout_name: str=None,
               holes: List[List[int]] = None,
               trajectory: Union[List[int], np.ndarray] = None,
               colorid=None,
@@ -428,6 +449,12 @@ def plot_traj(adata: AnnData,
               color_palette = sns.color_palette('tab10'),
               **args
               ):
+
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation"
+
+    if "graph_basis" in adata.uns and not layout_name:
+        layout_name = adata.uns["graph_basis"]
 
     if trajectory is None:
         raise ValueError("trajectory is None")
@@ -447,9 +474,8 @@ def plot_traj(adata: AnnData,
                 **args)
 
 def nxdraw_holes(adata: AnnData,
-                 graph_basis: str='X_pca_ddhodge_g',
                  graph_name: str=None,
-                 layout_name: str='X_pca_ddhodge_g_triangulation_circle',
+                 layout_name: str=None,
                  evector_name: str=None,
                  title: str= "",
                  edge_value: List[V] = [],
@@ -493,9 +519,13 @@ def nxdraw_holes(adata: AnnData,
 
     ax = ax or plt.gca()
 
-    if graph_basis and not (graph_name and evector_name):
-        graph_name = f"{graph_basis}_triangulation"
-        evector_name = f"{graph_basis}_triangulation_circle_L1Norm_decomp_vector"
+
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation"
+    if "graph_basis" in adata.uns and not layout_name:
+        layout_name = adata.uns["graph_basis"] + "_triangulation_circle"
+    if "graph_basis" in adata.uns and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
 
     if graph_name not in adata.uns:
         raise ValueError(f"{graph_name} not in adata.uns, please check!")
@@ -539,8 +569,8 @@ def nxdraw_holes(adata: AnnData,
 
 
 def nxdraw_score(adata: AnnData,
-                 graph_name:str = "X_pca_ddhodge_g",
-                 layout_name:str = "X_pca_ddhodge_g",
+                 graph_name:str = None,
+                 layout_name:str = None,
                  color:str = "u",
                  colorbar:bool = True,
                  directed:bool = False,
@@ -548,6 +578,14 @@ def nxdraw_score(adata: AnnData,
                  cmap = plt.cm.get_cmap('viridis'),
                  **args
     ):
+
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"]
+
+    if "graph_basis" in adata.uns and not layout_name:
+        layout_name = adata.uns["graph_basis"]
+
+
     u_color = None
     if color in set(chain.from_iterable(d.keys() for *_, d in adata.uns[graph_name].nodes(data=True))):
         u_color = np.fromiter(nx.get_node_attributes(adata.uns[graph_name], color).values(), dtype='float')
@@ -570,8 +608,8 @@ def nxdraw_score(adata: AnnData,
 
 
 def nxdraw_group(adata: AnnData,
-                 graph_name:str = 'X_pca_ddhodge_g',
-                 layout_name: str = 'X_pca_ddhodge_g',
+                 graph_name:str = None,
+                 layout_name: str = None,
                  group_name:str = 'group',
                  show_edges:bool=True,
                  show_legend:bool=True,
@@ -585,6 +623,12 @@ def nxdraw_group(adata: AnnData,
                  directed =False,
                  ax = None,
                  **args):
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"]
+
+    if "graph_basis" in adata.uns and not layout_name:
+        layout_name = adata.uns["graph_basis"]
+
 
     G_nxdraw_group(adata.uns[graph_name],
                    adata.obsm[layout_name],
@@ -606,13 +650,20 @@ def nxdraw_group(adata: AnnData,
 #endf nxdraw_group
 
 def plot_triangle_density(adata: AnnData,
-                          graph_name: str = 'X_pca_ddhodge_g',
-                          layout_name: str = 'X_pca_ddhodge_g',
+                          graph_name: str = None,
+                          layout_name: str = None,
                           node_size=10,
                           ax=None,
                           cmap = plt.get_cmap("jet"),
                           colorbar = True,
                           **args):
+
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"]
+
+    if "graph_basis" in adata.uns and not layout_name:
+        layout_name = adata.uns["graph_basis"]
+
 
     G_plot_triangle_density(adata.uns[graph_name], adata.obsm[layout_name], node_size=node_size, ax=ax, cmap=cmap, colorbar=colorbar, **args)
 #endf plot_triangle_density

@@ -59,7 +59,6 @@ def max_node_series_type(counter, leaves_index):
 
 
 def get_nodes_celltype_counts(adata,
-                              graph_basis = "X_pca_ddhodge_g",
                               graph_name = None,
                               tree_name = "fate_tree",
                               edge_attr = "ecount",
@@ -69,8 +68,9 @@ def get_nodes_celltype_counts(adata,
     """
     get the celltype counts for each node in the tree
     """
-    if graph_basis and not graph_name:
-        graph_name = f"{graph_basis}_triangulation_circle"
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
 
     if graph_name not in adata.uns:
         raise ValueError(f"graph_name: {graph_name} not in adata.obs.columns")
@@ -94,7 +94,7 @@ def get_nodes_celltype_counts(adata,
 
 
 def trim_derailed_nodes(adata,
-                        graph_name = "X_pca_ddhodge_g_triangulation_circle",
+                        graph_name = None,
                         tree_name = "fate_tree",
                         edge_attr = "ecount",
                         cluster = "group",
@@ -105,6 +105,9 @@ def trim_derailed_nodes(adata,
     The standard is: if no cell presents in the maximum cell type remove this node
     """
     adata = adata.copy() if iscopy else adata
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
 
     d_nodes_counter = get_nodes_celltype_counts(adata, graph_name, tree_name, edge_attr, cluster)
     leaves_index = get_leaves_index(adata.uns[tree_name])
@@ -137,13 +140,16 @@ def add_origin_to_stream(adata, fate_tree='fate_tree', stream_tree="stream_tree"
 
 def create_bstream_tree(adata: AnnData,
                        fate_tree: str = 'fate_tree',
-                       layout_name: str = 'X_pca_ddhodge_g',
+                       layout_name: str = None,
                        iscopy: bool = False,
                        ):
     """
     create stream_tree from fate_tree
     run a bunch of STREAM function for the STREAM plotting
     """
+
+    if "graph_basis" in adata.uns.keys() and not layout_name:
+        layout_name = adata.uns["graph_basis"]
 
     adata = adata.copy() if iscopy else adata
     g = adata.uns[fate_tree]
@@ -184,8 +190,8 @@ def get_root_bins(ddf, node_name, start, end):
     return sorted(root_bins)
 
 def create_detail_tree(adata, htree, root, ddf,
-                       graph_name = "X_pca_ddhodge_g_triangulation_circle",
-                       layout_name = "X_pca_ddhodge_g",
+                       graph_name = None,
+                       layout_name = None,
                        tree_name = "fate_tree",
                        edge_attr = "ecount",
                        cluster = "group",
@@ -205,6 +211,12 @@ def create_detail_tree(adata, htree, root, ddf,
     4. if trim_end, trim the end of the tree if there's no cell in the maximum cell type
 
     """
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
+    if "graph_basis" in adata.uns.keys() and not layout_name:
+        layout_name = adata.uns["graph_basis"]
+
     travel_edges = list(nx.bfs_tree(htree, root).edges())
     fate_tree = nx.DiGraph()
     root = None
@@ -520,10 +532,10 @@ def merge_common_list(lst):
     return list(connected_components(G))
 
 def harmonic_trajs_bins(adata: AnnData,
-                        graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
-                        evector_name="X_pca_ddhodge_g_triangulation_circle_L1Norm_decomp_vector",
+                        graph_name: str = None,
+                        evector_name=None,
                         eigen_n = -1,
-                        layout_name: str = 'X_pca_ddhodge_g',
+                        layout_name: str = None,
                         full_traj_matrix = 'full_traj_matrix',
                         trajs_clusters = 'trajs_clusters',
                         trajs_use = 100,
@@ -537,6 +549,15 @@ def harmonic_trajs_bins(adata: AnnData,
     return bins of each trajectory clustere edges
     if eigen_n < 1 use knee_eigen to find eigen_n
     """
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
+
+    if "graph_basis" in adata.uns.keys() and not layout_name:
+        layout_name = adata.uns["graph_basis"]
+
     np.random.seed(random_seed)
 
     if eigen_n < 1:
@@ -860,19 +881,28 @@ def dic_avg_attribute(df, attr='edge_mid_pos', bin_idx='edge_bins'):
     return dic
 
 def _edge_two_ends(adata: AnnData,
-                   graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
+                   graph_name: str = None,
                    ):
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
 
     elist = np.array([(x[0], x[1]) for x in adata.uns[graph_name].edges()])
     return {i:v for i, v in enumerate(elist)}
 
 def _edge_mid_points(adata: AnnData,
-                    graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
-                    layout_name: str = 'X_pca_ddhodge_g',
+                    graph_name: str = None,
+                    layout_name: str = None,
                     ):
     """
     return middle points of all edges
     """
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
+    if "graph_basis" in adata.uns.keys() and not layout_name:
+        layout_name = adata.uns["graph_basis"]
+
     elist = np.array([(x[0], x[1]) for x in adata.uns[graph_name].edges()])
     dic = {}
     for i in range(elist.shape[0]):
@@ -880,12 +910,15 @@ def _edge_mid_points(adata: AnnData,
     return dic
 
 def _edge_mid_attribute(adata: AnnData,
-                       graph_name: str = 'X_pca_ddhodge_g_triangulation_circle',
+                       graph_name: str = None,
                        node_attribute = 'u',
                        ):
     """
     return attribute of all edges
     """
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+
     #assert() attribute type
     elist = np.array([(x[0], x[1]) for x in adata.uns[graph_name].edges()])
     dic = {}
