@@ -13,7 +13,7 @@ def graph_layout(adata, graph_name=None, layout='neato', out_name=None, iscopy=F
 
     layouts = nx.nx_pydot.graphviz_layout(adata.uns[graph_name], prog=layout)
 
-    if not out_name:
+    if out_name:
         adata.obsm[out_name] = np.array([layouts[i] for i in range(len(layouts))])
     else:
         adata.obsm[graph_name] = np.array([layouts[i] for i in range(len(layouts))])

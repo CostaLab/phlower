@@ -6,6 +6,7 @@ import random
 import networkx as nx
 import numpy as np
 import scipy
+from datetime import datetime
 from tqdm import trange
 from anndata import AnnData
 from typing import List
@@ -37,8 +38,8 @@ def random_climb_knn(adata,
 
     if "graph_basis" in adata.uns.keys() and not graph_name:
         graph_name = adata.uns["graph_basis"] + "_triangulation"
-        A = adata.uns["graph_basis"] + "_A"
-        W = adata.uns["graph_basis"] + "_W"
+        A = re.sub("_g$", "_A", adata.uns["graph_basis"])
+        W = re.sub("_g$", "_W", adata.uns["graph_basis"])
 
     if graph_name not in adata.uns:
         raise ValueError(f"{graph_name} not in adata.uns")
@@ -87,12 +88,12 @@ def trajs_matrix(adata: AnnData,
     if graph_name not in adata.uns:
         raise ValueError(f"{graph_name} not in adata.uns")
 
-    print("projecting trajectories to eigenvectors...")
+    print(datetime.now(), "projecting trajectories to eigenvectors...")
     full_trajectory_matrix(adata,
                            trajs=trajs,
                            edge_w = edge_w,
-                           is_copy = False)
-    print("Embedding trajectory harmonics...")
+                           iscopy = False)
+    print(datetime.now(), "Embedding trajectory harmonics...")
     trajs_dm(adata,
              evector_name = evector_name,
              M_flatten = "full_traj_matrix_flatten",
@@ -100,6 +101,7 @@ def trajs_matrix(adata: AnnData,
              eigen_n = eigen_n,
              iscopy = False
             )
+    print(datetime.now(), "done.")
     return adata if iscopy else None
 #endf trajs_matrix
 
@@ -111,10 +113,10 @@ def full_trajectory_matrix(adata: AnnData,
                            ):
     adata = adata.copy() if iscopy else adata
 
-    if "grahp_basis" in adata.uns.keys() and not graph_name:
+    if "graph_basis" in adata.uns.keys() and not graph_name:
         graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
 
-    if graph_name not in adata.uns:
+    if graph_name not in adata.uns.keys():
         raise ValueError(f"{graph_name} not in adata.uns")
 
     if isinstance(trajs, str):

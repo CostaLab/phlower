@@ -554,7 +554,7 @@ def nxdraw_holes(adata: AnnData,
     if flip:
         H = [i*-1 for i in H]
     nx.draw_networkx(gg if is_arrow else gg.to_undirected(),
-                     adata.obsm[graph_name],
+                     adata.obsm[layout_name],
                      edge_color=H,
                      node_size=node_size,
                      width=width,
@@ -659,10 +659,10 @@ def plot_triangle_density(adata: AnnData,
                           **args):
 
     if "graph_basis" in adata.uns and not graph_name:
-        graph_name = adata.uns["graph_basis"]
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
 
     if "graph_basis" in adata.uns and not layout_name:
-        layout_name = adata.uns["graph_basis"]
+        layout_name = adata.uns["graph_basis"] + "_triangulation_circle"
 
 
     G_plot_triangle_density(adata.uns[graph_name], adata.obsm[layout_name], node_size=node_size, ax=ax, cmap=cmap, colorbar=colorbar, **args)
@@ -845,9 +845,8 @@ def G_plot_triangle_density(g:nx.Graph,
     colorbar: if show colorbar
     **args: parameters of networkx.draw
     """
-
     ax = ax or plt.gca()
-    values = nx.triangles(g)
+    values = nx.triangles(g.to_undirected())
     n_color = np.asarray([values[n] for n in g.nodes()])
     nx.draw(g, layouts, node_color=n_color, node_size=node_size, ax=ax, cmap=cmap, **args)
     if colorbar:

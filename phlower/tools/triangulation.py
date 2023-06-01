@@ -12,10 +12,10 @@ from .graphconstr import adjedges
 def construct_delaunay(adata:AnnData,
                        graph_name:str=None,
                        layout_name:str=None,
-                       trunc_quantile:flatten=0.75,
+                       trunc_quantile:float=0.75,
                        trunc_times:float=3,
                        cluster_name:str='group',
-                       quant=0.1,
+                       circle_quant=0.1,
                        node_attr='u',
                        start_n=5,
                        end_n = 5,
@@ -38,13 +38,16 @@ def construct_delaunay(adata:AnnData,
     if layout_name not in adata.obsm:
         raise ValueError(f"{layout_name} not in adata.obsm")
 
-    edges = truncated_delaunay(adata.uns[graph_name].nodes,  adata.obsm[layout_name], trunc_quantile=trunc_quantile, trunc_times=trunc_times)
+    edges = truncated_delaunay(adata.uns[graph_name].nodes,
+                               adata.obsm[layout_name],
+                               trunc_quantile=trunc_quantile,
+                               trunc_times=trunc_times)
     adata.uns[f'{graph_name}_triangulation'] = reset_edges(adata.uns[graph_name], edges, keep_old=False)
     construct_circle_delaunay(adata,
-                              graph_name=graph_name,
+                              graph_name=f'{graph_name}_triangulation',
                               layout_name=graph_name,
                               cluster_name=cluster_name,
-                              quant=quantile,
+                              quant=circle_quant,
                               node_attr=node_attr,
                               start_n=start_n,
                               end_n = end_n,
@@ -209,8 +212,8 @@ def construct_trucated_delaunay_knn(adata:AnnData,
 
     if "graph_basis" in adata.uns and not graph_name:
         graph_name = adata.uns["graph_basis"]
-        A = f"{graph_name}_A"
-        W = f"{graph_name}_W"
+        A = re.sub("_g$", "_A", "{graph_name}")
+        W = re.sub("_g$", "_W", "{graph_name}")
     if "graph_basis" in adata.uns and not layout_name:
         layout_name = adata.uns["graph_basis"]
 
@@ -395,9 +398,9 @@ def connect_starts_ends_with_Delaunay(g,
         tri_edges =[[ti(a,b),ti(a,c),ti(b,c)] for a,b,c in tri.simplices]
         tri_edges = list(set([item for sublist in tri_edges for item in sublist])) # flatten
         tri_edges = [(selected_nodes[x], selected_nodes[y]) for (x,y) in tri_edges]
-        print(len(tri_edges))
+        #print(len(tri_edges))
         tri_edges = [(x,y) for (x,y) in tri_edges if not is_in_2sets(x,y, end_nodes_sets)]
-        print(len(tri_edges))
+        #print(len(tri_edges))
         ## filtering, ends should not be together.
         G_ae.add_edges_from(tri_edges)
 

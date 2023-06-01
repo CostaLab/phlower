@@ -44,6 +44,7 @@ from .triangulation import (
         construct_trucated_delaunay,
         construct_trucated_delaunay_knn,
         construct_circle_delaunay,
+        construct_delaunay,
         )
 
 from .hodgedecomp import (
