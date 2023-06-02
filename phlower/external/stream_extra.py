@@ -14,7 +14,7 @@ from pandas.api.types import is_string_dtype,is_numeric_dtype
 
 
 
-def add_pos_to_graph(graph, layouts, pos='pos', iscopy=False):
+def add_pos_to_graph(graph, layouts, pos='X_pca_ddhodge_g', iscopy=False):
 
     assert(type(layouts) == type({}) or type(layouts)==type([]) or type(layouts)==type(np.array([])))
     dict_pos = dict()
@@ -44,7 +44,7 @@ def dfs_from_leaf(graph_copy,node,degrees_of_nodes,nodes_to_visit,nodes_to_merge
                 nodes_to_merge.append(n2)
                 return
 
-def extract_branches(g_fate_tree):
+def extract_branches(g_fate_tree, pos='X_pca_ddhodge_g'):
     #record the original degree(before removing nodes) for each node
     degrees_of_nodes = g_fate_tree.degree()
     g_fate_tree_copy = g_fate_tree.copy()
@@ -67,12 +67,12 @@ def extract_branches(g_fate_tree):
                 nodes_to_delete = nodes_to_merge
                 leaves = []
             g_fate_tree_copy.remove_nodes_from(nodes_to_delete)
-    dict_branches = add_branch_info(g_fate_tree,dict_branches)
+    dict_branches = add_branch_info(g_fate_tree,dict_branches, pos=pos)
     # print('Number of branches: ' + str(len(clusters_to_merge)))
     return dict_branches
 
 
-def construct_stream_tree(dict_branches, graph, pos='pos'):
+def construct_stream_tree(dict_branches, graph, pos='X_pca_ddhodge_g'):
     stream_tree = nx.Graph()
     stream_tree.add_nodes_from(list(set(itertools.chain.from_iterable(dict_branches.keys()))))
     stream_tree.add_edges_from(dict_branches.keys())
@@ -102,7 +102,7 @@ def construct_stream_tree(dict_branches, graph, pos='pos'):
     nx.set_edge_attributes(stream_tree,values=dict_branches_len,name='len')
     return stream_tree
 
-def add_branch_info(graph,dict_branches, pos='pos'):
+def add_branch_info(graph,dict_branches, pos='X_pca_ddhodge_g'):
     dict_nodes_pos = nx.get_node_attributes(graph, pos)
     #sns_palette = sns.color_palette("hls", len(dict_branches)).as_hex()
     sns_palette = sns.color_palette(cc.glasbey, n_colors=len(dict_branches)).as_hex()
@@ -118,13 +118,19 @@ def add_branch_info(graph,dict_branches, pos='pos'):
 
 
 
-def project_cells_to_g_fate_tree(adata, layout_name="X_dr", pos='pos'):
+def project_cells_to_g_fate_tree(adata, layout_name="X_dr", pos='X_pca_ddhodge_g'):
     input_data = adata.obsm[layout_name]
     g_fate_tree = adata.uns['g_fate_tree']
     dict_nodes_pos = nx.get_node_attributes(g_fate_tree, pos)
+
+    #print("keys", dict_nodes_pos.keys() )
+    #print("dict_nodes_pos", dict_nodes_pos.keys())
     nodes_pos = np.empty((0,input_data.shape[1]))
+    #print("nodes_pos", nodes_pos)
     nodes = np.empty((0,1),dtype=object)
+    #print("nodes", nodes)
     for key in dict_nodes_pos.keys():
+        #print("12", nodes_pos,dict_nodes_pos[key])
         nodes_pos = np.vstack((nodes_pos,dict_nodes_pos[key]))
         nodes = np.append(nodes,key)
     indices = pairwise_distances_argmin_min(input_data,nodes_pos,axis=1,metric='euclidean')[0]
@@ -143,6 +149,7 @@ def project_cells_to_g_fate_tree(adata, layout_name="X_dr", pos='pos'):
         list_br_id = [stream_tree.edges[br_key]['id'] for br_key,br_value in dict_branches_nodes.items() if x_node[ix] in br_value]
         dict_br_matrix = dict()
         for br_id in list_br_id:
+            #print("keys", dict_nodes_pos.keys() )
             dict_br_matrix[br_id] = np.array([dict_nodes_pos[i] for i in stream_tree.edges[br_id]['nodes']])
         dict_results = dict()
         list_dist_xp = list()

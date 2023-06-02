@@ -62,6 +62,10 @@ def harmonic_stream_tree(adata: AnnData,
         layout_name = adata.uns["graph_basis"]
 
 
+    if layout_name not in adata.obsm:
+        raise ValueError(f"layout_name {layout_name} is not in adata.obsm")
+
+
     d =  harmonic_trajs_bins(adata = adata,
                              graph_name = graph_name,
                              evector_name = evector_name,
@@ -82,8 +86,11 @@ def harmonic_stream_tree(adata: AnnData,
     adata.uns['fate_tree'] = fate_tree
     if pca_name in adata.obsm:
         add_node_pca(adata, pca_name=pca_name)
+    if layout_name != adata.uns["graph_basis"]:
+        add_node_pca(adata, pca_name=adata.uns["graph_basis"])
     create_bstream_tree(adata, layout_name=layout_name, iscopy=False)
-
+    if layout_name != adata.uns["graph_basis"]:
+        add_pca_to_stream(adata, attr=adata.uns["graph_basis"])
     return adata if iscopy else None
 #endf harmonic_stream_tree
 
@@ -183,7 +190,8 @@ def trim_derailed_nodes(adata,
     return adata if iscopy else None
 
 
-def add_origin_to_stream(adata, fate_tree='fate_tree', stream_tree="stream_tree"):
+def add_origin_to_stream(adata, fate_tree='fate_tree', stream_tree="stream_tree", iscopy=False):
+    adata = adata.copy if iscopy else adata
     assert(set(adata.uns[stream_tree].nodes()).issubset( set(adata.uns[fate_tree].nodes())))
     for node in adata.uns[stream_tree].nodes():
         adata.uns[stream_tree].nodes[node]['original'] = adata.uns[fate_tree].nodes[node]['original'][0]
@@ -196,6 +204,23 @@ def add_origin_to_stream(adata, fate_tree='fate_tree', stream_tree="stream_tree"
         elif in_degree > 0 and out_degree > 0:
             node_type = "branch"
         adata.uns[stream_tree].nodes[node]['node_type'] = node_type
+    return adata if iscopy else None
+
+def add_pca_to_stream(adata, fate_tree='fate_tree', stream_tree="stream_tree", attr="X_pca_ddhodge_g", iscopy=False):
+    adata = adata.copy if iscopy else adata
+
+    assert(set(adata.uns[stream_tree].nodes()).issubset( set(adata.uns[fate_tree].nodes())))
+    for node in adata.uns[stream_tree].nodes():
+        adata.uns[stream_tree].nodes[node][attr] = adata.uns[fate_tree].nodes[node][attr]
+        ##node type, branch, leaf, root
+        in_degree = adata.uns[fate_tree].in_degree(node)
+        out_degree = adata.uns[fate_tree].out_degree(node)
+        node_type = "leaf"
+        if in_degree == 0 and out_degree == 1:
+            node_type = "root"
+        elif in_degree > 0 and out_degree > 0:
+            node_type = "branch"
+    return adata if iscopy else None
 
 
 
@@ -214,16 +239,24 @@ def create_bstream_tree(adata: AnnData,
         layout_name = adata.uns["graph_basis"]
     g = adata.uns[fate_tree]
     g_pos   = adata.uns[fate_tree].to_undirected()
-    dic_br  =  extract_branches(g_pos)
-    dic_br  =  add_branch_info(g_pos, dic_br)
-    g_br    =  construct_stream_tree(dic_br, g_pos)
+    dic_br  =  extract_branches(g_pos, pos=layout_name)
+    dic_br  =  add_branch_info(g_pos, dic_br, pos = layout_name)
+
+    g_br    =  construct_stream_tree(dic_br, g_pos, pos= layout_name )
+    #if  adata.uns["graph_basis"] != layout_name:
+    #    for node in g_br.nodes():
+    #        g_br.nodes[node][adata.uns["graph_basis"] ] = g_fate_tree.nodes[node][adata.uns["graph_basis"] ]
 
     adata.uns['g_fate_tree'] = g_pos
     adata.uns['stream_tree'] = g_br
+    #if adata.uns['graph_basis'] != layout_name:
+        #add_node_pca(adata.uns['g_fate_tree'], layout_name=adata.uns['graph_basis'])
+        #add_node_pca(adata.uns['stream_tree'], layout_name=adata.uns['graph_basis'])
+
     layouts = adata.obsm[layout_name]
     if type(layouts) == dict:
         layouts = np.array([layouts[x] for x in range(max(layouts.keys()) + 1)])
-    project_cells_to_g_fate_tree(adata, layout_name=layout_name)
+    project_cells_to_g_fate_tree(adata, layout_name=layout_name, pos=layout_name)
     calculate_pseudotime(adata)
     add_origin_to_stream(adata)
 
@@ -340,7 +373,7 @@ def create_detail_tree(adata, htree, root, ddf,
         root = (n0_node, 0)
     #print(fate_tree.nodes())
 
-    fate_tree = add_node_info(fate_tree, ddf, root)
+    fate_tree = add_node_info(fate_tree, ddf, root, pos_name=layout_name)
     fate_tree = relabel_tree(fate_tree, root)
     fate_tree = manual_root(adata,graph_name, layout_name, fate_tree, '0_0', node_attribute=node_attribute)
     fate_tree.nodes['root']['original'] = (('root', ), 0)
@@ -374,7 +407,8 @@ def relabel_tree(fate_tree, root):
 
     return renamed_tree
 
-def add_node_info(fate_tree, ddf, root, pos_name='pos'):
+
+def add_node_info(fate_tree, ddf, root, pos_name='X_pca_ddhodge_g'):
     """
     traverse the tree nodes, combine the ubin info from each trajecotry group
     """
@@ -428,7 +462,35 @@ def add_node_info(fate_tree, ddf, root, pos_name='pos'):
     return fate_tree
 
 
-def add_node_pca(adata, root='root', fate_tree_name="fate_tree", graph_name = None, pos_name='dm_pos', pca_name='X_pca', iscopy=False):
+
+#def add_node_pca(adata, root='root', fate_tree_name="fate_tree", graph_name = None,  pca_name='X_pca', iscopy=False):
+#    """
+#    traverse the tree nodes, combine the set the average PCA coordinate
+#    """
+#    adata = adata.copy() if iscopy else adata
+#
+#    if "graph_basis" in adata.uns.keys() and not graph_name:
+#        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+#    travel_nodes = list(nx.bfs_tree(adata.uns[fate_tree_name], root).nodes())
+#
+#    d_pos = {}
+#    for node_name in travel_nodes:
+#        ecounts = adata.uns[fate_tree_name].nodes[node_name]['ecount']
+#        elist = np.array([(x[0], x[1]) for x in adata.uns[graph_name].edges()])
+#        nodelist = elist[[x for x,y in ecounts]].ravel()
+#        weight = np.array([(y,y) for x,y in ecounts]).ravel()
+#        pos = np.average(adata.obsm[pca_name][nodelist, :], weights=weight, axis=0)
+#        d_pos[node_name] = pos
+#
+#    nx.set_node_attributes(adata.uns[fate_tree_name], d_pos, pca_name)
+#
+#    return adata if iscopy else None
+##endf add_node_pca
+
+
+
+
+def add_node_pca(adata, root='root', fate_tree_name="fate_tree", graph_name = None,  pca_name='X_pca', iscopy=False):
     """
     traverse the tree nodes, combine the set the average PCA coordinate
     """
@@ -447,19 +509,22 @@ def add_node_pca(adata, root='root', fate_tree_name="fate_tree", graph_name = No
         pos = np.average(adata.obsm[pca_name][nodelist, :], weights=weight, axis=0)
         d_pos[node_name] = pos
 
-    nx.set_node_attributes(adata.uns[fate_tree_name], d_pos, pos_name)
+    nx.set_node_attributes(adata.uns[fate_tree_name], d_pos, pca_name)
 
     return adata if iscopy else None
 
 #endf add_node_pca
 
 
-def manual_root(adata, graph_name, layout_name, fate_tree, root, node_attribute='u',top_n=10, pos_name='pos'):
+def manual_root(adata, graph_name, layout_name, fate_tree, root, node_attribute='u',top_n=10, pos_name='X_pca_ddhodge_g'):
     """
     manually add new the root of the tree
     And add the same info as others, cumsum is not avaliable since it's not from trjaectories
     ecounts is top_n mininum u of the nodes.
     """
+    if "graph_basis" in adata.uns.keys() and not pos_name:
+        graph_name = adata.uns["graph_basis"]
+
     items = _edge_mid_attribute(adata, graph_name, node_attribute=node_attribute).items()
     edges = [k for k,v in sorted(items, key=lambda x:x[1])[:top_n]]
     fate_tree.add_node('root')
