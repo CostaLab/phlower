@@ -39,14 +39,14 @@ def harmonic_stream_tree(adata: AnnData,
                         trim_end = False,
                         full_traj_matrix = 'full_traj_matrix',
                         trajs_clusters = 'trajs_clusters',
-                        trajs_use = 100,
+                        trajs_use = 10000,
                         retain_clusters = [],
                         node_attribute = 'u',
                         time_sync_u = "edge_mid_u",
                         pca_name = "X_pca",
                         node_bottom_up = True,
                         min_kde_quant_rm = 0.1,
-                        kde_sample_n = 1000,
+                        kde_sample_n = 10000,
                         random_seed = 2022,
                         iscopy=False,
                         ):
@@ -462,34 +462,6 @@ def add_node_info(fate_tree, ddf, root, pos_name='X_pca_ddhodge_g'):
     return fate_tree
 
 
-
-#def add_node_pca(adata, root='root', fate_tree_name="fate_tree", graph_name = None,  pca_name='X_pca', iscopy=False):
-#    """
-#    traverse the tree nodes, combine the set the average PCA coordinate
-#    """
-#    adata = adata.copy() if iscopy else adata
-#
-#    if "graph_basis" in adata.uns.keys() and not graph_name:
-#        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
-#    travel_nodes = list(nx.bfs_tree(adata.uns[fate_tree_name], root).nodes())
-#
-#    d_pos = {}
-#    for node_name in travel_nodes:
-#        ecounts = adata.uns[fate_tree_name].nodes[node_name]['ecount']
-#        elist = np.array([(x[0], x[1]) for x in adata.uns[graph_name].edges()])
-#        nodelist = elist[[x for x,y in ecounts]].ravel()
-#        weight = np.array([(y,y) for x,y in ecounts]).ravel()
-#        pos = np.average(adata.obsm[pca_name][nodelist, :], weights=weight, axis=0)
-#        d_pos[node_name] = pos
-#
-#    nx.set_node_attributes(adata.uns[fate_tree_name], d_pos, pca_name)
-#
-#    return adata if iscopy else None
-##endf add_node_pca
-
-
-
-
 def add_node_pca(adata, root='root', fate_tree_name="fate_tree", graph_name = None,  pca_name='X_pca', iscopy=False):
     """
     traverse the tree nodes, combine the set the average PCA coordinate
@@ -532,7 +504,11 @@ def manual_root(adata, graph_name, layout_name, fate_tree, root, node_attribute=
     ## update attribute
     fate_tree.nodes['root']['ecount'] = [(e, 1) for e in edges]
     fate_tree.nodes['root'][pos_name]    = np.mean([_edge_mid_points(adata, graph_name, layout_name)[e] for e in edges], axis=0)
-    fate_tree.nodes['root']['u']      = np.mean([_edge_mid_attribute(adata, graph_name, node_attribute=node_attribute)[e] for e in edges], axis=0)
+    #if adata.uns['graph_basis'] != pos_name:
+    #    fate_tree.nodes['root'][adata.uns['graph_basis']] = np.mean([_edge_mid_points(adata, graph_name, adata.uns['graph_basis'])[e] for e in edges], axis=0)
+
+
+    fate_tree.nodes['root']['u'] = np.mean([_edge_mid_attribute(adata, graph_name, node_attribute=node_attribute)[e] for e in edges], axis=0)
     fate_tree.nodes['root']['cumsum'] = np.array([])
 
     return fate_tree
