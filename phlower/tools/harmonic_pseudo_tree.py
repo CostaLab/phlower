@@ -43,6 +43,7 @@ def harmonic_stream_tree(adata: AnnData,
                         retain_clusters = [],
                         node_attribute = 'u',
                         time_sync_u = "edge_mid_u",
+                        pca_name = "X_pca",
                         node_bottom_up = True,
                         min_kde_quant_rm = 0.1,
                         kde_sample_n = 1000,
@@ -79,6 +80,8 @@ def harmonic_stream_tree(adata: AnnData,
     htree,root = create_branching_tree(pairwise_bdict, keys=None)
     fate_tree = create_detail_tree(adata, htree, root, ddf, trim_end=trim_end, graph_name=graph_name, layout_name=layout_name)
     adata.uns['fate_tree'] = fate_tree
+    if pca_name in adata.obsm:
+        add_node_pca(adata, pca_name=pca_name)
     create_bstream_tree(adata, layout_name=layout_name, iscopy=False)
 
     return adata if iscopy else None
@@ -371,7 +374,7 @@ def relabel_tree(fate_tree, root):
 
     return renamed_tree
 
-def add_node_info(fate_tree, ddf, root, pos='pos'):
+def add_node_info(fate_tree, ddf, root, pos_name='pos'):
     """
     traverse the tree nodes, combine the ubin info from each trajecotry group
     """
@@ -419,13 +422,39 @@ def add_node_info(fate_tree, ddf, root, pos='pos'):
 
     #print(cumsum)
     nx.set_node_attributes(fate_tree, d_e_dic, 'ecount')
-    nx.set_node_attributes(fate_tree, d_pos, pos)
+    nx.set_node_attributes(fate_tree, d_pos, pos_name)
     nx.set_node_attributes(fate_tree, d_u, 'u')
     nx.set_node_attributes(fate_tree, d_cumsum, 'cumsum')
     return fate_tree
 
 
-def manual_root(adata, graph_name, layout_name, fate_tree, root, node_attribute='u',top_n=10):
+def add_node_pca(adata, root='root', fate_tree_name="fate_tree", graph_name = None, pos_name='dm_pos', pca_name='X_pca', iscopy=False):
+    """
+    traverse the tree nodes, combine the set the average PCA coordinate
+    """
+    adata = adata.copy() if iscopy else adata
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+    travel_nodes = list(nx.bfs_tree(adata.uns[fate_tree_name], root).nodes())
+
+    d_pos = {}
+    for node_name in travel_nodes:
+        ecounts = adata.uns[fate_tree_name].nodes[node_name]['ecount']
+        elist = np.array([(x[0], x[1]) for x in adata.uns[graph_name].edges()])
+        nodelist = elist[[x for x,y in ecounts]].ravel()
+        weight = np.array([(y,y) for x,y in ecounts]).ravel()
+        pos = np.average(adata.obsm[pca_name][nodelist, :], weights=weight, axis=0)
+        d_pos[node_name] = pos
+
+    nx.set_node_attributes(adata.uns[fate_tree_name], d_pos, pos_name)
+
+    return adata if iscopy else None
+
+#endf add_node_pca
+
+
+def manual_root(adata, graph_name, layout_name, fate_tree, root, node_attribute='u',top_n=10, pos_name='pos'):
     """
     manually add new the root of the tree
     And add the same info as others, cumsum is not avaliable since it's not from trjaectories
@@ -437,7 +466,7 @@ def manual_root(adata, graph_name, layout_name, fate_tree, root, node_attribute=
     fate_tree.add_edge('root', root)
     ## update attribute
     fate_tree.nodes['root']['ecount'] = [(e, 1) for e in edges]
-    fate_tree.nodes['root'][pos]    = np.mean([_edge_mid_points(adata, graph_name, layout_name)[e] for e in edges], axis=0)
+    fate_tree.nodes['root'][pos_name]    = np.mean([_edge_mid_points(adata, graph_name, layout_name)[e] for e in edges], axis=0)
     fate_tree.nodes['root']['u']      = np.mean([_edge_mid_attribute(adata, graph_name, node_attribute=node_attribute)[e] for e in edges], axis=0)
     fate_tree.nodes['root']['cumsum'] = np.array([])
 
