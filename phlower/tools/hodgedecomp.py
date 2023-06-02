@@ -9,6 +9,8 @@ from typing import Union
 from numpy.linalg import qr,solve,lstsq
 from .incidence import *
 from ..util import find_knee
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 def lexsort_rows(array: np.ndarray) -> np.ndarray:
     array = np.array(array)

@@ -16,7 +16,6 @@ from .trajectory import M_create_matrix_coordinates_trajectory_Hspace
 from ..util import pairwise, find_knee, tuple_increase, pearsonr_2D
 
 
-
 def feature_mat_coor_flatten_trajectory(adata: AnnData,
                                         feature : str = None,
                                         graph_name: str = None,

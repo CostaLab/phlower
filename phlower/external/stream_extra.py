@@ -14,7 +14,7 @@ from pandas.api.types import is_string_dtype,is_numeric_dtype
 
 
 
-def add_pos_to_graph(graph, layouts, iscopy=False):
+def add_pos_to_graph(graph, layouts, pos='pos', iscopy=False):
 
     assert(type(layouts) == type({}) or type(layouts)==type([]) or type(layouts)==type(np.array([])))
     dict_pos = dict()
@@ -27,7 +27,7 @@ def add_pos_to_graph(graph, layouts, iscopy=False):
         dict_pos[node] = np.average([layouts[x] for x in graph_out.nodes[node]['cells']], axis=0)
 
     #print(dict_pos)
-    nx.set_node_attributes(graph_out,values=dict_pos,name='pos')
+    nx.set_node_attributes(graph_out,values=dict_pos,name=pos)
     return graph_out
 #endf add_pos_to_graph
 
@@ -43,8 +43,6 @@ def dfs_from_leaf(graph_copy,node,degrees_of_nodes,nodes_to_visit,nodes_to_merge
             else:
                 nodes_to_merge.append(n2)
                 return
-
-
 
 def extract_branches(g_fate_tree):
     #record the original degree(before removing nodes) for each node
@@ -74,14 +72,14 @@ def extract_branches(g_fate_tree):
     return dict_branches
 
 
-def construct_stream_tree(dict_branches, graph):
+def construct_stream_tree(dict_branches, graph, pos='pos'):
     stream_tree = nx.Graph()
     stream_tree.add_nodes_from(list(set(itertools.chain.from_iterable(dict_branches.keys()))))
     stream_tree.add_edges_from(dict_branches.keys())
 
     for node in stream_tree.nodes():
         #stream_tree.nodes[node]['cells'] = graph.nodes[node]['cells'] -------------------====
-        stream_tree.nodes[node]['pos'] = graph.nodes[node]['pos']
+        stream_tree.nodes[node][pos] = graph.nodes[node][pos]
     root = list(stream_tree.nodes())[0]
     edges = nx.bfs_edges(stream_tree, root)
     nodes = [root] + [v for u, v in edges]
@@ -104,8 +102,8 @@ def construct_stream_tree(dict_branches, graph):
     nx.set_edge_attributes(stream_tree,values=dict_branches_len,name='len')
     return stream_tree
 
-def add_branch_info(graph,dict_branches):
-    dict_nodes_pos = nx.get_node_attributes(graph,'pos')
+def add_branch_info(graph,dict_branches, pos='pos'):
+    dict_nodes_pos = nx.get_node_attributes(graph, pos)
     #sns_palette = sns.color_palette("hls", len(dict_branches)).as_hex()
     sns_palette = sns.color_palette(cc.glasbey, n_colors=len(dict_branches)).as_hex()
 
@@ -120,10 +118,10 @@ def add_branch_info(graph,dict_branches):
 
 
 
-def project_cells_to_g_fate_tree(adata, layout_name="X_dr"):
+def project_cells_to_g_fate_tree(adata, layout_name="X_dr", pos='pos'):
     input_data = adata.obsm[layout_name]
     g_fate_tree = adata.uns['g_fate_tree']
-    dict_nodes_pos = nx.get_node_attributes(g_fate_tree,'pos')
+    dict_nodes_pos = nx.get_node_attributes(g_fate_tree, pos)
     nodes_pos = np.empty((0,input_data.shape[1]))
     nodes = np.empty((0,1),dtype=object)
     for key in dict_nodes_pos.keys():

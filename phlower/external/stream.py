@@ -34,10 +34,10 @@ def assign_root(adata,
                 root='root',
                 tree='stream_tree'
                 ):
-    return adata.uns[tree].nodes['root']['label']
+    return adata.uns[tree].nodes[root]['label']
 
 
-def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preference=None,
+def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,preference=None,
                    fig_size=(7,4.5),fig_legend_ncol=1,fig_legend_order = None,
                    vmin=None,vmax=None,alpha=0.8,
                    pad=1.08,w_pad=None,h_pad=None,
@@ -103,7 +103,7 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
     """
     print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03")
 
-    root = assign_root(adata)
+    root = assign_root(adata, root=root)
 
     dd = {}
     if text_attr == "original":
@@ -282,7 +282,7 @@ def plot_stream_sc(adata,root='S0',color=None,dist_scale=1,dist_pctl=95,preferen
 
 
 
-def plot_stream(adata,root='S0',color = None,preference=None,dist_scale=0.9,
+def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
                 factor_num_win=10,factor_min_win=2.0,factor_width=2.5,factor_nrow=200,factor_ncol=400,
                 log_scale = False,factor_zoomin=100.0,
                 fig_size=(7,4.5),fig_legend_order=None,fig_legend_ncol=1,
@@ -345,7 +345,7 @@ def plot_stream(adata,root='S0',color = None,preference=None,dist_scale=0.9,
     None
     """
     print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03")
-    root = assign_root(adata)
+    root = assign_root(adata, root=root)
 
     if(fig_path is None):
         fig_path = adata.uns['workdir']

@@ -371,7 +371,7 @@ def relabel_tree(fate_tree, root):
 
     return renamed_tree
 
-def add_node_info(fate_tree, ddf, root):
+def add_node_info(fate_tree, ddf, root, pos='pos'):
     """
     traverse the tree nodes, combine the ubin info from each trajecotry group
     """
@@ -418,10 +418,10 @@ def add_node_info(fate_tree, ddf, root):
         #print(node_name,d_u)
 
     #print(cumsum)
-    nx.set_node_attributes(fate_tree, d_e_dic, "ecount")
-    nx.set_node_attributes(fate_tree, d_pos, "pos")
-    nx.set_node_attributes(fate_tree, d_u, "u")
-    nx.set_node_attributes(fate_tree, d_cumsum, "cumsum")
+    nx.set_node_attributes(fate_tree, d_e_dic, 'ecount')
+    nx.set_node_attributes(fate_tree, d_pos, pos)
+    nx.set_node_attributes(fate_tree, d_u, 'u')
+    nx.set_node_attributes(fate_tree, d_cumsum, 'cumsum')
     return fate_tree
 
 
@@ -437,7 +437,7 @@ def manual_root(adata, graph_name, layout_name, fate_tree, root, node_attribute=
     fate_tree.add_edge('root', root)
     ## update attribute
     fate_tree.nodes['root']['ecount'] = [(e, 1) for e in edges]
-    fate_tree.nodes['root']['pos']    = np.mean([_edge_mid_points(adata, graph_name, layout_name)[e] for e in edges], axis=0)
+    fate_tree.nodes['root'][pos]    = np.mean([_edge_mid_points(adata, graph_name, layout_name)[e] for e in edges], axis=0)
     fate_tree.nodes['root']['u']      = np.mean([_edge_mid_attribute(adata, graph_name, node_attribute=node_attribute)[e] for e in edges], axis=0)
     fate_tree.nodes['root']['cumsum'] = np.array([])
 

@@ -77,6 +77,7 @@ def trajs_matrix(adata: AnnData,
                  trajs : Union[str, List[List[int]]] = "knn_trajs",
                  edge_w : List = None,
                  iscopy = False,
+                 verbose = True,
                 ):
     adata = adata.copy() if iscopy else adata
 
@@ -88,12 +89,14 @@ def trajs_matrix(adata: AnnData,
     if graph_name not in adata.uns:
         raise ValueError(f"{graph_name} not in adata.uns")
 
-    print(datetime.now(), "projecting trajectories to eigenvectors...")
+    if verbose:
+        print(datetime.now(), "projecting trajectories to eigenvectors...")
     full_trajectory_matrix(adata,
                            trajs=trajs,
                            edge_w = edge_w,
                            iscopy = False)
-    print(datetime.now(), "Embedding trajectory harmonics...")
+    if verbose:
+        print(datetime.now(), "Embedding trajectory harmonics...")
     trajs_dm(adata,
              evector_name = evector_name,
              M_flatten = "full_traj_matrix_flatten",
@@ -101,7 +104,8 @@ def trajs_matrix(adata: AnnData,
              eigen_n = eigen_n,
              iscopy = False
             )
-    print(datetime.now(), "done.")
+    if verbose:
+        print(datetime.now(), "done.")
     return adata if iscopy else None
 #endf trajs_matrix
 
