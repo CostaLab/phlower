@@ -69,7 +69,7 @@ def harmonic_stream_tree(adata: AnnData,
     d =  harmonic_trajs_bins(adata = adata,
                              graph_name = graph_name,
                              evector_name = evector_name,
-                             layout_name = layout_name,
+                             layout_name = adata.uns['graph_basis'], ## still use the default layout for visualization
                              eigen_n = eigen_n,
                              full_traj_matrix = full_traj_matrix,
                              trajs_clusters = trajs_clusters,
@@ -375,7 +375,7 @@ def create_detail_tree(adata, htree, root, ddf,
 
     fate_tree = add_node_info(fate_tree, ddf, root, pos_name=layout_name)
     fate_tree = relabel_tree(fate_tree, root)
-    fate_tree = manual_root(adata,graph_name, layout_name, fate_tree, '0_0', node_attribute=node_attribute)
+    fate_tree = manual_root(adata,graph_name, layout_name, fate_tree, '0_0', node_attribute=node_attribute, pos_name=layout_name)
     fate_tree.nodes['root']['original'] = (('root', ), 0)
 
     adata.uns[tree_name] = fate_tree
@@ -412,6 +412,7 @@ def add_node_info(fate_tree, ddf, root, pos_name='X_pca_ddhodge_g'):
     """
     traverse the tree nodes, combine the ubin info from each trajecotry group
     """
+    #print("adda_node_info, pos_name", pos_name)
 
     travel_nodes = list(nx.bfs_tree(fate_tree, root).nodes())
 
