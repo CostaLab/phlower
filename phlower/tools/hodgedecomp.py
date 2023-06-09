@@ -200,7 +200,7 @@ def L1Norm_decomp(adata: AnnData,
     d = harmonic_projection_matrix_with_w(L1.astype(float), eigen_num, check_symmetric = check_symmetric)
     end = time.time()
 
-    ## u_R = D_2^(-1/2) * u
+    ## u_R = D_2^(1/2) * u
     ## u_L^\top = u^\top * D_1^(-1/2)
     print((end-start), " sec")
 

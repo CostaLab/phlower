@@ -31,8 +31,10 @@ def fate_velocity_plot(
     embedd_label_style="text",
     embedd_label_font=10,
     show_legend: bool = False,
+    show_nodes = True,
     radius: float = 300,
     ax=None,
+    node_alpha: float = 0.5,
     alpha: float = 0.5,
     #streamdensity: float = 1.5,
 
@@ -63,17 +65,20 @@ def fate_velocity_plot(
                        radius=radius,
                        alpha=alpha,
                        **kwargs)
-    nxdraw_group(adata,
-                 group_name=group_name,
-                 ax=ax,
-                 layout_name=layout_name,
-                 graph_name=graph_name,
-                 node_size=4,
-                 label = embedd_label,
-                 labelsize = embedd_label_font,
-                 labelstyle = embedd_label_style,
-                 show_edges=False,
-                 show_legend=show_legend)
+    if show_nodes:
+        nxdraw_group(adata,
+                     group_name=group_name,
+                     ax=ax,
+                     layout_name=layout_name,
+                     graph_name=graph_name,
+                     node_size=4,
+                     label = embedd_label,
+                     labelsize = embedd_label_font,
+                     labelstyle = embedd_label_style,
+                     show_edges=False,
+                     show_legend=show_legend,
+                     alpha=node_alpha,
+                     )
 
 
 
@@ -202,7 +207,7 @@ def Coor_velocity_plot(
     x = pts
 
     headwidth = kwargs.pop("headwidth", 3)
-    headlength = kwargs.pop("headlength", 5)
+    headlength = kwargs.pop("headlength", 2)
 
     if figtype == "point":
         ax.quiver(

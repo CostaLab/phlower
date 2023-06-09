@@ -269,7 +269,7 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
                                     lw=ax_i.spines['bottom'].get_linewidth()*1e-5)
             if title is None:
                 title = ann
-            ax_i.set_title(title)
+            #ax_i.set_title(title)
             plt.tight_layout(pad=pad, h_pad=h_pad, w_pad=w_pad)
             if(save_fig):
                 #file_path_S = os.path.join(fig_path,root)

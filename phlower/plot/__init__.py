@@ -25,3 +25,5 @@ from .plotting import (
         M_plot_trajectory_harmonic_points_3d,
         L_plot_eigen_line,
 )
+
+from .velocity import (fate_velocity_plot)
