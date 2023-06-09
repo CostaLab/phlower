@@ -89,8 +89,7 @@ def grid_diagonal_length(umap, grid_density=20):
     x_len = x_max - x_min
     y_len = y_max - y_min
     grid_len = max(x_len, y_len) / grid_density
-    return grid_len
-
+    return np.sqrt(2)*grid_len
 
 
 def bin_umap_velocity(adata,

@@ -12,6 +12,7 @@ from typing import Iterable, List, Union, Optional, Set, Tuple, TypeVar
 from ..tools.trajectory import M_create_matrix_coordinates_trajectory_Hspace
 
 from ..util import get_uniform_multiplication, kde_eastimate, norm01
+from ..tools.harmonic_pseudo_tree import get_nodes_celltype_counts
 
 V = TypeVar('V')
 def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
@@ -667,6 +668,78 @@ def plot_triangle_density(adata: AnnData,
 
     G_plot_triangle_density(adata.uns[graph_name], adata.obsm[layout_name], node_size=node_size, ax=ax, cmap=cmap, colorbar=colorbar, **args)
 #endf plot_triangle_density
+
+
+
+def plot_pie_fate_tree(adata: AnnData,
+                       graph_name=None,
+                       layout_name=None,
+                       fate_tree='stream_tree',
+                       group= 'group',
+                       ax = None,
+                       ):
+    #https://www.appsloveworld.com/coding/python3x/146/creating-piechart-as-nodes-in-networkx
+
+    ax = ax or plt.gca()
+    if fate_tree not in adata.uns.keys():
+        raise ValueError("fate_tree not found in adata.uns")
+
+    if "graph_basis" in adata.uns.keys() and not graph_name:
+        graph_name = adata.uns["graph_basis"]
+
+    if "graph_basis" in adata.uns.keys() and not layout_name:
+        layout_name= adata.uns["graph_basis"]
+
+
+    nx.draw_networkx_nodes(adata.uns[graph_name],
+                           pos=adata.obsm[layout_name],
+                           ax=ax,
+                           node_size=3,
+                           node_color='grey',
+                           alpha=.2)
+
+    node_pos = nx.get_node_attributes(adata.uns[fate_tree],layout_name)
+    nx.draw_networkx_edges(adata.uns[fate_tree], pos=node_pos, ax=ax)
+
+    dic = get_nodes_celltype_counts(adata, tree_name='fate_tree', edge_attr='ecount', cluster=group)
+
+
+    all_nodes = list(set(adata.obs[group]))
+    #ax.set_xlim(xlim)
+    #ax.set_ylim(ylim)
+    bbox = ax.get_position().get_points()
+    ax_x_min = bbox[0, 0]
+    ax_x_max = bbox[1, 0]
+    ax_y_min = bbox[0, 1]
+    ax_y_max = bbox[1, 1]
+    xlim = ax_x_min, ax_x_max
+    ylim = ax_y_min, ax_y_max
+
+
+    trans=ax.transData.transform
+    trans2 = ax.transAxes.inverted().transform
+
+    piesize=0.05
+    p2=piesize/2.0
+    for node in adata.uns[fate_tree].nodes():
+        attributes =[np.log(dic[node].get(c, 0)+1) for c in all_nodes]
+        xx,yy=trans(node_pos[node]) # figure coordinates
+        xa,ya=trans2((xx,yy)) # axes coordinates
+        xa = xlim[0] + (xa - piesize / 2) * (xlim[1]-xlim[0])
+        ya = ylim[0] + (ya - piesize / 2) * (ylim[1]-ylim[0])
+        if ya < 0: ya = 0
+        if xa < 0: xa = 0
+        rect = [xa, ya, piesize * (xlim[1]-xlim[0]), piesize * (ylim[1]-ylim[0])]
+        #pie_axs.append(plt.axes(rect, frameon=False))
+
+
+        a = plt.axes(rect)
+        a.set_aspect('equal')
+        a.pie(attributes)
+
+
+
+
 
 def G_nxdraw_group(g,
                  layouts,
