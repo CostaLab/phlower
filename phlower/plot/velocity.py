@@ -32,7 +32,7 @@ def fate_velocity_plot(
     embedd_label_font=10,
     show_legend: bool = False,
     show_nodes = True,
-    radius: float = 300,
+    radius: float = 100,
     ax=None,
     node_alpha: float = 0.5,
     alpha: float = 0.5,
@@ -54,7 +54,8 @@ def fate_velocity_plot(
         raise Exception("fate tree not found")
 
     ax = plt.gca() if ax is None else ax
-    bin_umap, bin_velocity = bin_umap_velocity(adata, fate_tree, layout_name)
+    grid_length = grid_diagonal_length(adata.obsm[layout_name], grid_density)
+    bin_umap, bin_velocity = bin_umap_velocity(adata, fate_tree, layout_name, grid_length=grid_length)
     Coor_velocity_plot(bin_umap,
                        bin_velocity,
                        ax=ax,
@@ -82,9 +83,20 @@ def fate_velocity_plot(
 
 
 
+def grid_diagonal_length(umap, grid_density=20):
+    x_min, x_max = umap[:, 0].min(), umap[:, 0].max()
+    y_min, y_max = umap[:, 1].min(), umap[:, 1].max()
+    x_len = x_max - x_min
+    y_len = y_max - y_min
+    grid_len = max(x_len, y_len) / grid_density
+    return grid_len
+
+
+
 def bin_umap_velocity(adata,
                       fate_tree='fate_tree',
-                      layout_name=None
+                      layout_name=None,
+                      grid_length=1,
                       ):
 
     if "graph_basis" in adata.uns and not layout_name:
@@ -97,9 +109,14 @@ def bin_umap_velocity(adata,
     for a,e in adata.uns[fate_tree].edges():
         xa= adata.uns['fate_tree'].nodes[a][layout_name]
         xe= adata.uns['fate_tree'].nodes[e][layout_name]
-        bin_umap.append(xa)
-        bin_velocity.append(xe-xa)
-
+        if np.linalg.norm(xa-xe)*3 > grid_length:
+            n = int(np.linalg.norm(xa-xe)*3/grid_length)
+            for i in range(n):
+                bin_umap.append(xa + (xe-xa)*i/n)
+                bin_velocity.append(xe-xa)
+        else:
+            bin_umap.append(xa)
+            bin_velocity.append(xe-xa)
     return np.array(bin_umap), np.array(bin_velocity)
 #endf
 
