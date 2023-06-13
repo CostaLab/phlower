@@ -622,6 +622,7 @@ def nxdraw_group(adata: AnnData,
                  labelsize=10,
                  labelstyle='text',
                  directed =False,
+                 legend_col=1,
                  ax = None,
                  **args):
     if "graph_basis" in adata.uns and not graph_name:
@@ -644,6 +645,7 @@ def nxdraw_group(adata: AnnData,
                    labelsize=labelsize,
                    labelstyle=labelstyle,
                    directed = directed,
+                   legend_col = legend_col,
                    ax=ax,
                    **args)
 
@@ -676,6 +678,8 @@ def plot_pie_fate_tree(adata: AnnData,
                        layout_name=None,
                        fate_tree='stream_tree',
                        group= 'group',
+                       show_nodes=True,
+                       show_legend = False,
                        ax = None,
                        ):
     #https://www.appsloveworld.com/coding/python3x/146/creating-piechart-as-nodes-in-networkx
@@ -691,12 +695,13 @@ def plot_pie_fate_tree(adata: AnnData,
         layout_name= adata.uns["graph_basis"]
 
 
-    nx.draw_networkx_nodes(adata.uns[graph_name],
-                           pos=adata.obsm[layout_name],
-                           ax=ax,
-                           node_size=3,
-                           node_color='grey',
-                           alpha=.2)
+    if show_nodes:
+        nx.draw_networkx_nodes(adata.uns[graph_name],
+                               pos=adata.obsm[layout_name],
+                               ax=ax,
+                               node_size=3,
+                               node_color='grey',
+                               alpha=.2)
 
     node_pos = nx.get_node_attributes(adata.uns[fate_tree],layout_name)
     nx.draw_networkx_edges(adata.uns[fate_tree], pos=node_pos, ax=ax)
@@ -721,8 +726,11 @@ def plot_pie_fate_tree(adata: AnnData,
 
     piesize=0.05
     p2=piesize/2.0
+    pie_axs = []
     for node in adata.uns[fate_tree].nodes():
-        attributes =[np.log(dic[node].get(c, 0)+1) for c in all_nodes]
+        attributes =[np.sqrt(dic[node].get(c, 0)+0) for c in all_nodes]
+        #print(all_nodes)
+        #labels=all_nodes
         xx,yy=trans(node_pos[node]) # figure coordinates
         xa,ya=trans2((xx,yy)) # axes coordinates
         xa = xlim[0] + (xa - piesize / 2) * (xlim[1]-xlim[0])
@@ -730,14 +738,19 @@ def plot_pie_fate_tree(adata: AnnData,
         if ya < 0: ya = 0
         if xa < 0: xa = 0
         rect = [xa, ya, piesize * (xlim[1]-xlim[0]), piesize * (ylim[1]-ylim[0])]
-        #pie_axs.append(plt.axes(rect, frameon=False))
 
-
-        a = plt.axes(rect)
+        a = plt.axes(rect, frameon=False)
+        # for legend
+        pie_axs.append(a)
         a.set_aspect('equal')
-        a.pie(attributes)
+        a.pie(attributes, labels=all_nodes, labeldistance=None)
 
+    #a.legend()
+    #nx.draw_networkx_nodes(adata.uns[graph_name],pos=adata.obsm[layout_name], node_size=0, ax=ax, label=all_nodes)
+    #patches, texts = pie_axs[0].pie(frac=[1]*len(all_nodes), labels=all_nodes, labeldistance=None)
 
+    if show_legend:
+        a.legend(all_nodes, loc='center left', bbox_to_anchor=(1, 0.5), ncol=3)
 
 
 
@@ -754,6 +767,7 @@ def G_nxdraw_group(g,
                  labelsize=10,
                  labelstyle='text',
                  directed=False,
+                 legend_col=1,
                  ax = None,
                  **args):
     """
@@ -819,7 +833,7 @@ def G_nxdraw_group(g,
 
 
     if show_legend:
-            ax.legend(loc=legend_loc,  bbox_to_anchor=bbox_to_anchor, markerscale=markerscale)
+            ax.legend(loc=legend_loc,  bbox_to_anchor=bbox_to_anchor, markerscale=markerscale, ncol=legend_col)
 
 
 

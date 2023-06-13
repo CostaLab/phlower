@@ -32,9 +32,10 @@ def fate_velocity_plot(
     embedd_label_font=10,
     show_legend: bool = False,
     show_nodes = True,
-    radius: float = 100,
+    radius: float = 50,
     ax=None,
     node_alpha: float = 0.5,
+    maxlinewidth = 4,
     alpha: float = 0.5,
     #streamdensity: float = 1.5,
 
@@ -55,7 +56,7 @@ def fate_velocity_plot(
 
     ax = plt.gca() if ax is None else ax
     grid_length = grid_diagonal_length(adata.obsm[layout_name], grid_density)
-    bin_umap, bin_velocity = bin_umap_velocity(adata, fate_tree, layout_name, grid_length=grid_length)
+    bin_umap, bin_velocity = bin_umap_velocity(adata, fate_tree, layout_name, grid_length=grid_length, radius=radius)
     Coor_velocity_plot(bin_umap,
                        bin_velocity,
                        ax=ax,
@@ -63,6 +64,7 @@ def fate_velocity_plot(
                        figtype=figtype,
                        streamdensity=streamdensity,
                        n_neighbors=n_neighbors,
+                       maxlinewidth = maxlinewidth,
                        radius=radius,
                        alpha=alpha,
                        **kwargs)
@@ -96,6 +98,7 @@ def bin_umap_velocity(adata,
                       fate_tree='fate_tree',
                       layout_name=None,
                       grid_length=1,
+                      radius = 50,
                       ):
 
     if "graph_basis" in adata.uns and not layout_name:
@@ -109,7 +112,7 @@ def bin_umap_velocity(adata,
         xa= adata.uns['fate_tree'].nodes[a][layout_name]
         xe= adata.uns['fate_tree'].nodes[e][layout_name]
         if np.linalg.norm(xa-xe)*3 > grid_length:
-            n = int(np.linalg.norm(xa-xe)*3/grid_length)
+            n = int(np.linalg.norm(xa-xe)*radius*2/grid_length)
             for i in range(n):
                 bin_umap.append(xa + (xe-xa)*i/n)
                 bin_velocity.append(xe-xa)
@@ -187,6 +190,7 @@ def Coor_velocity_plot(
     streamdensity: float = 1.5,
     radius: float = 2,
     alpha=0.5,
+    maxlinewidth=4,
     **kwargs
 ):
     '''
@@ -247,8 +251,9 @@ def Coor_velocity_plot(
 
         lw_coef = kwargs.pop("lw_coef", 1)
         linewidth = kwargs.pop("linewidth", lw_coef * np.sqrt(Ug.T**2 + Vg.T**2))
-        linewidth = 2*(linewidth-min(linewidth[~np.isnan(linewidth)]))/(max(linewidth[~np.isnan(linewidth)])-min(linewidth[~np.isnan(linewidth)]))
+        linewidth = np.sqrt(maxlinewidth*(linewidth-min(linewidth[~np.isnan(linewidth)]))/(max(linewidth[~np.isnan(linewidth)])-min(linewidth[~np.isnan(linewidth)])))
         #import skimpy
+
         #print(skimpy.skim(pd.DataFrame(list(linewidth.ravel()))))
         arrowsize = kwargs.pop("arrowsize", 1)
         minlength = kwargs.pop("minlength", 0.1)
