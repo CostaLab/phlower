@@ -482,7 +482,7 @@ def nxdraw_holes(adata: AnnData,
                  edge_value: List[V] = [],
                  vector_dim:int=0,
                  font_size:int=0,
-                 node_size:float=0.1,
+                 node_size:float=1,
                  width:int=1,
                  edge_cmap=plt.cm.RdBu_r,
                  with_labels: bool = False,
@@ -522,7 +522,7 @@ def nxdraw_holes(adata: AnnData,
 
 
     if "graph_basis" in adata.uns and not graph_name:
-        graph_name = adata.uns["graph_basis"] + "_triangulation"
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
     if "graph_basis" in adata.uns and not layout_name:
         layout_name = adata.uns["graph_basis"] + "_triangulation_circle"
     if "graph_basis" in adata.uns and not evector_name:
@@ -540,25 +540,27 @@ def nxdraw_holes(adata: AnnData,
         H = np.abs(edge_value) if is_abs else edge_value
 
     elist = adata.uns[graph_name].edges()
-    elist_set = set(list(elist))
+    #elist_set = set(list(elist))
     if with_potential is not None and  len(with_potential) == 2:
         u=nx.get_node_attributes(adata.uns[graph_name], with_potential[1])
         direction = [-1 if (u[e]-u[a])>0 else 1 for a,e in elist]
         H = [i*j for i,j in zip(H, direction)]
 
-    gg = adata.uns[graph_name].to_directed()
-    for edge in list(gg.edges()):
-        if edge in elist_set:
-            continue
-        gg.remove_edge(edge[0], edge[1])
+    #gg = adata.uns[graph_name].to_directed()
+    #for edge in list(gg.edges()):
+    #    if edge in elist_set:
+    #        continue
+    #    gg.remove_edge(edge[0], edge[1])
 
     if flip:
         H = [i*-1 for i in H]
-    nx.draw_networkx(gg if is_arrow else gg.to_undirected(),
+    absH = np.abs(H)
+    width_range = [i*width for  i in (absH - min(absH))/(max(absH) - min(absH))]
+    nx.draw_networkx(adata.uns[graph_name] if is_arrow else adata.uns[graph_name].to_undirected(),
                      adata.obsm[layout_name],
-                     edge_color=H,
+                     edge_color=list(H),
                      node_size=node_size,
-                     width=width,
+                     width=width_range,
                      edge_cmap=edge_cmap,
                      with_labels=with_labels,
                      ax=ax,
@@ -765,6 +767,7 @@ def G_nxdraw_group(g,
                  markerscale=1,
                  label=True,
                  labelsize=10,
+                 edge_color='gray',
                  labelstyle='text',
                  directed=False,
                  legend_col=1,
@@ -803,9 +806,9 @@ def G_nxdraw_group(g,
 
     if show_edges:
         if directed:
-            nx.draw_networkx_edges(g, pos=layouts, ax=ax)
+            nx.draw_networkx_edges(g, pos=layouts, ax=ax, edge_color=edge_color)
         else:
-            nx.draw_networkx_edges(g.to_undirected(), pos=layouts, ax=ax)
+            nx.draw_networkx_edges(g.to_undirected(), pos=layouts, ax=ax, edge_color=edge_color)
 
     for i, (k, v) in enumerate(d_colors.items()):
         name = k

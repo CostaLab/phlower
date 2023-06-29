@@ -33,6 +33,25 @@ def random_climb_knn(adata,
                      iscopy=False,
                      traj_name = None,
                      seeds:int=2022):
+    """
+    Randomly climb the graph from the roots cells to the leaves cells using the knn_edges.
+    1. random climb the knn_edges graph from the root cells
+    2. each edge in knn_edges, find the shortest path in the graph_name graph if there's no edge in the graph_name
+
+    Parameters:
+    ----------
+    adata: AnnData
+    graph_name: str, the graph with holes to be used, adata.uns["graph_basis"] + "_triangulation" by default if None
+    A: csr_matrix, the adjacency matrix of the diffusion
+    W: csr_matrix, the weight matrix of the diffusion
+    knn_edges_k: int, the number of knn edges to be used, 9 by default
+    attr: str, the attribute of the graph_name, "u" by default
+    roots_ratio: float, the ratio of the cells to be used as root, 0.1 by default
+    n: int, the number of trajectories to be produced, 10000 by default
+    iscopy: bool, whether to return a copy of adata or not, False by default
+    traj_name: str, the name of the trajectories to be saved in adata.uns, "knn_trajs" by default
+    seeds: int, the random seeds to be used, 2022 by default
+    """
 
     adata = adata.copy() if iscopy else adata
 
@@ -54,7 +73,6 @@ def random_climb_knn(adata,
         raise ValueError(f"{n}: number of trajectories should be > 0 ")
     if n <100:
         print(f"{n}: number of trajectories would be better when >= 100")
-
 
     g = adata.uns[graph_name]
     knn_edges = adjedges(adata.uns[A], adata.uns[W], knn_edges_k)
@@ -79,6 +97,21 @@ def trajs_matrix(adata: AnnData,
                  iscopy = False,
                  verbose = True,
                 ):
+    """
+    1. embed the trajectories to be the flows of SC
+    2. embed the flow to be the harmonics space of the graph
+
+    Parameters:
+    ----------
+    adata: AnnData
+    graph_name: str, the graph with holes to be used, adata.uns["graph_basis"] + "_triangulation_circle" by default if None
+    evector_name: str, the L1 decomposed eigen vectors from the graph_name,  adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector" by default if None
+    embedding: str, the embedding for visualize the clustering results, "umap" by default
+    eigen_n: int, the number of eigen vectors to be used, -1 by default, which means all eigen vectors with 0 eigen values
+    trajs: str or List[List[int]], the trajectories to be used, "knn_trajs" by default in adata.uns
+    edge_w: List, the weights of the edges in the graph, None by default, which means all edges have the same weight 1
+    iscopy: bool, whether to return a copy of adata or not, False by default
+    """
     adata = adata.copy() if iscopy else adata
 
     if "graph_basis" in adata.uns.keys() and not graph_name:
@@ -90,7 +123,7 @@ def trajs_matrix(adata: AnnData,
         raise ValueError(f"{graph_name} not in adata.uns")
 
     if verbose:
-        print(datetime.now(), "projecting trajectories to eigenvectors...")
+        print(datetime.now(), "projecting trajectories to simplics...")
     full_trajectory_matrix(adata,
                            trajs=trajs,
                            edge_w = edge_w,
@@ -115,6 +148,10 @@ def full_trajectory_matrix(adata: AnnData,
                            edge_w : List = None,
                            iscopy = False,
                            ):
+    """
+    We multiply the trajs matrix(nodes order) with the graph structure, 1 if same direction else -1 for each edge in a trajs.
+    Otherwise set to be 0
+    """
     adata = adata.copy() if iscopy else adata
 
     if "graph_basis" in adata.uns.keys() and not graph_name:
@@ -264,6 +301,9 @@ def G_random_climb_knn(g:nx.Graph, knn_edges, attr:str='u', roots_ratio:float=0.
     1st: Random climb using KNN graph to construct a trajectory.
     2nd: Check each edge of the trajectory, if the edge does not belong to the edge of the graph G, find shotest path
     3rd: Get the final trajectory
+
+    In step 2nd, the edges consist of the nodes,
+    that is we care about only if edge exists, and store the direction by the nodes order
 
     Parameters
     ------------
