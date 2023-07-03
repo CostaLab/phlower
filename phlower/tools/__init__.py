@@ -15,15 +15,6 @@ from .clustering import (
         agglomerativeclustering,
         )
 
-from .fate_tree import (
-        create_fate_tree,
-        create_stream_tree,
-        trajectory_buckets,
-        initialize_a_tree,
-        add_traj_to_graph,
-        )
-
-
 from .dimensionreduction import (
         run_pca,
         run_umap,

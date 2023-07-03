@@ -46,6 +46,7 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
                    title = None,
                    text_attr = 'original',
                    save_fig=False,fig_path=None,fig_format='pdf',
+                   return_fig = False,
                    s = 30,
                    plotly=False):
     """Generate stream plot at single cell level (aka, subway map plots)
@@ -277,6 +278,10 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
                 #    os.makedirs(file_path_S)
                 #plt.savefig(os.path.join(file_path_S,'stream_sc_' + slugify(ann) + '.' + fig_format),pad_inches=1,bbox_inches='tight')
                 plt.savefig(fig_path,pad_inches=1,bbox_inches='tight')
+                #plt.close(fig)
+            if return_fig:
+                return fig
+            else:
                 plt.close(fig)
 
 
@@ -291,7 +296,10 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
                 title=None,
                 vmin=None,vmax=None,
                 pad=1.08,w_pad=None,h_pad=None,
-                save_fig=False,fig_path=None,fig_format='pdf'):
+                save_fig=False,
+                return_fig=False,
+                fig_path=None,
+                fig_format='pdf'):
     """Generate stream plot at density level
 
     Parameters
@@ -502,4 +510,10 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
             #    os.makedirs(file_path_S)
             #plt.savefig(os.path.join(file_path_S,'stream_' + slugify(ann) + '.' + fig_format),pad_inches=1,bbox_inches='tight')
             plt.savefig(fig_path, pad_inches=1,bbox_inches='tight')
+            #plt.close(fig)
+
+        if return_fig:
+            return fig
+        else:
             plt.close(fig)
+

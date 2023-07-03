@@ -12,7 +12,6 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from scipy.spatial import distance_matrix
 from scipy.sparse import issparse, find,csr_matrix
 from scipy.sparse.linalg import eigs
-from fa2 import ForceAtlas2
 from .diffusionmap import affinity
 
 def run_umap(mtx, random_state=2022):
@@ -157,6 +156,7 @@ def run_palantir_fdl(mtx,
     :param iterations: Number of iterations used by ForceAtlas
     :return: Pandas data frame representing the force directed layout
     """
+    from fa2 import ForceAtlas2
     if verbose:
         print(datetime.now(), "Computing palantir diffusion...")
     if type(mtx) != pd.DataFrame:
@@ -259,7 +259,7 @@ def run_fdl(mtx,
     ForceAtlas2
     input dm to calculate affinity matrix
     """
-
+    from fa2 import ForceAtlas2
 
 
     np.random.seed(random_state)

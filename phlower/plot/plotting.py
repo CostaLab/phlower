@@ -121,7 +121,7 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
                                        clusters = "trajs_clusters",
                                        evector_name = None,
                                        retain_clusters=[],
-                                       dims = [0,1],
+                                       dims = [0,1,2],
                                        node_size=2,
                                        show_legend=False,
                                        figsize=(800,800),
@@ -151,7 +151,7 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
     if clusters not in adata.uns:
         raise ValueError(f"clusters: {clusters} not in adata.uns, please check!")
 
-
+    print(max(dims)+1)
     mat_coor_flatten_trajectory = [adata.uns[evector_name][0:max(dims)+1, :] @ mat for mat in adata.uns[full_traj_matrix_flatten].toarray()]
     M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
                                          cluster_list = list(adata.uns[clusters]),
@@ -492,6 +492,7 @@ def nxdraw_holes(adata: AnnData,
                  is_abs: bool = False,
                  is_arrow: bool = True,
                  ax = None,
+                 colorbar=False,
                  **args):
     """
     plot holes from eigen decomposition of L1
@@ -568,6 +569,12 @@ def nxdraw_holes(adata: AnnData,
 
     if title:
         ax.set_title(title)
+
+    if colorbar:
+        sm = plt.cm.ScalarMappable(cmap=edge_cmap, norm=plt.Normalize(vmin = min(H), vmax=max(H)))
+        sm._A = []
+        plt.colorbar(sm, ax=plt.gca())
+
 #endf nxdraw_Holes
 
 
