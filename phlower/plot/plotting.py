@@ -28,6 +28,7 @@ def plot_trajectory_harmonic_lines_3d(adata: AnnData,
                                       show_legend=True,
                                       sample_ratio = 0.1,
                                       color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                                      fig_path=None,
                                       **args):
     """
     Parameters
@@ -60,6 +61,7 @@ def plot_trajectory_harmonic_lines_3d(adata: AnnData,
                                         show_legend = show_legend,
                                         sample_ratio = sample_ratio,
                                         color_palette = color_palette,
+                                        fig_path=fig_path,
                                         **args)
 
 
@@ -127,6 +129,7 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
                                        figsize=(800,800),
                                        sample_ratio = 0.1,
                                        color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                                       fig_path=None,
                                        **args):
     """
     Parameters
@@ -162,6 +165,7 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
                                          figsize = figsize,
                                          sample_ratio = sample_ratio,
                                          color_palette = color_palette,
+                                         fig_path=fig_path,
                                          **args
                                          )
 
@@ -631,6 +635,7 @@ def nxdraw_group(adata: AnnData,
                  labelsize=10,
                  labelstyle='text',
                  directed =False,
+                 edge_color='gray',
                  legend_col=1,
                  ax = None,
                  **args):
@@ -651,6 +656,7 @@ def nxdraw_group(adata: AnnData,
                    bbox_to_anchor=bbox_to_anchor,
                    markerscale=markerscale,
                    label=label,
+                   edge_color=edge_color,
                    labelsize=labelsize,
                    labelstyle=labelstyle,
                    directed = directed,
@@ -686,9 +692,12 @@ def plot_pie_fate_tree(adata: AnnData,
                        graph_name=None,
                        layout_name=None,
                        fate_tree='stream_tree',
+                       piesize=0.05,
                        group= 'group',
                        show_nodes=True,
                        show_legend = False,
+                       legend_column = 3,
+                       bg_alpha=0.2,
                        ax = None,
                        ):
     #https://www.appsloveworld.com/coding/python3x/146/creating-piechart-as-nodes-in-networkx
@@ -710,7 +719,7 @@ def plot_pie_fate_tree(adata: AnnData,
                                ax=ax,
                                node_size=3,
                                node_color='grey',
-                               alpha=.2)
+                               alpha=bg_alpha)
 
     node_pos = nx.get_node_attributes(adata.uns[fate_tree],layout_name)
     nx.draw_networkx_edges(adata.uns[fate_tree], pos=node_pos, ax=ax)
@@ -719,8 +728,6 @@ def plot_pie_fate_tree(adata: AnnData,
 
 
     all_nodes = list(set(adata.obs[group]))
-    #ax.set_xlim(xlim)
-    #ax.set_ylim(ylim)
     bbox = ax.get_position().get_points()
     ax_x_min = bbox[0, 0]
     ax_x_max = bbox[1, 0]
@@ -733,13 +740,10 @@ def plot_pie_fate_tree(adata: AnnData,
     trans=ax.transData.transform
     trans2 = ax.transAxes.inverted().transform
 
-    piesize=0.05
     p2=piesize/2.0
     pie_axs = []
     for node in adata.uns[fate_tree].nodes():
         attributes =[np.sqrt(dic[node].get(c, 0)+0) for c in all_nodes]
-        #print(all_nodes)
-        #labels=all_nodes
         xx,yy=trans(node_pos[node]) # figure coordinates
         xa,ya=trans2((xx,yy)) # axes coordinates
         xa = xlim[0] + (xa - piesize / 2) * (xlim[1]-xlim[0])
@@ -754,12 +758,9 @@ def plot_pie_fate_tree(adata: AnnData,
         a.set_aspect('equal')
         a.pie(attributes, labels=all_nodes, labeldistance=None)
 
-    #a.legend()
-    #nx.draw_networkx_nodes(adata.uns[graph_name],pos=adata.obsm[layout_name], node_size=0, ax=ax, label=all_nodes)
-    #patches, texts = pie_axs[0].pie(frac=[1]*len(all_nodes), labels=all_nodes, labeldistance=None)
 
     if show_legend:
-        a.legend(all_nodes, loc='center left', bbox_to_anchor=(1, 0.5), ncol=3)
+        a.legend(all_nodes, loc='center left', bbox_to_anchor=(1, 0.5), ncol=legend_column)
 
 
 
@@ -1136,6 +1137,7 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                                         show_legend=True,
                                         sample_ratio = 1,
                                         color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                                        fig_path = None,
                                         **args):
     """
     Parameters
@@ -1222,6 +1224,8 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                 width=figsize[1],
                 height=figsize[0],)
     fig.show()
+    if fig_path is not None:
+        fig.write_html(fig_path)
 
 
 def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
@@ -1304,6 +1308,7 @@ def M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
                                          figsize = (800,800),
                                          sample_ratio = 1,
                                          color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                                         fig_path = None,
                                          **args):
     """
     Parameters
@@ -1374,6 +1379,8 @@ def M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
                 height=figsize[0],)
 
     fig.show()
+    if fig_path is not None:
+        fig.write_html(fig_path)
 
 
 def M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
@@ -1410,6 +1417,8 @@ def M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
 
     if len(retain_clusters) == 0:
         retain_clusters = set(cluster_list)
+    print(retain_clusters)
+    print(set(cluster_list))
     assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
     if not isinstance(cluster_list, np.ndarray):
         cluster_list = np.array(cluster_list)
@@ -1481,7 +1490,7 @@ def L_plot_eigen_line(values, n_eig=10, step_size=1, show_legend=True, ax=None, 
     ax = ax or plt.gca()
     n_eig = min(n_eig, len(values))
     ax.plot(range(1,n_eig+1), values[0:n_eig], linestyle='--', marker='o', color='b', label='eigen value', **args)
-    ax.set_xticks(range(1,n_eig+1, step_size))
+    ax.set_xticks(range(0,n_eig, step_size))
     if show_legend:
         ax.legend()
 #endf plot_eigen_line

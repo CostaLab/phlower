@@ -282,7 +282,8 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
             if return_fig:
                 return fig
             else:
-                plt.close(fig)
+                #plt.close(fig)
+                pass
 
 
 
@@ -515,5 +516,6 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
         if return_fig:
             return fig
         else:
-            plt.close(fig)
+            #plt.close(fig)
+            pass
 
