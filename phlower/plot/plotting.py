@@ -1489,7 +1489,7 @@ def L_plot_eigen_line(values, n_eig=10, step_size=1, show_legend=True, ax=None, 
     """
     ax = ax or plt.gca()
     n_eig = min(n_eig, len(values))
-    ax.plot(range(1,n_eig+1), values[0:n_eig], linestyle='--', marker='o', color='b', label='eigen value', **args)
+    ax.plot(range(0,n_eig), values[0:n_eig], linestyle='--', marker='o', color='b', label='eigen value', **args)
     ax.set_xticks(range(0,n_eig, step_size))
     if show_legend:
         ax.legend()

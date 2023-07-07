@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import scipy
 from anndata import AnnData
-from scipy.sparse import csc_matrix
+from scipy.sparse import csc_matrix, csr_matrix
 from typing import Union
 from numpy.linalg import qr,solve,lstsq
 from .incidence import *
@@ -41,6 +41,25 @@ def triangle_list(G: nx.Graph) -> np.ndarray:
 #def gradop(g:nx.DiGraph) -> csc_matrix : ## construct B1.T matrix, node to edge matrix
 def gradop(g:nx.DiGraph): ## construct B1.T matrix, node to edge matrix
   return nx.incidence_matrix(g, oriented=True).T
+
+
+def div_adj(adj_matrix: Union[np.ndarray, csr_matrix, csr_matrix], tol:float=1e-7) -> csr_matrix:
+    """
+    divergence directly from adjacency matrix
+    """
+    if isinstance(adj_matrix, csr_matrix):
+        adj_matrix = adj_matrix.toarray()
+
+    adj_matrix[adj_matrix < tol] = 0
+    edge = np.array(adj_matrix.nonzero())
+    ne = edge.shape[1]
+    nv = adj_matrix.shape[0]
+    e_w = adj_matrix[edge[0, :], edge[1, :]].T
+    #print("ew_shape", e_w.shape)
+    i, j, x = np.tile(range(ne), 2), edge.flatten(), np.repeat([-1, 1], ne)
+    #print("divop shape", scipy.sparse.csr_matrix((x, (i, j)), shape=(ne, nv)).T.shape)
+    return -1 * scipy.sparse.csr_matrix((x, (i, j)), shape=(ne, nv)).T @ e_w
+
 
 #-> csc_matrix
 def divop(g:nx.DiGraph) :
@@ -88,7 +107,7 @@ def laplacian1(g:nx.DiGraph) -> csc_matrix:
 
 
 
-def potential(g:nx.DiGraph, tol=1e-7, weight_attr='weight'):
+def potential(g:nx.DiGraph, tol=1e-7, weight_attr='weight', method='lstsq'):
     L = nx.laplacian_matrix(g.to_undirected(), weight=None)
     #1st
     #p = solve(L.toarray(), -div(g))
@@ -99,13 +118,23 @@ def potential(g:nx.DiGraph, tol=1e-7, weight_attr='weight'):
     #p = np.linalg.solve(R, y)
 
     # 3rd implementation
-    p =  lstsq(L.toarray(), -div(g, weight_attr), rcond=None)[0]
+    #p =  lstsq(L.toarray(), -div(g, weight_attr), rcond=None)[0]
+
+    #4th
+    if method == 'lstsq':
+        p =  lstsq(L.toarray(), -div(g, weight_attr), rcond=None)[0]
+    elif method == 'mr':
+        p = scipy.sparse.linalg.lsmr(L, -div(g))[0]
+    elif method == 'qr':
+        p = scipy.sparse.linalg.lsqr(L, -div(g))[0]
+    else:
+        raise ValueError("method must be one of 'lstsq', 'mr', 'qr'")
 
     return (p - min(p))
 
 
-def grad(g:nx.DiGraph, tol=1e-7, weight_attr='weight'):
-    return gradop(g)@ potential(g, tol, weight_attr=weight_attr)
+def grad(g:nx.DiGraph, tol=1e-7, weight_attr='weight', method='lstsq'):
+    return gradop(g)@ potential(g, tol, weight_attr=weight_attr, method=method)
 
 
 def div(g:nx.DiGraph, weight_attr='weight'):

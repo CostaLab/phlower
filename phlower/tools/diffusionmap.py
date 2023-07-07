@@ -1,3 +1,4 @@
+import scipy
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -63,12 +64,12 @@ def  diffusionMaps(R,k=7,sigma=None, verbose=False, eig_k=100):
     logW = affinity(R,k,sigma,log=True,normalize=False)
     rs = np.exp([logsumexp(logW[i,:]) for i in range(logW.shape[0])]) ## dii=\sum_j w_{i,j}
     #L=D-W, dii = \sum_j w_{ij}
-    D = np.diag(np.sqrt(rs))        ## D^{1/2}
-    Dinv = np.diag(1/np.sqrt(rs))   ##D^{-1/2}
+    D = scipy.sparse.diags(np.sqrt(rs), 0, format='csr')        ## D^{1/2}
+    Dinv = scipy.sparse.diags(1/np.sqrt(rs),0, format='csr')   ##D^{-1/2}
     #dela porte etal. An Introduction to Diffusion Maps
     # normalized W: P = D^{-1} W
     # P' = D^{1/2}PD^{-1/2} =  D^{-1/2} W D^{-1/2}
-    Ms = Dinv @ np.exp(logW) @ Dinv ##
+    Ms = scipy.sparse.csr_matrix(Dinv @ np.exp(logW) @ Dinv)##
     ## https://jlmelville.github.io/smallvis/spectral.html row normalisation
     #e = eigen(Ms,symmetric=TRUE)
 
@@ -78,10 +79,10 @@ def  diffusionMaps(R,k=7,sigma=None, verbose=False, eig_k=100):
     e = linalg.eigsh(Ms, k=eig_k) ## eigen decomposition of P'
     #e = np.linalg.eigh(Ms) ## eigen decomposition of P'
     evalue= e[0][::-1]
-    evec = np.flip(e[1], axis=1)
-    s = np.sum(np.sqrt(rs) * evec[:,0]) # scaling
+    evec =np.flip(e[1], axis=1)
+    s =(np.sum(np.sqrt(rs) * evec[:,0])) # scaling
     # Phi is orthonormal under the weighted inner product
     #0:Psi, 1:Phi, 2:eig
-    dic = {'psi':s * Dinv@evec, 'phi': (1/s)*D@evec, "eig": evalue}
+    dic = {'psi':scipy.sparse.csr_matrix(s * Dinv@evec), 'phi': scipy.sparse.csr_matrix((1/s)*D@evec), "eig": evalue}
     return dic
     #return s * Dinv@evec, (1/s)*D@evec, evalue

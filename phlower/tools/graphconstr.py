@@ -1,19 +1,21 @@
 import sklearn
 import copy
 import igraph
+import scipy
 import networkx as nx
 import numpy as np
 import pandas as pd
 from datetime import datetime
 from itertools import chain
-from typing import Iterable, List, Tuple, TypeVar
+from typing import Iterable, List, Tuple, TypeVar, Union
 from numpy.linalg import solve
+from scipy.sparse.linalg import spsolve
 from scipy.spatial import distance_matrix
 from scipy.sparse import csc_matrix, csr_matrix
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from .diffusionmap import diffusionMaps, affinity, logsumexp
-from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl
+from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl, div_adj
 from .dimensionreduction import run_pca
 
 V = TypeVar('V')
@@ -38,10 +40,18 @@ def knn(x,k=2):
 
 
 #alt. mat. -> networkx graph
-def graph_altmat(A:np.ndarray, tol:float=1e-7) -> nx.DiGraph:
+def graph_altmat(A:Union[csc_matrix, csr_matrix, np.ndarray], tol:float=1e-7) -> nx.DiGraph:
   nA = copy.deepcopy(A)
-  nA[nA<tol] = 0
-  G = nx.from_numpy_matrix(nA, parallel_edges=False, create_using=nx.DiGraph)
+  #nA = nA.todense()
+
+  if isinstance(nA, np.ndarray):
+    nA[nA<tol] = 0
+    return nx.from_numpy_matrix(nA, parallel_edges=False, create_using=nx.DiGraph)
+
+  nA.data[nA.data < tol] = 0
+  nA.eliminate_zeros()
+  #--------nA[nA<tol] = 0 ----------------------
+  G = nx.from_scipy_sparse_array(nA, parallel_edges=False, create_using=nx.DiGraph)
   return G
 
 
@@ -76,7 +86,7 @@ def randomdata(m:int, n:int, p:list=[0.9,0.05,0.05]) -> np.ndarray:
 #  return graph_altmat(A).edges()
 ##endf
 
-def adjedges(A, W, k=4):
+def adjedges(A:Union[csc_matrix, csr_matrix, np.ndarray], W, k=4):
     """
     From adjacency matrix & distance matrix W to knn edges
 
@@ -94,13 +104,22 @@ def adjedges(A, W, k=4):
     nA = copy.deepcopy(A)
 
     nei = np.apply_along_axis(knn,0,nW, k)
-    nA[~(nei|nei.T)] = 0
+    zerofilter = ~(nei|nei.T)
+    if isinstance(nA, np.ndarray):
+        pass
+    elif isinstance(nA, csc_matrix):
+        zerofilter = csc_matrix(zerofilter)
+    elif isinstance(nA, csr_matrix):
+        zerofilter = csr_matrix(zerofilter)
+
+    nA[zerofilter] = 0
+    nA.eliminate_zeros()
     kedges = graph_altmat(nA).edges()
     return kedges
 #endf adjedges
 
 #" dm cells x dimensions
-def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False):
+def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False, lstsq_method="lstsq"):
   """
   transition matrix is calculate by eigen decomposition outcome
 
@@ -119,6 +138,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   -------------
   ndc: number of diffusion components using
   npc: number of principal components using
+  lstsq_method: "lstsq" or "lsqr", "lsmr"
 
   Return
   --------------
@@ -141,39 +161,64 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   print("done.")
   # Diffusion distance matrix
   mm = d['psi']@np.diag(np.power(d['eig'], s))[:, 1:(ndc+1)]
-  W = distance_matrix(mm, mm)
+
+  if verbose:
+    print(datetime.now(),"diffusion distance:")
+  W = distance_matrix(np.array(mm), np.array(mm))
+  if verbose:
+    print(datetime.now(),"transition matrix:")
   # Transition matrix at t=s
+  print(datetime.now(),"1")
   M = d['psi']@np.diag(np.power(d['eig'], s))@d['phi'].T
   # Set potential as density at time t=s
   #print(M)
+  print(datetime.now(),"2")
   u = np.mean(M[roots,:], axis = 0)
+  del M
+  print(datetime.now(),"3")
   # Set potential u=-log(p) where p is density at time t=s
   #-------names(u) = colnames(X)
   # approximated -grad (related to directional deriv.?)
-  A = np.subtract.outer(u,u)
+  A = scipy.sparse.csr_matrix(np.subtract.outer(u,u))
   #P = with(d,Psi@diag(colSums(outer(1:10,eig,`^`)))@t(Phi))
   #P = with(d,Psi[,1]@t(Psi[1,]))
   #P = with(d,Psi @ diag(eig-1) @ diag(sapply(eig,function(x) sum(x^seq(0,100)))) @ t(Phi)) # totalflow
   #A = P-t(P)
   # divergence of fully-connected diffusion graph
 
-  OA = copy.deepcopy(A)
-  g_o = graph_altmat(A)
+  if verbose:
+    print(datetime.now(),"graph from A")
 
+  OA = copy.deepcopy(A)
+  #g_o = graph_altmat(A)
+
+  print(datetime.now(),"5")
   #return(g_o)
   if verbose:
     print(datetime.now(), "Rewiring: ")
-  div_o = div(g_o)
+
+  if verbose:
+    print(datetime.now(), "div(g_o)...")
+  #div_o = div(g_o)
+  div_o = div_adj(A)
+  #del g_o
   # u_o = drop(potential(g_o)) # time consuming
   # k-NN graph using diffusion distance
   nei = np.apply_along_axis(knn,0,W, k)
-  A[~(nei|nei.T)] = 0
+  from collections import Counter
+  #print("(~(nei|nei.T)): ", (~(nei|nei.T)))
+  zerofilter = scipy.sparse.csr_matrix(~(nei|nei.T))
+  from collections import Counter
+  print("zerofilter:", Counter(zerofilter.toarray().ravel()))
+  A[zerofilter] = 0
 
 
   ## For test
   #csv_dir = "/home/sz753404/data/git_code/trajectory-outlier-detection-flow-embeddings/util"
   #A = np.array(pd.read_csv(f"{csv_dir}/A.csv", index_col=0))
 
+  if verbose:
+    print(datetime.now(), "create graph...")
   g = graph_altmat(A)
   # Pulling back the original potential using pruned graph
   # Lgi = MASS.ginv(as.matrix(laplacian0(g)))
@@ -181,22 +226,39 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   # igraph.E(g).weight = gradop(g)@Lgi@div_s
   # Pulling back the original divergeggnce using pruned graph
 
-
   if verbose:
     print(datetime.now(), "edge weight...")
+  ## sparse csc matrix
+  a = divop(g).T@divop(g) + lmda * scipy.sparse.diags([1]*len(g.edges()), 0, format="csc")
+  b = -gradop(g)@div_o
 
-  edge_weight = solve(
-    divop(g).T@divop(g) + lmda * np.diag([1]*len(g.edges())),
-    -gradop(g)@div_o,
-  )
+  cg_ret = -1
+  if scipy.linalg.ishermitian(a.toarray()):
+      if verbose:
+        print(datetime.now(), "CG...")
+      edge_weight, cg_ret = scipy.sparse.linalg.cg(a, b, tol=1e-6)
 
+  if cg_ret != 0:
+    if verbose:
+        print(datetime.now(), "CG failed, use LS instead...")
+    edge_weight = scipy.sparse.linalg.spsolve(
+      a,
+      b,
+    )
+
+  del a,b
+
+
+
+#scipy.sparse.linalg.lsqr
+#scipy.sparse.linalg.lsmr: probably faster
 
   attrw_dict = {(x[0], x[1]):{"weight":y} for x,y in zip(g.edges(), edge_weight)}
   nx.set_edge_attributes(g, attrw_dict)
 
   if verbose:
     print(datetime.now(), "grad...")
-  edge_weight = grad(g, weight_attr='weight')
+  edge_weight = grad(g, weight_attr='weight', lstsq_method=lstsq_method)
   attrw_dict = {(x[0], x[1]):{"weight":y} for x,y in zip(g.edges(), edge_weight)}
   nx.set_edge_attributes(g, attrw_dict)
 
@@ -206,7 +268,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   if verbose:
     print(datetime.now(), "ddhodge done.")
   print("done.")
-  attru_dict = {x:{"u":y} for x,y in zip(g.nodes(), potential(g))}
+  attru_dict = {x:{"u":y} for x,y in zip(g.nodes(), potential(g, lstsq_method=lstsq_method))}
   nx.set_node_attributes(g, attru_dict)
 
   attrv_dict = {x:{"div":y} for x,y in zip(g.nodes(), div(g))}
@@ -220,7 +282,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
 
 
 ## X: column observations,row features
-def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False):
+def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False, **kwargs):
   """
   Parameter
   -------------
@@ -243,7 +305,7 @@ def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, ve
   npc = min(100, Y.shape[0]-1, Y.shape[1]-1) if not npc else min(100, Y.shape[0]-1, Y.shape[1] -1, npc)
   pc = run_pca(Y, npc)
 
-  dic = diffusionGraphDM(pc, roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose)
+  dic = diffusionGraphDM(pc, roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, **kwargs)
   return dic
 #endf diffusionGraph
 
