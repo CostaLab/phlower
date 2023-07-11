@@ -1892,3 +1892,20 @@ def fill_im_array(dict_im_array,df_bins_gene,stream_tree,df_base_x,df_base_y,df_
                                                                           (id_y_base[x]-id_y_top[x]+1))
     return dict_im_array
 
+def scale_marker_expr(params):
+    df_marker_detection = params[0]
+    marker = params[1]
+    percentile_expr = params[2]
+    marker_values = df_marker_detection[marker].copy()
+    if(min(marker_values)<0):
+        min_marker_values = np.percentile(marker_values[marker_values<0],100-percentile_expr)
+        marker_values[marker_values<min_marker_values] = min_marker_values
+        max_marker_values = np.percentile(marker_values[marker_values>0],percentile_expr)
+        marker_values[marker_values>max_marker_values] = max_marker_values
+        marker_values = marker_values - min(marker_values)
+    else:
+        max_marker_values = np.percentile(marker_values[marker_values>0],percentile_expr)
+        marker_values[marker_values>max_marker_values] = max_marker_values
+    marker_values = marker_values/max_marker_values
+    return marker_values
+

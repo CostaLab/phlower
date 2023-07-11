@@ -26,6 +26,7 @@ def ddhodge(
         layout: str = 'neato',
         iscopy: bool = False,
         verbose: bool = True,
+        lstsq_method: str = 'lstsq',
         ):
 
     """
@@ -75,9 +76,9 @@ def ddhodge(
         if isinstance(adata.obsm[basis], pd.DataFrame): ## fixed wrong type
             adata.obsm[basis] = adata.obsm[basis].to_numpy()
         pc = adata.obsm[basis][:, 0:npc]
-        d = diffusionGraphDM(pc,roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose)
+        d = diffusionGraphDM(pc,roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, lstsq_method=lstsq_method)
     else:
-        d = diffusionGraph(adata.X.T.todense() if scipy.sparse.issparse(adata.X.T) else adata.X.T ,roots=roots,k=k,npc=npc,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose)
+        d = diffusionGraph(adata.X.T.todense() if scipy.sparse.issparse(adata.X.T) else adata.X.T ,roots=roots,k=k,npc=npc,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, lstsq_method=lstsq_method)
         adata.obsm['X_pca'] = d['dm']
         basis = 'X_pca'
 

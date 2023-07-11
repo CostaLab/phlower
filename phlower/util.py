@@ -1,4 +1,5 @@
 import math
+import scipy
 import numpy as np
 import numpy.matlib
 import itertools
@@ -384,3 +385,26 @@ def find_cut_point_bu(list_with_nan, cut_threshold=0.1, increase=False):
 
     return curr_candidate  if curr_candidate > 0 else 0
 
+def test_cholesky( A, beta=1e-6, verbose=False ):
+    """ try cholesky( a scipy.sparse matrix  + beta I )
+
+    https://scicomp.stackexchange.com/questions/12979/testing-if-a-matrix-is-positive-semi-definite
+    Why A + beta I, beta say 1e-6 ?
+    If A has tiny eigenvalues, 0 to within machine precision,
+    about half of these "zeros" may be negative -- tough on solvers.
+    Also the condition number improves to ~ rho(A) / beta.
+    """
+    #scikit-sparse
+    from sksparse.cholmod import cholesky, CholmodNotPositiveDefiniteError
+    try:
+        solve = cholesky( A, beta=beta )  # A + beta I
+        if verbose:
+            print( "+ %g I is positive-definite" % (beta ))
+        return solve  # x = solve( b )
+    except CholmodNotPositiveDefiniteError:
+        if verbose:
+            print( " + %g I is not positive-definite" % (beta ))
+    except CholmodTooLargeError:
+        if verbose:
+            print( " + %g I is too large" % (beta ))
+        return False

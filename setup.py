@@ -23,6 +23,7 @@ setup(
                       "louvain",
                       "colorcet",
                       'umap-learn',
+                      'scikit-sparse',
                       'scanpy',
                       #'pygraphviz',
                       'anndata',

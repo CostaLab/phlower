@@ -8,7 +8,7 @@ from scipy.sparse import csc_matrix, csr_matrix
 from typing import Union
 from numpy.linalg import qr,solve,lstsq
 from .incidence import *
-from ..util import find_knee
+from ..util import find_knee, test_cholesky
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -49,8 +49,11 @@ def div_adj(adj_matrix: Union[np.ndarray, csr_matrix, csr_matrix], tol:float=1e-
     """
     if isinstance(adj_matrix, csr_matrix):
         adj_matrix = adj_matrix.toarray()
+        adj_matrix[adj_matrix < tol] = 0
+    else:
+        adj_matrix.data[adj_matrix.data < tol] = 0
+        adj_matrix.eliminate_zeros()
 
-    adj_matrix[adj_matrix < tol] = 0
     edge = np.array(adj_matrix.nonzero())
     ne = edge.shape[1]
     nv = adj_matrix.shape[0]
@@ -123,18 +126,25 @@ def potential(g:nx.DiGraph, tol=1e-7, weight_attr='weight', method='lstsq'):
     #4th
     if method == 'lstsq':
         p =  lstsq(L.toarray(), -div(g, weight_attr), rcond=None)[0]
-    elif method == 'mr':
-        p = scipy.sparse.linalg.lsmr(L, -div(g))[0]
-    elif method == 'qr':
-        p = scipy.sparse.linalg.lsqr(L, -div(g))[0]
+    elif method == 'lsmr':
+        p = scipy.sparse.linalg.lsmr(L, -div(g, weight_attr))[0]
+    elif method == 'lsqr':
+        p = scipy.sparse.linalg.lsqr(L, -div(g, weight_attr))[0]
+    elif method == 'cholesky':
+        #p =
+        ret = test_cholesky(L, verbose=True)
+        if ret:
+            p = ret(-div(g, weight_attr))
+        else:
+            p = scipy.sparse.linalg.spsolve(L, -div(g))
     else:
-        raise ValueError("method must be one of 'lstsq', 'mr', 'qr'")
+        raise ValueError("method must be one of 'lstsq', 'lsmr', 'lsqr'")
 
     return (p - min(p))
 
 
-def grad(g:nx.DiGraph, tol=1e-7, weight_attr='weight', method='lstsq'):
-    return gradop(g)@ potential(g, tol, weight_attr=weight_attr, method=method)
+def grad(g:nx.DiGraph, tol=1e-7, weight_attr='weight', lstsq_method='lstsq'):
+    return gradop(g)@ potential(g, tol, weight_attr=weight_attr, method=lstsq_method)
 
 
 def div(g:nx.DiGraph, weight_attr='weight'):

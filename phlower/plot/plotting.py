@@ -478,6 +478,69 @@ def plot_traj(adata: AnnData,
                 color_palette=color_palette,
                 **args)
 
+
+
+def nxdraw_harmonic(adata: AnnData,
+                    graph_name: str=None,
+                    evector_name: str=None,
+                    title: str= "",
+                    vector_dims:List[V] = [0,1],
+                    node_size:float=1,
+                    show_center = True,
+                    with_potential = 'u',
+                    ax = None,
+                    **args):
+    """
+    plot holes from eigen decomposition of L1
+
+    Parameters
+    ----
+    evector_name: eigen vector of L1
+    title: title of the plot
+    vector_dim: int, the dimension of the eigen vector to plot
+    node_size: int, the size of the node
+    with_potential: use potential to flip the evector or not
+    ax: matplotlib axis, the axis to plot
+    """
+
+    ax = ax or plt.gca()
+
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
+    if "graph_basis" in adata.uns and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
+
+
+    if graph_name not in adata.uns:
+        raise ValueError(f"{graph_name} not in adata.uns, please check!")
+    if evector_name not in adata.uns:
+        raise ValueError(f"{evector_name} not in adata.uns, please check!")
+
+    H0 = adata.uns[evector_name][vector_dims[0]]
+    H1 = adata.uns[evector_name][vector_dims[1]]
+
+    if with_potential is not None:
+        elist = adata.uns[graph_name].edges()
+        u=nx.get_node_attributes(adata.uns[graph_name], with_potential)
+        direction = [-1 if (u[e]-u[a])>0 else 1 for a,e in elist]
+        H0 = [i*j for i,j in zip(H0, direction)]
+        H1 = [i*j for i,j in zip(H1, direction)]
+
+
+
+    ax.scatter(H0, H1, s=node_size,  **args)
+    if show_center:
+        ax.scatter(0, 0, s=node_size*5,  c='red')
+
+    if title:
+        ax.set_title(title)
+
+#endf nxdraw_Holes
+
+
+
+
+
 def nxdraw_holes(adata: AnnData,
                  graph_name: str=None,
                  layout_name: str=None,
@@ -490,7 +553,7 @@ def nxdraw_holes(adata: AnnData,
                  width:int=1,
                  edge_cmap=plt.cm.RdBu_r,
                  with_labels: bool = False,
-                 with_potential = ['X_pca_ddhodge', 'u'],
+                 with_potential = 'u',
                  flip: bool = False,
                  is_norm: bool=False,
                  is_abs: bool = False,
@@ -546,8 +609,8 @@ def nxdraw_holes(adata: AnnData,
 
     elist = adata.uns[graph_name].edges()
     #elist_set = set(list(elist))
-    if with_potential is not None and  len(with_potential) == 2:
-        u=nx.get_node_attributes(adata.uns[graph_name], with_potential[1])
+    if with_potential is not None:
+        u=nx.get_node_attributes(adata.uns[graph_name], with_potential)
         direction = [-1 if (u[e]-u[a])>0 else 1 for a,e in elist]
         H = [i*j for i,j in zip(H, direction)]
 
@@ -578,7 +641,6 @@ def nxdraw_holes(adata: AnnData,
         sm = plt.cm.ScalarMappable(cmap=edge_cmap, norm=plt.Normalize(vmin = min(H), vmax=max(H)))
         sm._A = []
         plt.colorbar(sm, ax=plt.gca())
-
 #endf nxdraw_Holes
 
 
@@ -697,7 +759,9 @@ def plot_pie_fate_tree(adata: AnnData,
                        show_nodes=True,
                        show_legend = False,
                        legend_column = 3,
+                       color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                        bg_alpha=0.2,
+
                        ax = None,
                        ):
     #https://www.appsloveworld.com/coding/python3x/146/creating-piechart-as-nodes-in-networkx
@@ -756,7 +820,7 @@ def plot_pie_fate_tree(adata: AnnData,
         # for legend
         pie_axs.append(a)
         a.set_aspect('equal')
-        a.pie(attributes, labels=all_nodes, labeldistance=None)
+        a.pie(attributes, labels=all_nodes, labeldistance=None, colors=color_palette)
 
 
     if show_legend:
@@ -1219,10 +1283,12 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                             mode='lines'
             )
     fig.update_layout(
-                legend= {'itemsizing': 'constant'}, ## increase the point size in legend.
-                autosize=False,
-                width=figsize[1],
-                height=figsize[0],)
+                    legend= {'itemsizing': 'constant'}, ## increase the point size in legend.
+                    autosize=False,
+                    width=figsize[1],
+                    height=figsize[0],)
+
+
     fig.show()
     if fig_path is not None:
         fig.write_html(fig_path)

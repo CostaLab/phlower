@@ -1,23 +1,30 @@
 ## code adjusted from from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03
 import os
 import copy
+import scipy
+import multiprocessing
 import pandas as pd
 import numpy as np
 import networkx as nx
 import seaborn as sns
 import matplotlib as mpl
 import colorcet as cc
+from copy import deepcopy
+from decimal import Decimal
+from scipy.stats import spearmanr,mannwhitneyu,gaussian_kde,kruskal
+from statsmodels.sandbox.stats.multicomp import multipletests
 from matplotlib.patches import Polygon
 from matplotlib import pyplot as plt
 from pandas.api.types import is_string_dtype,is_numeric_dtype
 from .stream_extra import *
+from .scikit_posthocs import posthoc_conover
 
 ##TODO: use kde information to merge the buckets
 ##TODO: if duplicated nodes is an issue, we can calculate center of each vertex, if set the node to the nearest vertex.
 
 
 def tree_label_dict(adata,
-                    tree = "stream",
+                    tree = "stream_tree",
                     from_ = "label",
                     to_ = 'original'
                     ):
@@ -55,7 +62,7 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
     ----------
     adata: AnnData
         Annotated data matrix.
-    root: `str`, optional (default: 'S0'):
+    root: `str`, optional (default: 'root'):
         The starting node, temporialy abandoned cause it can be decided automatically.
     color: `list` optional (default: None)
         Column names of observations (adata.obs.columns) or variable names(adata.var_names). A list of names to be plotted.
@@ -270,7 +277,7 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
                                     lw=ax_i.spines['bottom'].get_linewidth()*1e-5)
             if title is None:
                 title = ann
-            #ax_i.set_title(title)
+            ax_i.set_title(title)
             plt.tight_layout(pad=pad, h_pad=h_pad, w_pad=w_pad)
             if(save_fig):
                 #file_path_S = os.path.join(fig_path,root)
@@ -307,7 +314,7 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
     ----------
     adata: AnnData
         Annotated data matrix.
-    root: `str`, optional (default: 'S0'):
+    root: `str`, optional (default: 'root'):
         The starting node, temporialy abandoned cause it can be decided automatically.
     color: `list` optional (default: None)
         Column names of observations (adata.obs.columns) or variable names(adata.var_names). A list of names to be plotted.
@@ -518,4 +525,363 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
         else:
             #plt.close(fig)
             pass
+
+
+
+def detect_transition_markers(adata,marker_list=None,cutoff_spearman=0.4, cutoff_logfc = 0.25, percentile_expr=95, n_jobs = 1,min_num_cells=5,use_precomputed=True, root='root',preference=None):
+
+    """Detect transition markers along one branch.
+    Parameters
+    ----------
+    adata: AnnData
+        Annotated data matrix.
+    marker_list: `list`, optional (default: None):
+        A list of candidate markers to be scanned. Instead of scanning all available genes/peaks/kmers/motifs, this will limit the scanning to a specific list of genes/peaks/kmers/motifs
+        If none, all available features (genes/peaks/kmers/motifs) will be scanned.
+    cutoff_spearman: `float`, optional (default: 0.4)
+        Between 0 and 1. The cutoff used for Spearman's rank correlation coefficient.
+    cutoff_logfc: `float`, optional (default: 0.25)
+        The log2-transformed fold change cutoff between cells around start and end node.
+    percentile_expr: `int`, optional (default: 95)
+        Between 0 and 100. Between 0 and 100. Specify the percentile of marker expression greater than 0 to filter out some extreme marker expressions.
+    min_num_cells: `int`, optional (default: 5)
+        The minimum number of cells in which markers are expressed.
+    n_jobs: `int`, optional (default: 1)
+        The number of parallel jobs to run when scaling the marker expressions .
+    use_precomputed: `bool`, optional (default: True)
+        If True, the previously computed scaled marker expression will be used
+    root: `str`, optional (default: 'root'):
+        The starting node
+    preference: `list`, optional (default: None):
+        The preference of nodes. The branch with speficied nodes are preferred and will be dealt with first. The higher ranks the node have, The earlier the branch with that node will be analyzed.
+        This will help generate the consistent results as shown in subway map and stream plot.
+
+    Returns
+    -------
+    updates `adata` with the following fields.
+    scaled_marker_expr: `list` (`adata.uns['scaled_marker_expr']`)
+        Scaled marker expression for marker marker detection.
+    transition_markers: `dict` (`adata.uns['transition_markers']`)
+        Transition markers for each branch deteced by STREAM.
+    """
+
+    root = assign_root(adata, root=root)
+
+    file_path = os.path.join(adata.uns['workdir'],'transition_markers')
+    if(not os.path.exists(file_path)):
+        os.makedirs(file_path)
+
+    if(marker_list is None):
+        print('Scanning all features ...')
+        marker_list = adata.var_names.tolist()
+    else:
+        print('Scanning the specified marker list ...')
+        ###remove duplicate keys
+        marker_list = list(dict.fromkeys(marker_list))
+        for marker in marker_list:
+            if(marker not in adata.var_names):
+                raise ValueError("could not find '%s' in `adata.var_names`"  % (marker))
+
+    flat_tree = adata.uns['stream_tree']
+    dict_node_state = nx.get_node_attributes(flat_tree,'label')
+    df_marker_detection = adata.obs.copy()
+    df_marker_detection.rename(columns={"label": "CELL_LABEL", "branch_lam": "lam"},inplace = True)
+    if(use_precomputed and ('scaled_marker_expr' in adata.uns_keys())):
+        print('Importing precomputed scaled marker expression matrix ...')
+        results = adata.uns['scaled_marker_expr']
+        df_results = pd.DataFrame(results).T
+        if(all(np.isin(marker_list,df_results.columns.tolist()))):
+            input_markers_expressed = marker_list
+            df_scaled_marker_expr = df_results[input_markers_expressed]
+        else:
+            raise ValueError("Not all markers in `marker_list` can be found in precomputed scaled marker expression matrix. Please set `use_precomputed=False`")
+
+    else:
+        input_markers = marker_list
+        df_sc = pd.DataFrame(index= adata.obs_names.tolist(),
+                             data = adata[:,input_markers].X,
+                             columns=input_markers)
+        #exclude markers that are expressed in fewer than min_num_cells cells
+        #min_num_cells = max(5,int(round(df_marker_detection.shape[0]*0.001)))
+        # print('Minimum number of cells expressing markers: '+ str(min_num_cells))
+
+        print("Filtering out markers that are expressed in less than " + str(min_num_cells) + " cells ...")
+        input_markers_expressed = np.array(input_markers)[np.where((df_sc[input_markers]>0).sum(axis=0)>min_num_cells)[0]].tolist()
+        df_marker_detection[input_markers_expressed] = df_sc[input_markers_expressed].copy()
+
+        print(str(n_jobs)+' cpus are being used ...')
+        params = [(df_marker_detection,x,percentile_expr) for x in input_markers_expressed]
+        pool = multiprocessing.Pool(processes=n_jobs)
+        results = pool.map(scale_marker_expr,params)
+        pool.close()
+        adata.uns['scaled_marker_expr'] = results
+        df_scaled_marker_expr = pd.DataFrame(results).T
+
+    print(str(len(input_markers_expressed)) + ' markers are being scanned ...')
+    df_marker_detection[input_markers_expressed] = df_scaled_marker_expr
+    #### TG (Transition markers) along each branch
+    dict_tg_edges = dict()
+    dict_label_node = {value: key for key,value in nx.get_node_attributes(flat_tree,'label').items()}
+    if(preference!=None):
+        preference_nodes = [dict_label_node[x] for x in preference]
+    else:
+        preference_nodes = None
+    root_node = dict_label_node[root]
+    bfs_edges = bfs_edges_modified(flat_tree,root_node,preference=preference_nodes)
+#     all_branches = np.unique(df_marker_detection['branch_id']).tolist()
+    for edge_i in bfs_edges:
+        edge_i_alias = (dict_node_state[edge_i[0]],dict_node_state[edge_i[1]])
+        if edge_i in nx.get_edge_attributes(flat_tree,'id').values():
+            df_cells_edge_i = deepcopy(df_marker_detection[df_marker_detection.branch_id==edge_i])
+            df_cells_edge_i['lam_ordered'] = df_cells_edge_i['lam']
+        else:
+            df_cells_edge_i = deepcopy(df_marker_detection[df_marker_detection.branch_id==(edge_i[1],edge_i[0])])
+            df_cells_edge_i['lam_ordered'] = flat_tree.edges[edge_i]['len'] - df_cells_edge_i['lam']
+        df_cells_edge_i_sort = df_cells_edge_i.sort_values(['lam_ordered'])
+        df_stat_pval_qval = pd.DataFrame(columns = ['stat','logfc','pval','qval'],dtype=float)
+        for markername in input_markers_expressed:
+            id_initial = range(0,int(df_cells_edge_i_sort.shape[0]*0.2))
+            id_final = range(int(df_cells_edge_i_sort.shape[0]*0.8),int(df_cells_edge_i_sort.shape[0]*1))
+            values_initial = df_cells_edge_i_sort.iloc[id_initial,:][markername]
+            values_final = df_cells_edge_i_sort.iloc[id_final,:][markername]
+            diff_initial_final = abs(values_final.mean() - values_initial.mean())
+            if(diff_initial_final>0):
+                logfc = np.log2(max(values_final.mean(),values_initial.mean())/(min(values_final.mean(),values_initial.mean())+diff_initial_final/1000.0))
+            else:
+                logfc = 0
+            if(logfc>cutoff_logfc):
+                df_stat_pval_qval.loc[markername] = np.nan
+                df_stat_pval_qval.loc[markername,['stat','pval']] = spearmanr(df_cells_edge_i_sort.loc[:,markername],\
+                                                                            df_cells_edge_i_sort.loc[:,'lam_ordered'])
+                df_stat_pval_qval.loc[markername,'logfc'] = logfc
+        if(df_stat_pval_qval.shape[0]==0):
+            print('No Transition markers are detected in branch ' + edge_i_alias[0]+'_'+edge_i_alias[1])
+        else:
+            p_values = df_stat_pval_qval['pval']
+            q_values = multipletests(p_values, method='fdr_bh')[1]
+            df_stat_pval_qval['qval'] = q_values
+            dict_tg_edges[edge_i_alias] = df_stat_pval_qval[(abs(df_stat_pval_qval.stat)>=cutoff_spearman)].sort_values(['qval'])
+            dict_tg_edges[edge_i_alias].to_csv(os.path.join(file_path,'transition_markers_'+ edge_i_alias[0]+'_'+edge_i_alias[1] + '.tsv'),sep = '\t',index = True)
+    adata.uns['transition_markers'] = dict_tg_edges
+
+
+
+
+def plot_transition_markers(adata,num_markers = 15,
+                            save_fig=False,fig_path=None,fig_size=None,
+                            text_attr = "original",
+                            ):
+
+    if(fig_path is None):
+        fig_path = os.path.join(adata.uns['workdir'],'transition_markers')
+    if(not os.path.exists(fig_path)):
+        os.makedirs(fig_path)
+
+    if text_attr == "original":
+        dd = tree_label_dict(adata,tree = "stream_tree",from_ = "label",to_ = 'original')
+
+    dict_tg_edges = adata.uns['transition_markers']
+    flat_tree = adata.uns['stream_tree']
+    colors = sns.color_palette("Set1", n_colors=8, desat=0.8)
+    for edge_i in dict_tg_edges.keys():
+
+        df_tg_edge_i = deepcopy(dict_tg_edges[edge_i])
+        df_tg_edge_i = df_tg_edge_i.iloc[:num_markers,:]
+
+        stat = df_tg_edge_i.stat[::-1]
+        qvals = df_tg_edge_i.qval[::-1]
+
+        pos = np.arange(df_tg_edge_i.shape[0])-1
+        bar_colors = np.tile(colors[4],(len(stat),1))
+        id_neg = np.arange(len(stat))[np.array(stat<0)]
+        bar_colors[id_neg]=colors[2]
+
+        if(fig_size is None):
+            fig_size = (12,np.ceil(0.4*len(stat)))
+        fig = plt.figure(figsize=fig_size)
+        ax = fig.add_subplot(1,1,1, adjustable='box')
+        ax.barh(pos,stat,align='center',height=0.8,tick_label=[''],color = bar_colors)
+        ax.set_xlabel('Spearman correlation coefficient')
+        edge_i0 = str(dd.get(edge_i[0],edge_i[0]))
+        edge_i1 = str(dd.get(edge_i[1],edge_i[1]))
+
+        ax.set_title("branch " + edge_i0+'_'+edge_i1)
+        ax.spines['left'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.set_ylim((min(pos)-1,max(pos)+1))
+
+        rects = ax.patches
+        for i,rect in enumerate(rects):
+            if(stat[i]>0):
+                alignment = {'horizontalalignment': 'left', 'verticalalignment': 'center'}
+                ax.text(rect.get_x()+rect.get_width()+0.01, rect.get_y() + rect.get_height()/2.0, \
+                        qvals.index[i],**alignment)
+                ax.text(rect.get_x()+0.01, rect.get_y()+rect.get_height()/2.0,
+                        "{:.2E}".format(Decimal(str(qvals[i]))),size=0.8*mpl.rcParams['font.size'],
+                        color='black',**alignment)
+            else:
+                alignment = {'horizontalalignment': 'right', 'verticalalignment': 'center'}
+                ax.text(rect.get_x()+rect.get_width()-0.01, rect.get_y()+rect.get_height()/2.0, \
+                        qvals.index[i],**alignment)
+                ax.text(rect.get_x()-0.01, rect.get_y()+rect.get_height()/2.0,
+                        "{:.2E}".format(Decimal(str(qvals[i]))),size=0.8*mpl.rcParams['font.size'],
+                        color='w',**alignment)
+        plt.tight_layout()
+        if(save_fig):
+            plt.savefig(os.path.join(fig_path,'transition_markers_'+ edge_i0+'_'+edge_i1+'.pdf'),\
+                        pad_inches=1,bbox_inches='tight')
+            plt.close(fig)
+
+
+
+
+def detect_leaf_markers(adata,marker_list=None,cutoff_zscore=1.,cutoff_pvalue=1e-2,percentile_expr=95,n_jobs = 1,min_num_cells=5,
+                        use_precomputed=True, root='root',preference=None):
+    """Detect leaf markers for each branch.
+    Parameters
+    ----------
+    adata: AnnData
+        Annotated data matrix.
+    marker_list: `list`, optional (default: None):
+        A list of candidate markers to be scanned. Instead of scanning all available genes/peaks/kmers/motifs, this will limit the scanning to a specific list of genes/peaks/kmers/motifs
+        If none, all available features (genes/peaks/kmers/motifs) will be scanned.
+    cutoff_zscore: `float`, optional (default: 1.5)
+        The z-score cutoff used for mean values of all leaf branches.
+    cutoff_pvalue: `float`, optional (default: 1e-2)
+        The p value cutoff used for Kruskal-Wallis H-test and post-hoc pairwise Conover’s test.
+    percentile_expr: `int`, optional (default: 95)
+        Between 0 and 100. Between 0 and 100. Specify the percentile of marker expression greater than 0 to filter out some extreme marker expressions.
+    n_jobs: `int`, optional (default: 1)
+        The number of parallel jobs to run when scaling the marker expressions .
+    min_num_cells: `int`, optional (default: 5)
+        The minimum number of cells in which markers are expressed.
+    use_precomputed: `bool`, optional (default: True)
+        If True, the previously computed scaled marker expression will be used
+    root: `str`, optional (default: 'S0'):
+        The starting node
+    preference: `list`, optional (default: None):
+        The preference of nodes. The branch with speficied nodes are preferred and will be dealt with first. The higher ranks the node have, The earlier the branch with that node will be analyzed.
+        This will help generate the consistent results as shown in subway map and stream plot.
+
+    Returns
+    -------
+    updates `adata` with the following fields.
+    scaled_marker_expr: `list` (`adata.uns['scaled_marker_expr']`)
+        Scaled marker expression for marker marker detection.
+    leaf_markers_all: `pandas.core.frame.DataFrame` (`adata.uns['leaf_markers_all']`)
+        All the leaf markers from all leaf branches.
+    leaf_markers: `dict` (`adata.uns['leaf_markers']`)
+        Leaf markers for each branch.
+    """
+
+    file_path = os.path.join(adata.uns['workdir'],'leaf_markers')
+    if(not os.path.exists(file_path)):
+        os.makedirs(file_path)
+
+
+    root = assign_root(adata, root=root)
+
+    if(marker_list is None):
+        print('Scanning all features ...')
+        marker_list = adata.var_names.tolist()
+    else:
+        print('Scanning the specified marker list ...')
+        ###remove duplicate keys
+        marker_list = list(dict.fromkeys(marker_list))
+        for marker in marker_list:
+            if(marker not in adata.var_names):
+                raise ValueError("could not find '%s' in `adata.var_names`"  % (marker))
+
+    flat_tree = adata.uns['stream_tree']
+    dict_node_state = nx.get_node_attributes(flat_tree,'label')
+    df_marker_detection = adata.obs.copy()
+    df_marker_detection.rename(columns={"label": "CELL_LABEL", "branch_lam": "lam"},inplace = True)
+
+    if(use_precomputed and ('scaled_marker_expr' in adata.uns_keys())):
+        print('Importing precomputed scaled marker expression matrix ...')
+        results = adata.uns['scaled_marker_expr']
+        df_results = pd.DataFrame(results).T
+        if(all(np.isin(marker_list,df_results.columns.tolist()))):
+            input_markers_expressed = marker_list
+            df_scaled_marker_expr = df_results[input_markers_expressed]
+        else:
+            raise ValueError("Not all markers in `marker_list` can be found in precomputed scaled marker expression matrix. Please set `use_precomputed=False`")
+    else:
+        input_markers = marker_list
+        df_sc = pd.DataFrame(index= adata.obs_names.tolist(),
+                             data = adata[:,input_markers].X,
+                             columns=input_markers)
+        #exclude markers that are expressed in fewer than min_num_cells cells
+        print("Filtering out markers that are expressed in less than " + str(min_num_cells) + " cells ...")
+        input_markers_expressed = np.array(input_markers)[np.where((df_sc[input_markers]>0).sum(axis=0)>min_num_cells)[0]].tolist()
+        df_marker_detection[input_markers_expressed] = df_sc[input_markers_expressed].copy()
+
+        print(str(n_jobs)+' cpus are being used ...')
+        params = [(df_marker_detection,x,percentile_expr) for x in input_markers_expressed]
+        pool = multiprocessing.Pool(processes=n_jobs)
+        results = pool.map(scale_marker_expr,params)
+        pool.close()
+        adata.uns['scaled_marker_expr'] = results
+        df_scaled_marker_expr = pd.DataFrame(results).T
+
+    print(str(len(input_markers_expressed)) + ' markers are being scanned ...')
+    df_marker_detection[input_markers_expressed] = df_scaled_marker_expr
+
+    #### find marker markers that are specific to one leaf branch
+    dict_label_node = {value: key for key,value in nx.get_node_attributes(flat_tree,'label').items()}
+    if(preference!=None):
+        preference_nodes = [dict_label_node[x] for x in preference]
+    else:
+        preference_nodes = None
+    root_node = dict_label_node[root]
+    bfs_edges = bfs_edges_modified(flat_tree,root_node,preference=preference_nodes)
+    leaves = [k for k,v in flat_tree.degree() if v==1]
+    leaf_edges = [x for x in bfs_edges if (x[0] in leaves) or (x[1] in leaves)]
+
+    df_marker_detection['bfs_edges'] = df_marker_detection['branch_id']
+    df_marker_detection.astype('object')
+    for x in df_marker_detection['branch_id'].unique():
+        id_ = df_marker_detection[df_marker_detection['branch_id']==x].index
+        if x not in bfs_edges:
+            df_marker_detection.loc[id_,'bfs_edges'] =pd.Series(index=id_,data=[(x[1],x[0])]*len(id_))
+
+    df_leaf_markers = pd.DataFrame(columns=['zscore','H_statistic','H_pvalue']+leaf_edges)
+    for marker in input_markers_expressed:
+        meann_values = df_marker_detection[['bfs_edges',marker]].groupby(by = 'bfs_edges')[marker].mean()
+        br_values = df_marker_detection[['bfs_edges',marker]].groupby(by = 'bfs_edges')[marker].apply(list)
+        leaf_mean_values = meann_values[leaf_edges]
+        leaf_mean_values.sort_values(inplace=True)
+        leaf_br_values = br_values[leaf_edges]
+        if(leaf_mean_values.shape[0]<=2):
+            print('There are not enough leaf branches')
+        else:
+            zscores = scipy.stats.zscore(leaf_mean_values)
+            if(abs(zscores)[abs(zscores)>cutoff_zscore].shape[0]>=1):
+                if(any(zscores>cutoff_zscore)):
+                    cand_br = leaf_mean_values.index[-1]
+                    cand_zscore = zscores[-1]
+                else:
+                    cand_br = leaf_mean_values.index[0]
+                    cand_zscore = zscores[0]
+                list_br_values = [leaf_br_values[x] for x in leaf_edges]
+                kurskal_statistic,kurskal_pvalue = kruskal(*list_br_values)
+                if(kurskal_pvalue<cutoff_pvalue):
+                    df_conover_pvalues= posthoc_conover(df_marker_detection[[x in leaf_edges for x in df_marker_detection['bfs_edges']]],
+                                                       val_col=marker, group_col='bfs_edges', p_adjust = 'fdr_bh')
+                    cand_conover_pvalues = df_conover_pvalues[~df_conover_pvalues.columns.isin([cand_br])][cand_br]
+                    if(all(cand_conover_pvalues < cutoff_pvalue)):
+                        df_leaf_markers.loc[marker,:] = 1.0
+                        df_leaf_markers.loc[marker,['zscore','H_statistic','H_pvalue']] = [cand_zscore,kurskal_statistic,kurskal_pvalue]
+                        df_leaf_markers.loc[marker,cand_conover_pvalues.index] = cand_conover_pvalues
+    df_leaf_markers.rename(columns={x:dict_node_state[x[0]]+dict_node_state[x[1]]+'_pvalue' for x in leaf_edges},inplace=True)
+    df_leaf_markers.sort_values(by=['H_pvalue','zscore'],ascending=[True,False],inplace=True)
+    df_leaf_markers.to_csv(os.path.join(file_path,'leaf_markers.tsv'),sep = '\t',index = True)
+    dict_leaf_markers = dict()
+    for x in leaf_edges:
+        x_alias = (dict_node_state[x[0]],dict_node_state[x[1]])
+        dict_leaf_markers[x_alias] = df_leaf_markers[df_leaf_markers[x_alias[0]+x_alias[1]+'_pvalue']==1.0]
+        dict_leaf_markers[x_alias].to_csv(os.path.join(file_path,'leaf_markers'+x_alias[0]+'_'+x_alias[1] + '.tsv'),sep = '\t',index = True)
+    adata.uns['leaf_markers_all'] = df_leaf_markers
+    adata.uns['leaf_markers'] = dict_leaf_markers
 

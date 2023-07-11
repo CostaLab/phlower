@@ -2,6 +2,7 @@ from .plotting import (
         nxdraw_group,
         nxdraw_score,
         nxdraw_holes,
+        nxdraw_harmonic,
         plot_traj,
         plot_trajs_embedding,
         plot_triangle_density,

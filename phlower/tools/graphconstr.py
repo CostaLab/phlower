@@ -8,7 +8,6 @@ import pandas as pd
 from datetime import datetime
 from itertools import chain
 from typing import Iterable, List, Tuple, TypeVar, Union
-from numpy.linalg import solve
 from scipy.sparse.linalg import spsolve
 from scipy.spatial import distance_matrix
 from scipy.sparse import csc_matrix, csr_matrix
@@ -17,6 +16,9 @@ from sklearn.preprocessing import StandardScaler
 from .diffusionmap import diffusionMaps, affinity, logsumexp
 from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl, div_adj
 from .dimensionreduction import run_pca
+
+
+from ..util import test_cholesky
 
 V = TypeVar('V')
 
@@ -232,20 +234,20 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   a = divop(g).T@divop(g) + lmda * scipy.sparse.diags([1]*len(g.edges()), 0, format="csc")
   b = -gradop(g)@div_o
 
-  cg_ret = -1
-  if scipy.linalg.ishermitian(a.toarray()):
-      if verbose:
-        print(datetime.now(), "CG...")
-      edge_weight, cg_ret = scipy.sparse.linalg.cg(a, b, tol=1e-6)
-
-  if cg_ret != 0:
+  #cg_ret = -1
+  if verbose:
+    print(datetime.now(), "cholesky solve ax=b...")
+  ret = test_cholesky(a, verbose=verbose) #cholesky to solve ax=b
+  if ret:
+    edge_weight = ret(b)
+    #edge_weight, cg_ret = scipy.sparse.linalg.cg(a, b, tol=1e-6)
+  else:
     if verbose:
-        print(datetime.now(), "CG failed, use LS instead...")
+        print(datetime.now(), "cholesky failed, use LS instead...")
     edge_weight = scipy.sparse.linalg.spsolve(
       a,
       b,
     )
-
   del a,b
 
 
@@ -268,7 +270,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   if verbose:
     print(datetime.now(), "ddhodge done.")
   print("done.")
-  attru_dict = {x:{"u":y} for x,y in zip(g.nodes(), potential(g, lstsq_method=lstsq_method))}
+  attru_dict = {x:{"u":y} for x,y in zip(g.nodes(), potential(g, method=lstsq_method))}
   nx.set_node_attributes(g, attru_dict)
 
   attrv_dict = {x:{"div":y} for x,y in zip(g.nodes(), div(g))}
@@ -282,7 +284,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
 
 
 ## X: column observations,row features
-def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False, **kwargs):
+def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False, lstsq_method="lstsq"):
   """
   Parameter
   -------------
@@ -305,7 +307,7 @@ def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, ve
   npc = min(100, Y.shape[0]-1, Y.shape[1]-1) if not npc else min(100, Y.shape[0]-1, Y.shape[1] -1, npc)
   pc = run_pca(Y, npc)
 
-  dic = diffusionGraphDM(pc, roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, **kwargs)
+  dic = diffusionGraphDM(pc, roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, lstsq_method="lstsq")
   return dic
 #endf diffusionGraph
 
