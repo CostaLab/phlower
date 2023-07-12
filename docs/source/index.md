@@ -1,13 +1,13 @@
 # Welcome to PHLOWER's documentation!
+![logo](img/phlower_logo_white_bg.png){.bg-warning w=100px align=right}
 
 **PHLOWER** is a Python library for single cell trajectory inference using Hodge Decomposition
 
 Check out the :doc:`usage` section for further information, including
 how to :ref:`installation` the project.
 
-```{image} img/phlower_logo_white_bg.png
-:width: 100px
-```
+
+
 
 
    This project is under active development.
