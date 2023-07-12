@@ -599,7 +599,7 @@ def detect_transition_markers(adata,marker_list=None,cutoff_spearman=0.4, cutoff
     else:
         input_markers = marker_list
         df_sc = pd.DataFrame(index= adata.obs_names.tolist(),
-                             data = adata[:,input_markers].X,
+                             data = np.array(adata[:,input_markers].X if isinstance(adata.X, np.ndarray) else  adata[:,input_markers].X.todense() , dtype=object),
                              columns=input_markers)
         #exclude markers that are expressed in fewer than min_num_cells cells
         #min_num_cells = max(5,int(round(df_marker_detection.shape[0]*0.001)))
@@ -810,8 +810,10 @@ def detect_leaf_markers(adata,marker_list=None,cutoff_zscore=1.,cutoff_pvalue=1e
     else:
         input_markers = marker_list
         df_sc = pd.DataFrame(index= adata.obs_names.tolist(),
-                             data = adata[:,input_markers].X,
+                             data = np.array(adata[:,input_markers].X if isinstance(adata.X, np.ndarray) else  adata[:,input_markers].X.todense() , dtype=object),
                              columns=input_markers)
+
+
         #exclude markers that are expressed in fewer than min_num_cells cells
         print("Filtering out markers that are expressed in less than " + str(min_num_cells) + " cells ...")
         input_markers_expressed = np.array(input_markers)[np.where((df_sc[input_markers]>0).sum(axis=0)>min_num_cells)[0]].tolist()

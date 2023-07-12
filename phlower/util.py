@@ -395,7 +395,7 @@ def test_cholesky( A, beta=1e-6, verbose=False ):
     Also the condition number improves to ~ rho(A) / beta.
     """
     #scikit-sparse
-    from sksparse.cholmod import cholesky, CholmodNotPositiveDefiniteError
+    from sksparse.cholmod import cholesky, CholmodNotPositiveDefiniteError, CholmodTooLargeError
     try:
         solve = cholesky( A, beta=beta )  # A + beta I
         if verbose:
