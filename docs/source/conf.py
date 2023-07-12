@@ -18,6 +18,7 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     "myst_parser",
+    "nbsphinx", ## for jupyter notebook
 ]
 
 intersphinx_mapping = {
