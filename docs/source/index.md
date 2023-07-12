@@ -6,7 +6,7 @@ Check out the :doc:`usage` section for further information, including
 how to :ref:`installation` the project.
 
 <p align="center">
-  <img height="150" src="https://github.com/CostaLab/phlower/blob/main/figures/phlower_logo.svg" />
+  <img height="150" src="../../figures/phlower_logo_white_bg.png" />
 </p>
 
 
