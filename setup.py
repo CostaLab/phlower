@@ -14,7 +14,7 @@ setup(
                       'networkx>=2.4',
                       'pydot',
                       'igraph',
-                      "sklearn",
+                      "scikit-learn",
                       "scipy",
                       "pandas",
                       "plotly",
