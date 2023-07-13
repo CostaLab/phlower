@@ -23,7 +23,7 @@ setup(
                       "louvain",
                       "colorcet",
                       'umap-learn',
-                      'scikit-sparse', #libsuitesparse-dev
+                      'scikit-sparse', #deb:libsuitesparse-dev, conda:suitesparse
                       'scanpy',
                       #'pygraphviz',
                       'anndata',

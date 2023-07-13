@@ -15,6 +15,8 @@ PHLOWER：graPh Hodge Laplacian inferring trajectOries floWs of cEll diffeRentia
 installation
 --------
 
+library dependencies:
+- suite-sparse
 
 .. code:: shell
 
