@@ -408,3 +408,23 @@ def test_cholesky( A, beta=1e-6, verbose=False ):
         if verbose:
             print( " + %g I is too large" % (beta ))
         return False
+
+def has_islands(adjacency_matrix):
+    num_vertices = adjacency_matrix.shape[0]
+    visited = np.zeros(num_vertices, dtype=bool)
+
+    for vertex in range(num_vertices):
+        if not visited[vertex]:
+            stack = [vertex]
+            visited[vertex] = True
+
+            while stack:
+                curr_vertex = stack.pop()
+
+                neighbors = np.nonzero(adjacency_matrix[curr_vertex])[0]
+                for neighbor in neighbors:
+                    if not visited[neighbor]:
+                        stack.append(neighbor)
+                        visited[neighbor] = True
+
+    return np.any(~visited)

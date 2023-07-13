@@ -109,7 +109,7 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
     stream_root: `dict` (`adata.uns['stream_root']`)
         Store the coordinates of nodes ('nodes') and edges ('edges') in subwaymap plot.
     """
-    print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03")
+    #print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03")
 
     root = assign_root(adata, root=root)
 
@@ -360,7 +360,7 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
     -------
     None
     """
-    print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03")
+    #print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03")
     root = assign_root(adata, root=root)
 
     if(fig_path is None):

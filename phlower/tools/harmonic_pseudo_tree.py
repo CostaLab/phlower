@@ -48,6 +48,7 @@ def harmonic_stream_tree(adata: AnnData,
                         min_kde_quant_rm = 0.1,
                         kde_sample_n = 10000,
                         random_seed = 2022,
+                        stream_workdir='',
                         iscopy=False,
                         ):
     adata = adata.copy() if iscopy else adata
@@ -61,10 +62,11 @@ def harmonic_stream_tree(adata: AnnData,
     if "graph_basis" in adata.uns.keys() and not layout_name:
         layout_name = adata.uns["graph_basis"]
 
-
     if layout_name not in adata.obsm:
         raise ValueError(f"layout_name {layout_name} is not in adata.obsm")
 
+    if "workdir" not in adata.uns:
+        adata.uns['workdir'] = stream_workdir
 
     d =  harmonic_trajs_bins(adata = adata,
                              graph_name = graph_name,

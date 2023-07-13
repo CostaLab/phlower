@@ -18,7 +18,7 @@ from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacia
 from .dimensionreduction import run_pca
 
 
-from ..util import test_cholesky
+from ..util import test_cholesky, has_islands
 
 V = TypeVar('V')
 
@@ -129,7 +129,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   # S is the eigen vectors of M'
   psi = D^{-1/2} S
   phi = S^T D^{1/2}
-    \begin{aligned}
+    \\begin{aligned}
     M^s & = Q \Lambda Q^{-1}Q \Lambda Q^{-1}\cdots Q \Lambda Q^{-1}\\
     & = Q \Lambda^s Q^{-1}\\
     & = D^{-1/2} S \Lambda^s S^T D^{1/2} \\
@@ -206,22 +206,35 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   #del g_o
   # u_o = drop(potential(g_o)) # time consuming
   # k-NN graph using diffusion distance
+
+
   nei = np.apply_along_axis(knn,0,W, k)
-  from collections import Counter
-  #print("(~(nei|nei.T)): ", (~(nei|nei.T)))
   zerofilter = scipy.sparse.csr_matrix(~(nei|nei.T))
-  from collections import Counter
-  print("zerofilter:", Counter(zerofilter.toarray().ravel()))
   A[zerofilter] = 0
-
-
-  ## For test
-  #csv_dir = "/home/sz753404/data/git_code/trajectory-outlier-detection-flow-embeddings/util"
-  #A = np.array(pd.read_csv(f"{csv_dir}/A.csv", index_col=0))
-
-  if verbose:
-    print(datetime.now(), "create graph...")
   g = graph_altmat(A)
+
+  while True: ## if A is not connected
+    if nx.is_connected(g.to_undirected()):
+        if verbose:
+            print(datetime.now(), "connected graph k=",k)
+        break
+    else:
+        if verbose:
+            print(datetime.now(), "not connected graph k=",k)
+    A = copy.deepcopy(OA)
+    k = k+1
+    nei = np.apply_along_axis(knn,0,W, k)
+    zerofilter = scipy.sparse.csr_matrix(~(nei|nei.T))
+    A[zerofilter] = 0
+    A.eliminate_zeros()
+    if verbose:
+      print(datetime.now(), "create graph...")
+    g = graph_altmat(A)
+    if k>100:
+        raise Exception("k is too large")
+
+
+
   # Pulling back the original potential using pruned graph
   # Lgi = MASS.ginv(as.matrix(laplacian0(g)))
   # div_s = glmnet.glmnet(Lgi,u_o,alpha=0.5,lmda=lmda).beta

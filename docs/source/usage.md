@@ -3,11 +3,12 @@
 ### Installation
 
   ```bash
-    pip install -r requirements.txt
+    git clone https://github.com/CostaLab/phlower.git
+    pip install phlower
   ```
 
-#### Run the server
+#### Run
 
-  ```bash
-    python manage.py runserver
+  ```python
+  import phlower
   ```
