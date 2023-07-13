@@ -12,7 +12,7 @@ build:
     - libtool
     - autoconf
     - automake
-
+    - libsuitesparse-dev
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
