@@ -41,16 +41,27 @@ def random_climb_knn(adata,
     Parameters:
     ----------
     adata: AnnData
-    graph_name: str, the graph with holes to be used, adata.uns["graph_basis"] + "_triangulation" by default if None
-    A: csr_matrix, the adjacency matrix of the diffusion
-    W: csr_matrix, the weight matrix of the diffusion
-    knn_edges_k: int, the number of knn edges to be used, 9 by default
-    attr: str, the attribute of the graph_name, "u" by default
-    roots_ratio: float, the ratio of the cells to be used as root, 0.1 by default
-    n: int, the number of trajectories to be produced, 10000 by default
-    iscopy: bool, whether to return a copy of adata or not, False by default
-    traj_name: str, the name of the trajectories to be saved in adata.uns, "knn_trajs" by default
-    seeds: int, the random seeds to be used, 2022 by default
+        AnnData object
+    graph_name: str
+        the graph with holes to be used, adata.uns["graph_basis"] + "_triangulation" by default if None
+    A: csr_matrix
+        the adjacency matrix of the diffusion
+    W: csr_matrix
+        the weight matrix of the diffusion
+    knn_edges_k: int
+        the number of knn edges to be used, 9 by default
+    attr: str
+        the attribute of the graph_name, "u" by default
+    roots_ratio: float
+        the ratio of the cells to be used as root, 0.1 by default
+    n: int
+        the number of trajectories to be produced, 10000 by default
+    iscopy: bool
+        whether to return a copy of adata or not, False by default
+    traj_name: str
+        the name of the trajectories to be saved in adata.uns, "knn_trajs" by default
+    seeds: int
+        the random seeds to be used, 2022 by default
     """
 
     adata = adata.copy() if iscopy else adata
@@ -104,13 +115,21 @@ def trajs_matrix(adata: AnnData,
     Parameters:
     ----------
     adata: AnnData
-    graph_name: str, the graph with holes to be used, adata.uns["graph_basis"] + "_triangulation_circle" by default if None
-    evector_name: str, the L1 decomposed eigen vectors from the graph_name,  adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector" by default if None
-    embedding: str, the embedding for visualize the clustering results, "umap" by default
-    eigen_n: int, the number of eigen vectors to be used, -1 by default, which means all eigen vectors with 0 eigen values
-    trajs: str or List[List[int]], the trajectories to be used, "knn_trajs" by default in adata.uns
-    edge_w: List, the weights of the edges in the graph, None by default, which means all edges have the same weight 1
-    iscopy: bool, whether to return a copy of adata or not, False by default
+        AnnData object
+    graph_name: str
+        the graph with holes to be used, adata.uns["graph_basis"] + "_triangulation_circle" by default if None
+    evector_name: str
+        the L1 decomposed eigen vectors from the graph_name,  adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector" by default if None
+    embedding: str
+        the embedding for visualize the clustering results, "umap" by default
+    eigen_n: int
+        the number of eigen vectors to be used, -1 by default, which means all eigen vectors with 0 eigen values
+    trajs: str or List[List[int]]
+        the trajectories to be used, "knn_trajs" by default in adata.uns
+    edge_w: List
+        the weights of the edges in the graph, None by default, which means all edges have the same weight 1
+    iscopy: bool
+        whether to return a copy of adata or not, False by default
     """
     adata = adata.copy() if iscopy else adata
 
@@ -182,11 +201,19 @@ def trajs_dm(adata,
              M_flatten: Union[str, np.ndarray] = "full_traj_matrix_flatten",
              embedding = 'umap',
              eigen_n: int = -1,
-             iscopy=False,
-             **args,
+             iscopy=False
              ):
     """
-    eigen_n: the number of eigen vectors to use, if -1, use find_knee out
+    adata: AnnData
+        AnnData object
+    evector_name: str
+        the L1 decomposed eigen vectors from the graph_name,  adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector" by default if None
+    embedding: str
+        the embedding for visualize the clustering results, "umap" by default
+    eigen_n: int
+        the number of eigen vectors to use, if -1, use find_knee out
+    iscopy: bool
+        whether to return a copy of adata or not, False by default
     """
 
     adata = adata.copy() if iscopy else adata
@@ -232,6 +259,20 @@ def trajs_dm(adata,
 
 
 def trajs_clustering(adata, embedding = 'trajs_harmonic_dm', clustering_method: str = "dbscan", iscopy=False, oname_basis='', **args,):
+    """
+    adata: AnnData
+        AnnData object
+    embedding: str
+        the embedding for visualize the clustering results, "trajs_harmonic_dm" by default
+    clustering_method: str
+        the clustering method to use, options dbscan,leiden,louvain, "dbscan" by default
+    iscopy: bool
+        whether to return a copy of adata or not, False by default
+    oname_basis: str
+        the basis of the output name, "" by default
+    args: dict
+        the parameters for the clustering method
+    """
     adata = adata.copy() if iscopy else adata
     dm = adata.uns[embedding]
     if clustering_method == "dbscan":

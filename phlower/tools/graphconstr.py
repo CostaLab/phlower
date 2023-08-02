@@ -138,16 +138,37 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
 
   Parameter
   -------------
-  ndc: number of diffusion components using
-  npc: number of principal components using
-  lstsq_method: "lstsq" or "lsqr", "lsmr"
+  dm: numpy array
+    dimension reduction of diffusion map input
+  roots: list
+    list of bool values if they are root nodes
+  k: int
+    number of nearest neighbors for diffusion map
+  npc: int
+    number of principal components using
+  ndc: int
+    number of diffusion components using
+  s: int
+    number of stepes for diffusion map  random walk(default 1)
+  lmda: float
+    regularization parameter for ddhodge(default 1e-4)
+  sigma: float
+    sigma for gaussian kernel(default None)
+  verbose: bool
+    print out progress(default False)
+  lstsq_method: str
+    method for least square solver,  "lstsq" or "lsqr", "lsmr" (default "lstsq")
 
   Return
-  --------------
-  Dictionay d
-  d['g']: The diffusion graph
-  d['A']: Graph full adjacency matrix
-  d['W']: Distances
+  ---------------
+  dic: dict
+     d['g']: The diffusion graph
+     d['A']: Graph full adjacency matrix
+     d['W']: Diffusion Distances
+     d['psi']: Diffusion Map right eigenvectors
+     d['phi']: Diffusion Map left eigenvectors
+     d['eig']: Diffusion Map eigenvalues
+     d['dm']: dimension reduction input of diffusion map
   """
 
   if all(np.array(roots)==False):
@@ -170,14 +191,11 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   if verbose:
     print(datetime.now(),"transition matrix:")
   # Transition matrix at t=s
-  print(datetime.now(),"1")
   M = d['psi']@np.diag(np.power(d['eig'], s))@d['phi'].T
   # Set potential as density at time t=s
   #print(M)
-  print(datetime.now(),"2")
   u = np.mean(M[roots,:], axis = 0)
   del M
-  print(datetime.now(),"3")
   # Set potential u=-log(p) where p is density at time t=s
   #-------names(u) = colnames(X)
   # approximated -grad (related to directional deriv.?)
@@ -194,7 +212,6 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   OA = copy.deepcopy(A)
   #g_o = graph_altmat(A)
 
-  print(datetime.now(),"5")
   #return(g_o)
   if verbose:
     print(datetime.now(), "Rewiring: ")
@@ -213,7 +230,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   A[zerofilter] = 0
   g = graph_altmat(A)
 
-  while True: ## if A is not connected
+  while False: ## if A is not connected
     if nx.is_connected(g.to_undirected()):
         if verbose:
             print(datetime.now(), "connected graph k=",k)
@@ -281,10 +298,12 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   g = graph_altmat(as_altmat(g, 'weight'))
 
   if verbose:
-    print(datetime.now(), "ddhodge done.")
-  print("done.")
+    print(datetime.now(), "potential.")
   attru_dict = {x:{"u":y} for x,y in zip(g.nodes(), potential(g, method=lstsq_method))}
   nx.set_node_attributes(g, attru_dict)
+  if verbose:
+    print(datetime.now(), "ddhodge done.")
+  print("done.")
 
   attrv_dict = {x:{"div":y} for x,y in zip(g.nodes(), div(g))}
   nx.set_node_attributes(g, attrv_dict)
@@ -301,8 +320,38 @@ def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, ve
   """
   Parameter
   -------------
-  ndc: number of diffusion components using
-  npc: number of principal components using
+  X: numpy array
+    column observations,row features
+  roots: list
+    list of bool values if they are root nodes
+  k: int
+    number of nearest neighbors for diffusion map
+  npc: int
+    number of principal components using
+  ndc: int
+    number of diffusion components using
+  s: int
+    number of stepes for diffusion map  random walk(default 1)
+  lmda: float
+    regularization parameter for ddhodge(default 1e-4)
+  sigma: float
+    sigma for gaussian kernel(default None)
+  verbose: bool
+    print out progress(default False)
+  lstsq_method: str
+    method for least square solver,  "lstsq" or "lsqr", "lsmr" (default "lstsq")
+
+  Return
+  ---------------
+  dic: dict
+     d['g']: The diffusion graph
+     d['A']: Graph full adjacency matrix
+     d['W']: Diffusion Distances
+     d['psi']: Diffusion Map right eigenvectors
+     d['phi']: Diffusion Map left eigenvectors
+     d['eig']: Diffusion Map eigenvalues
+     d['dm']: dimension reduction input of diffusion map
+
   """
   #print("X:", X)
   #print("roots:", roots)

@@ -24,6 +24,46 @@ def construct_delaunay(adata:AnnData,
                        calc_layout:bool = False,
                        iscopy:bool=False,
                        ):
+    """
+    Main function for constructing delaunay graph from a layout to get holes
+     1. triangulate using the layout given
+     2. remove too long distance edges by trunc_quantile * trunc_times
+     3. randomly select starts and ends points by node_attr score
+     4. connect starts and ends points with delaunay triangulation
+     5. run layout algorithm for graph with holes  if calc_layout is true
+
+
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object
+    graph_name: str
+        graph name in adata.uns
+    layout_name: str
+        layout name in adata.obsm
+    trunc_quantile: float
+        quantile for truncating delaunay edges
+    trunc_times: float
+        times for truncating delaunay edges
+    cluster_name: str
+        cluster name in adata.obs
+    circle_quant: float
+        quantile for connecting start and end points
+    node_attr: str
+        node attribute for connecting
+    start_n: int
+        number of start points
+    end_n: int
+        number of end points
+    separate_ends_triangle: bool
+        whether to separate end points to different clusters
+    random_seed: int
+        random seed for selecting start and end points
+    calc_layout: bool
+        whether to calculate layout for the delaunay graph
+    iscopy: bool
+        whether to return a copy of adata
+    """
 
     adata = adata.copy if iscopy else adata
     if "graph_basis" in adata.uns and not graph_name:
@@ -65,6 +105,26 @@ def construct_trucated_delaunay(adata:AnnData,
                                 trunc_times:float=3,
                                 iscopy:bool=False,
                                 ):
+    """
+    Function for only constructing delaunay graph from a layout without creating holes
+     1. triangulate using the layout given
+     2. remove too long distance edges by trunc_quantile * trunc_times
+
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object
+    graph_name: str
+        graph name in adata.uns
+    layout_name: str
+        layout name in adata.obsm
+    trunc_quantile: float
+        quantile for truncating delaunay edges
+    trunc_times: float
+        times for truncating delaunay edges
+    is_copy: bool
+        whether to return a copy of adata
+    """
     if iscopy:
         adata = adata.copy()
 
@@ -100,6 +160,40 @@ def construct_circle_delaunay(adata:AnnData,
                               calc_layout:bool = False,
                               iscopy:bool=False,
                               ):
+    """
+    Fuction for only connecting start and end points with delaunay triangulation
+     3. randomly select starts and ends points by node_attr score
+     4. connect starts and ends points with delaunay triangulation
+     5. run layout algorithm for graph with holes  if calc_layout is true
+
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object
+    graph_name: str
+        graph name in adata.uns
+    layout_name: str
+        layout name in adata.obsm
+    cluster_name: str
+        cluster name in adata.obs
+    quant: float
+        quantile for connecting start and end points
+    node_attr: str
+        node attribute for connecting
+    start_n: int
+        number of start points
+    end_n: int
+        number of end points
+    separate_ends_triangle: bool
+        whether to separate end points to different clusters
+    random_seed: int
+        random seed for selecting start and end points
+    calc_layout: bool
+        whether to calculate layout for the delaunay graph
+    iscopy: bool
+        whether to return a copy of adata
+
+    """
     if iscopy:
         adata = adata.copy()
 
@@ -270,8 +364,6 @@ def construct_trucated_delaunay_knn(adata:AnnData,
     print("knn_k applied:", knn_edges_k)
     return adata if iscopy else None
 #endf triangulation_delaunay_knn
-
-
 
 
 

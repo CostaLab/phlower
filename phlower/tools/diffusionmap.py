@@ -16,10 +16,14 @@ def affinity(R, k=7, sigma=None, log=False, normalize=False):
 
     Parameter
     -----------
-    R: symmetric matrix(positive semi-definite); Distance matrix
-    k: number of neighbors in adaptive-scaling, ignore if sigma is not None
-    log: transform the affinity by logrithm or not
-    normalize: return transition matrix
+    R: np.array
+        symmetric matrix(positive semi-definite); Distance matrix
+    k: int
+        number of neighbors in adaptive-scaling, ignore if sigma is not None
+    log: bool
+        transform the affinity by logrithm or not
+    normalize: bool
+        return transition matrix
     """
     def top_k(lst, k=1):
         assert(len(lst) >k)
@@ -47,15 +51,21 @@ def  diffusionMaps(R,k=7,sigma=None, verbose=False, eig_k=100):
     https://en.wikipedia.org/wiki/Diffusion_map
     Parameter
     ----------
-    R: distance matrix
-    k: number of neighbors in adaptive-scaling
-    sigma: for isotropic diffussion
+    R: np.array
+        symmetric matrix(positive semi-definite); Distance matrix
+    k: int
+        number of neighbors in adaptive-scaling
+    sigma: float
+        for isotropic diffussion
     Return
     ----------
     dic:
-        psi: right eigvector of P = D^{-1/2} * evec
-        phi: left eigvector of P = D^{1/2} * evec
-        eig: eigenvalues
+        psi: scipy.sparse.csr_matrix
+            right eigvector of P = D^{-1/2} * evec
+        phi: scipy.sparse.csr_matrix
+            left eigvector of P = D^{1/2} * evec
+        eig: np.array
+            eigenvalues
     """
     k=k-1 ## k is R version minus 1 for the index
     if verbose:

@@ -180,12 +180,19 @@ def L1Norm_decomp(adata: AnnData,
     Parameters
     ----------
     adata: AnnData
-    graph_name: str, graph name for the graph with many holes
-    eigen_num: int, number of eigenvalues to be calculated
-    L1_mode: str, "sym" or "RW"
-    check_symmetric: bool, check if the matrix is symmetric
-    isnorm: bool, normalize the graph hodge laplacian
-    iscopy: bool, copy the adata or not
+        AnnData object store the graph in uns slot
+    graph_name: str
+        graph name for the graph with many holes
+    eigen_num: int
+        number of eigenvalues to be calculated
+    L1_mode: str
+        "sym" or "RW"
+    check_symmetric: bool
+        check if the matrix is symmetric
+    isnorm: bool
+        normalize the graph hodge laplacian
+    iscopy: bool
+        copy the adata or not
     """
     if iscopy:
         adata = adata.copy()

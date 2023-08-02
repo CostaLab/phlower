@@ -51,6 +51,54 @@ def harmonic_stream_tree(adata: AnnData,
                         stream_workdir='',
                         iscopy=False,
                         ):
+    """
+    create a pseudo tree based on the grouped trajectories using cumulative trajectory embedding to decide branching
+
+    Parameters
+    ------------
+    adata: AnnData
+        an Annodata object
+    graph_name: str
+        the graph name in adata.uns
+    evector_name: str
+        the eigen vector name in adata.uns
+    layout_name: str
+        the layout name in adata.obsm
+    eigen_n: int
+        the number of eigen vectors to use, -1 would use vectors before knee
+    min_bin_number:
+        the minimum number of bins to use
+    cut_threshold:
+        the threshold to cut the tree, default 1
+    trim_end:
+        whether to trim the end of the tree, default False
+    full_traj_matrix: str
+        the full trajectory matrix name in adata.uns
+    trajs_clusters: str
+        the trajectory clusters name in adata.uns
+    trajs_use: int
+        the number of trajectories to use, default 10000
+    retain_clusters: list
+        the clusters to retain, default []
+    node_attribute: str
+        the node attribute to use, default 'u'
+    time_sync_u: str
+        the time sync u to use, default 'edge_mid_u'
+    pca_name: str
+        the pca name in adata.obsm, default 'X_pca'
+    node_bottom_up: bool
+        whether to use bottom up to construct the tree, default True
+    min_kde_quant_rm: float
+        the minimum quantile to remove, default 0.1
+    kde_sample_n: int
+        the number of samples to use in kde, default 10000
+    random_seed: int
+        the random seed to use, default 2022
+    stream_workdir: str
+        the workdir to save the stream tree, default ''
+    iscopy: bool
+        whether to return a copy of adata, default False
+    """
     adata = adata.copy() if iscopy else adata
 
     if "graph_basis" in adata.uns.keys() and not graph_name:
