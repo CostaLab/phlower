@@ -136,7 +136,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
     & = \psi \cdot \Lambda^s \cdot \phi\\
     \end{aligned}
 
-  Parameter
+  Parameters
   -------------
   dm: numpy array
     dimension reduction of diffusion map input
@@ -162,12 +162,12 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   Return
   ---------------
   dic: dict
-     d['g']: The diffusion graph
-     d['A']: Graph full adjacency matrix
-     d['W']: Diffusion Distances
-     d['psi']: Diffusion Map right eigenvectors
-     d['phi']: Diffusion Map left eigenvectors
-     d['eig']: Diffusion Map eigenvalues
+     d['g']: The diffusion graph\n
+     d['A']: Graph full adjacency matrix\n
+     d['W']: Diffusion Distances\n
+     d['psi']: Diffusion Map right eigenvectors\n
+     d['phi']: Diffusion Map left eigenvectors\n
+     d['eig']: Diffusion Map eigenvalues\n
      d['dm']: dimension reduction input of diffusion map
   """
 
@@ -318,7 +318,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
 ## X: column observations,row features
 def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False, lstsq_method="lstsq"):
   """
-  Parameter
+  Parameters
   -------------
   X: numpy array
     column observations,row features

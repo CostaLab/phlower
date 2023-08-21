@@ -14,7 +14,7 @@ def affinity(R, k=7, sigma=None, log=False, normalize=False):
     Gaussian affinity matrix constructor
     W = exp(-r_{ij}^2/sigma)
 
-    Parameter
+    Parameters
     -----------
     R: np.array
         symmetric matrix(positive semi-definite); Distance matrix
@@ -49,7 +49,8 @@ def  diffusionMaps(R,k=7,sigma=None, verbose=False, eig_k=100):
     """
     Diffusion map(Coifman, 2005)
     https://en.wikipedia.org/wiki/Diffusion_map
-    Parameter
+
+    Parameters
     ----------
     R: np.array
         symmetric matrix(positive semi-definite); Distance matrix

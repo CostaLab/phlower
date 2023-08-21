@@ -23,17 +23,26 @@ from .scikit_posthocs import posthoc_conover
 ##TODO: if duplicated nodes is an issue, we can calculate center of each vertex, if set the node to the nearest vertex.
 
 
+
 def tree_label_dict(adata,
                     tree = "stream_tree",
                     from_ = "label",
-                    to_ = 'original'
+                    to_ = 'original',
+                    branch_label = False,
                     ):
     htree = adata.uns[tree]
     d1= nx.get_node_attributes(adata.uns[tree], from_)
     d2 = nx.get_node_attributes(adata.uns[tree], to_)
 
-    dd = {v:d2[k] for k,v in d1.items()}
+    if branch_label:
+        dd = {v:d2[k] for k,v in d1.items()}
+    else: ## only keep leave annotation
+        dd = {v:d2[k][0] if len(d2[k]) == 1 else ""  for k,v in d1.items()}
+
     return dd
+
+
+
 
 
 
@@ -50,12 +59,14 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
                    pad=1.08,w_pad=None,h_pad=None,
                    show_text=True,show_graph=True,
                    show_legend=True,
-                   title = None,
+                   titles = None,
                    text_attr = 'original',
                    save_fig=False,fig_path=None,fig_format='pdf',
                    return_fig = False,
                    s = 30,
-                   plotly=False):
+                   plotly=False,
+                   cmap_continous = 'viridis',
+                   ):
     """Generate stream plot at single cell level (aka, subway map plots)
 
     Parameters
@@ -101,6 +112,8 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
         if save_fig is True, specify figure format.
     plotly: `bool`, optional (default: False)
         if True, plotly will be used to make interactive plots
+    cmap_continous: `str`, optional (default: 'viridis')
+        continuous values cmap
     Returns
     -------
     updates `adata` with the following fields.
@@ -112,6 +125,8 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
     #print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03")
 
     root = assign_root(adata, root=root)
+    figs = []
+
 
     dd = {}
     if text_attr == "original":
@@ -126,6 +141,12 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
         color = ['group']
         #color = ['label']
     ###remove duplicate keys
+
+    if titles is not None:
+        if len(titles) != len(color):
+            titles = None
+            print("warning: titles number is not consistent with color")
+
 
     for acolor in color:
         if acolor not in adata.obs.columns:
@@ -212,7 +233,7 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
                               width=800,height=500)
             fig.show(renderer="notebook")
     else:
-        for i,ann in enumerate(color):
+        for i, ann in enumerate(color):
             fig = plt.figure(figsize=(fig_size[0],fig_size[1]))
             ax_i = fig.add_subplot(1,1,1)
             if(is_string_dtype(df_plot[ann])):
@@ -244,8 +265,13 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
             else:
                 vmin_i = df_plot[ann].min() if vmin is None else vmin
                 vmax_i = df_plot[ann].max() if vmax is None else vmax
-                sc_i = ax_i.scatter(df_plot_shuf['pseudotime'], df_plot_shuf['dist'],
-                                    c=df_plot_shuf[ann],vmin=vmin_i,vmax=vmax_i,alpha=alpha)
+                cell_order = np.argsort(df_plot_shuf['pseudotime'], kind="stable") ## order cells, not working
+                if cmap_continous not in mpl.colormaps:
+                    cmap_continous = "viridis"
+                    print("warning: wrong cmap, use default viridis!")
+
+                sc_i = ax_i.scatter(list(df_plot_shuf['pseudotime']), list(df_plot_shuf['dist']), s=s,
+                                    c=list(df_plot_shuf[ann]),vmin=vmin_i,vmax=vmax_i,alpha=alpha, cmap = plt.get_cmap(cmap_continous) )
                 cbar = plt.colorbar(sc_i,ax=ax_i, pad=0.01, fraction=0.05, aspect=40)
                 cbar.solids.set_edgecolor("face")
                 cbar.ax.locator_params(nbins=5)
@@ -275,8 +301,11 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
             ax_i.tick_params(axis="x",pad=-1)
             annots = arrowed_spines(ax_i, locations=('bottom right',),
                                     lw=ax_i.spines['bottom'].get_linewidth()*1e-5)
-            if title is None:
+            title = ""
+            if titles is None:
                 title = ann
+            else:
+                title = titles[i]
             ax_i.set_title(title)
             plt.tight_layout(pad=pad, h_pad=h_pad, w_pad=w_pad)
             if(save_fig):
@@ -287,10 +316,12 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
                 plt.savefig(fig_path,pad_inches=1,bbox_inches='tight')
                 #plt.close(fig)
             if return_fig:
-                return fig
+                figs.append(fig)
             else:
                 #plt.close(fig)
                 pass
+    if return_fig:
+        return figs
 
 
 
@@ -301,13 +332,15 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
                 fig_size=(7,4.5),fig_legend_order=None,fig_legend_ncol=1,
                 fig_colorbar_aspect=30,
                 show_legend=True,
-                title=None,
+                titles=None,
                 vmin=None,vmax=None,
                 pad=1.08,w_pad=None,h_pad=None,
                 save_fig=False,
                 return_fig=False,
                 fig_path=None,
-                fig_format='pdf'):
+                fig_format='pdf',
+                cmap_continous = 'viridis',
+                ):
     """Generate stream plot at density level
 
     Parameters
@@ -356,12 +389,15 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
         if save_fig is True, specify figure path. if None, adata.uns['workdir'] will be used.
     fig_format: `str`, optional (default: 'pdf')
         if save_fig is True, specify figure format.
+    cmap_continous: `str`, optional (default: 'viridis')
+        continuous values cmap
     Returns
     -------
     None
     """
     #print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03")
     root = assign_root(adata, root=root)
+    figs = []
 
     if(fig_path is None):
         fig_path = adata.uns['workdir']
@@ -370,6 +406,13 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
     if(color is None):
         #color = ['label']
         color = ['group']
+
+    if titles is not None:
+        if len(titles) != len(color):
+            titles = None
+            print("warning: titles number is not consistent with color")
+
+
 
     for acolor in color:
         if acolor not in adata.obs.columns:
@@ -431,7 +474,7 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
                                    log_scale=log_scale,factor_zoomin=factor_zoomin)
         dict_plot['numeric'] = [verts,extent,ann_order,dict_ann_df,dict_im_array]
 
-    for ann in color:
+    for i, ann in enumerate(color):
         if(is_string_dtype(dict_ann[ann])):
             if(not ((ann+'_color' in adata.uns_keys()) and (set(adata.uns[ann+'_color'].keys()) >= set(np.unique(dict_ann[ann]))))):
                 ### a hacky way to generate colors from seaborn
@@ -489,8 +532,12 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
             for ann_i in ann_order:
                 vmin_i = dict_ann_df[ann].loc[ann_i,:].min() if vmin is None else vmin
                 vmax_i = dict_ann_df[ann].loc[ann_i,:].max() if vmax is None else vmax
+                if cmap_continous not in mpl.colormaps:
+                    cmap_continous = "viridis"
+                    print("warning: wrong cmap, use default viridis!")
+
                 im = ax.imshow(dict_im_array[ann][ann_i],interpolation='bicubic',
-                               extent=[xmin,xmax,ymin,ymax],vmin=vmin_i,vmax=vmax_i,aspect='auto')
+                               extent=[xmin,xmax,ymin,ymax],vmin=vmin_i,vmax=vmax_i,aspect='auto', cmap=plt.get_cmap(cmap_continous))
                 verts_cell = verts[ann_i]
                 clip_path = Polygon(verts_cell, facecolor='none', edgecolor='none', closed=True)
                 ax.add_patch(clip_path)
@@ -508,9 +555,13 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
         ax.tick_params(axis="x",pad=-1)
         annots = arrowed_spines(ax, locations=('bottom right',),
                                 lw=ax.spines['bottom'].get_linewidth()*1e-5)
-        if title is None:
+        title=""
+        if titles is None:
             title = ann
+        else:
+            title = titles[i]
         ax.set_title(title)
+        title = None
         plt.tight_layout(pad=pad, h_pad=h_pad, w_pad=w_pad)
         if(save_fig):
             #file_path_S = os.path.join(fig_path,root)
@@ -521,11 +572,12 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
             #plt.close(fig)
 
         if return_fig:
-            return fig
+            figs.append(fig)
         else:
             #plt.close(fig)
             pass
-
+    if return_fig:
+        return figs
 
 
 def detect_transition_markers(adata,marker_list=None,cutoff_spearman=0.4, cutoff_logfc = 0.25, percentile_expr=95, n_jobs = 1,min_num_cells=5,use_precomputed=True, root='root',preference=None):
