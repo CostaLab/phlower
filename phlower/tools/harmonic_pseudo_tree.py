@@ -17,6 +17,7 @@ from collections import Counter, defaultdict
 from ..util import bsplit, pairwise, term_frequency_cosine, find_cut_point, find_cut_point_bu
 
 from .trajectory import M_create_matrix_coordinates_trajectory_Hspace
+from .tree_utils import _edge_two_ends
 
 from ..external.stream_extra import (add_pos_to_graph,
                                      dfs_from_leaf,
@@ -1055,18 +1056,8 @@ def dic_avg_attribute(df, attr='edge_mid_pos', bin_idx='edge_bins'):
     #data/sz753404/miniconda3/envs/schema/lib/python3.9/site-packages/hodgetraj/tools/harmonic_pseudo_tree.py:686: UserWarning:
     #Boolean Series key will be reindexed to match DataFrame index.
 
-
     return dic
 
-def _edge_two_ends(adata: AnnData,
-                   graph_name: str = None,
-                   ):
-
-    if "graph_basis" in adata.uns.keys() and not graph_name:
-        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
-
-    elist = np.array([(x[0], x[1]) for x in adata.uns[graph_name].edges()])
-    return {i:v for i, v in enumerate(elist)}
 
 def _edge_mid_points(adata: AnnData,
                     graph_name: str = None,

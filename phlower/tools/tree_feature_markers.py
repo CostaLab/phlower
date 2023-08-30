@@ -3,19 +3,69 @@ import scipy
 import scanpy as sc
 import numpy as np
 import pandas as pd
+import networkx as nx
+from sklearn.preprocessing import StandardScaler
 from anndata import AnnData
 from typing import Union, List
+from .tree_utils import _edge_two_ends, _edgefreq_to_nodefreq
+from ..util import get_quantiles
 
 
-def _edge_two_ends(adata: AnnData,
-                   graph_name: str = None,
-                   ):
 
-    if "graph_basis" in adata.uns.keys() and not graph_name:
-        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
 
-    elist = np.array([(x[0], x[1]) for x in adata.uns[graph_name].edges()])
-    return {i:v for i, v in enumerate(elist)}
+def find_a_branch_all_predecessors(tree, daughter_node):
+    """
+    find all predecessors of a node of same family, i.e. all nodes with the same prefix
+    return list starts with the most grand father node
+    """
+    ret_list = [daughter_node]
+    prefix = daughter_node.split("_")[0] + '_'
+    current_daughter = daughter_node
+    while True:
+        father = list(tree.predecessors(current_daughter))
+        if len(father) != 1:
+            break
+        if father[0].startswith(prefix): ##only extract nodes from same family
+            ret_list.append(father[0])
+            current_daughter = father[0]
+        else:
+            break
+    return ret_list[::-1]
+#endf find_a_branch_all_predecessors
+
+
+def _divide_nodes_to_branches(tree,
+                              branching_node,
+                             ):
+    """
+        |--o--o--o---o--o--o--o--o---a
+        |
+        |
+   -o---|ab
+        |
+        |--o-o--o--o-o---o-----o---o---o----b
+
+    starts with ab nodes, divide the nodes to branches
+
+    Parameters
+    ----------
+    tree: networkx.DiGraph
+        fate tree
+    branching_node: str
+        the branching node to have branches, here is ab
+    """
+    from collections import defaultdict
+
+    travesed_nodes = list(nx.dfs_tree(tree, branching_node))
+    travesed_nodes = [node for node in travesed_nodes if node != branching_node]
+
+    node_groups = defaultdict(list)
+    for tn in travesed_nodes:
+        node_groups[tn.split("_")[0]].append(tn)
+    #assert(len(node_groups) == 2)
+    return node_groups
+#endf _divide_nodes_to_branches
+
 
 def _edgefreq_to_nodefreq(edge_freq, d_edge2node):
     """
@@ -31,13 +81,15 @@ def _edgefreq_to_nodefreq(edge_freq, d_edge2node):
         d_node_freq[b] += y
 
     return d_node_freq
-
+#endf _edgefreq_to_nodefreq
 
 
 def tree_nodes_markers(adata: AnnData,
-                       node1: str,
+                       nodes1:Union[str, List[str]] = None,
                        nodes2:Union[str, List[str]] = None,
                        iscopy = False,
+                       vs1_name:str = None,
+                       vs2_name:str = None,
                        **kwargs):
     """
     use scanpy to find markers
@@ -61,24 +113,45 @@ def tree_nodes_markers(adata: AnnData,
 
     """
     adata = adata.copy() if iscopy else adata
-    if node1 not in adata.uns["fate_tree"].nodes():
-        raise ValueError(f"{node1} is not in fate_tree")
+    if nodes1 is None:
+        raise ValueError('nodes1 is None')
     if nodes2 is None:
         raise ValueError(f"nodes2 is None")
+
+    if isinstance(nodes1, str):
+        nodes1 = [nodes1]
     if isinstance(nodes2, str):
         nodes2 = [nodes2]
     for node2 in nodes2:
         if node2 not in adata.uns["fate_tree"].nodes():
             raise ValueError(f"{node2} is not in fate_tree")
+    for node1 in nodes1:
+        if node1 not in adata.uns["fate_tree"].nodes():
+            raise ValueError(f"{node1} is not in fate_tree")
 
-    ## construct node1 array
+
+    vs_name = f"{vs1_name}_vs_{vs2_name}" if vs1_name is not None and vs2_name is not None else None
     d_edge2node = _edge_two_ends(adata)
-    node1_tuple = adata.uns['fate_tree'].nodes[node1]['ecount']
-    d_nodes_node1 = _edgefreq_to_nodefreq(edge_freq=node1_tuple, d_edge2node=d_edge2node)
-    X_node1 = adata.X[list(d_nodes_node1.keys()),:]
-    if scipy.sparse.issparse(X_node1):
-        X_node1 = X_node1.toarray()
-    X_node1 = X_node1 * np.array(list(d_nodes_node1.values()))[:, np.newaxis]
+    ## construct nodes1 array
+    nodes1_name = nodes1
+    if not isinstance(nodes1, str):
+        nodes1_name = '.'.join(nodes1)
+        nodes1_tuple = []
+        for node1 in nodes1:
+            node1_tuple = adata.uns['fate_tree'].nodes[node1]['ecount']
+            nodes1_tuple.extend(node1_tuple)
+    ## construct node1 array
+    else:
+        nodes1_tuple = adata.uns['fate_tree'].nodes[nodes1]['ecount']
+
+    d_nodes_nodes1 = _edgefreq_to_nodefreq(edge_freq=nodes1_tuple, d_edge2node=d_edge2node)
+    X_nodes1 = adata.X[list(d_nodes_nodes1.keys()),:]
+    obs_name_nodes1 = [f"{x}-n1" for x in  adata.obs_names[list(d_nodes_nodes1.keys())]]
+    if scipy.sparse.issparse(X_nodes1):
+        X_nodes1 = X_nodes1.toarray()
+    X_nodes1 = X_nodes1 * np.array(list(d_nodes_nodes1.values()))[:, np.newaxis]
+
+
 
     ## construct node2 array
     nodes2_name = nodes2
@@ -94,17 +167,20 @@ def tree_nodes_markers(adata: AnnData,
 
     d_nodes_nodes2 = _edgefreq_to_nodefreq(edge_freq=nodes2_tuple, d_edge2node=d_edge2node)
     X_nodes2 = adata.X[list(d_nodes_nodes2.keys()),:]
+    obs_name_nodes2 = [f"{x}-n2" for x in  adata.obs_names[list(d_nodes_nodes2.keys())]]
     if scipy.sparse.issparse(X_nodes2):
         X_nodes2 = X_nodes2.toarray()
     X_nodes2 = X_nodes2 * np.array(list(d_nodes_nodes2.values()))[:, np.newaxis]
 
-
+    vs1_name = nodes1_name if vs1_name is None else vs1_name
+    vs2_name = nodes2_name if vs2_name is None else vs2_name
 
     # concat and initial a new anndata
-    group = [node1] * X_node1.shape[0]  + [nodes2_name]*X_nodes2.shape[0]
-    X_merge = pd.DataFrame(np.concatenate((X_node1, X_nodes2)))
+    group = [vs1_name] * X_nodes1.shape[0]  + [vs2_name]*X_nodes2.shape[0]
+    print("shapes: ", X_nodes1.shape, X_nodes2.shape)
+    X_merge = pd.DataFrame(np.concatenate((X_nodes1, X_nodes2)))
     X_merge.columns = adata.var_names
-    X_merge.index =  range(X_merge.shape[0])
+    X_merge.index = obs_name_nodes1 + obs_name_nodes2
     ## normalize columns to 1 avoid too large value
     normalized_X=(X_merge-X_merge.min())/(X_merge.max()-X_merge.min())
 
@@ -113,10 +189,380 @@ def tree_nodes_markers(adata: AnnData,
     bdata.obs['compare'] = group
 
     # find markers using scanpy
-    sc.tl.rank_genes_groups(bdata, groupby='compare', groups=[node1], reference=nodes2_name, **kwargs)
+    sc.tl.rank_genes_groups(bdata, groupby='compare', groups=[vs1_name], reference=vs2_name, **kwargs)
     # shrink the helping anndata object
     bdata = bdata[:, :3]## make it smaller for storage.
     # save the result to adata
-    adata.uns[f'markers_{node1}_vs_{nodes2_name}'] = bdata
-
+    if vs_name is None:
+        vs_name = f"markers_{nodes1_name}_vs_{nodes2_name}"
+    else:
+        vs_name = f"markers_{vs_name}"
+    print("vs_name: ", vs_name)
+    adata.uns[vs_name] = bdata
     return adata if iscopy else None
+#endf tree_nodes_markers
+
+
+
+def tree_branches_markers(adata: AnnData,
+                          branching_node:str,
+                          branch_1: str,
+                          branches_2: List[str] = None,
+                          include_branching_node: bool = False,
+                          name_append: str = None,
+                          ratio:float=0.3,
+                          iscopy:bool=False,
+                          **kwargs):
+
+    """
+        |<<O<<<<<------O-----a
+        |
+    --<<|ab
+        |             |----------O----b
+        |>>O>>>>------|bc
+        |             |------------O----c
+        |
+        |<<O<<<<<---------------O----d
+
+
+    Take differentiation of branch bc against branch a, d and branching ab
+    first find all branches(a,d,bc)
+    perform differential analysis between bc against (a, d and ab) if include_branching_node is True
+    perform differential analysis between bc against (a, d) if include_branching_node is False
+    (>>>) agains (<<<)
+
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object
+    branching_node: str
+        the branching node
+    branches_1: str
+        the branch to be compared
+    branches_2: List[str]
+        the branches to be compared with, if None, all other branches will be used
+    include_branching_node: bool
+        whether to include the branching node branch in the comparison
+    ratio: float
+        the ratio of the number of cells in the branch to be compared to the number of cells in the other branches
+
+    """
+    import functools
+
+    node_groups = _divide_nodes_to_branches(adata.uns['fate_tree'], branching_node)
+    #print(node_groups)
+    ## branch_1 is defined in here
+    branch_1_predix = branch_1.split('_')[0]
+    assert branch_1_predix in node_groups.keys(), f"branch_1 {branch_1} is not in the tree"
+
+
+    ## branches_2 can be defined by user or automatically
+    if branches_2 is None:
+        branches_2_predix = [k for k in node_groups.keys() if k != branch_1_predix]
+    else:
+        branches_2_predix = [k for k in branches_2 if k in node_groups.keys()]
+
+    ## get parts of nodes for each branch
+    for k in node_groups:
+        len_branch = max(int(len(node_groups[k])*ratio), 1)
+        node_groups[k] = node_groups[k][:len_branch]
+
+    ## add branching node to branches_2_predix
+    if include_branching_node:
+        branching_branch = find_a_branch_all_predecessors(adata.uns['fate_tree'], branching_node)
+        len_branching_branch = max(int(len(branching_branch)*ratio), 1)
+        node_groups["branching"] = (branching_branch[-1*len_branching_branch:])
+        branches_2_predix.append("branching")
+
+    adata = adata.copy() if iscopy else adata
+
+    nodes1 = node_groups[branch_1_predix]
+    nodes2 = functools.reduce(lambda x,y: x+y, [node_groups[k] for k in branches_2_predix])
+
+
+    vs2_name = f"{branching_node}_rest" if include_branching_node else f"rest"
+    if name_append is not None:
+        vs2_name = f"{vs2_name}_{name_append}"
+
+    tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{branch_1}", vs2_name=vs2_name,**kwargs)
+    return adata if iscopy else None
+
+
+
+
+
+def tree_2branch_markers_start(adata: AnnData,
+                               branching_node:str,
+                               include_branching_node: bool = False,
+                               ratio:float=0.3,
+                               iscopy:bool=False,
+                               **kwargs):
+
+    """
+        |>>O>>>>>>>----O-----a
+        |
+    -<<<|ab
+        |
+        |<<O<<<<<<<<------------O----b
+
+    1. find different markers that regulate branch a and branch b
+    2. the markers can be the start of the branch or the end of the branch
+    3. this function focus on the start of the branch
+        i)   find all of the nodes of the branch a and branch b
+        ii)  select a good ratio of the nodes as the start of the branch(>>>>)
+        iii) find the markers that regulate the start of the branch
+
+    (>>>>>) against (<<<)
+
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object
+    branching_node: str
+        the branching node to have branches, here is ab
+    """
+
+
+    node_groups = _divide_nodes_to_branches(adata.uns['fate_tree'], branching_node)
+    assert(len(node_groups)==2)
+    keys = list(node_groups.keys())
+    nodes1 = node_groups[keys[0]]
+    nodes2 = node_groups[keys[1]]
+    len1 = max(int(len(nodes1)*ratio),1)
+    len2 = max(int(len(nodes2)*ratio),1)
+    nodes1 = nodes1[:len1]
+    nodes2 = nodes2[:len2]
+
+    adata = adata.copy() if iscopy else adata
+    tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{keys[0]}_a{ratio}", vs2_name=f"{keys[1]}_a{ratio}",**kwargs)
+    return adata if iscopy else None
+
+def tree_2branch_markers_end(adata: AnnData,
+                            branching_node:str,
+                            include_branching_node: bool = False,
+                            ratio:float=0.3,
+                            iscopy:bool=False,
+                             **kwargs):
+
+    """
+        |--O-----------O>>>>>a
+        |
+        |
+    --<<|ab
+        |
+        |--O------------->>>>>>>O>>>>b
+
+    1. find different markers that regulate branch a and branch b
+    2. the markers can be the start of the branch or the end of the branch
+    3. this function focus on the start of the branch
+        i)   find all of the nodes of the branch a and branch b
+        ii)  select a good ratio of the nodes as the end of the branch(>>>>)
+        iii) find the markers that regulate the start of the branch
+
+    (>>>>>) against (<<<)
+
+    """
+
+    node_groups = _divide_nodes_to_branches(adata.uns['fate_tree'], branching_node)
+    assert(len(node_groups)==2)
+    keys = list(node_groups.keys())
+    nodes1 = node_groups[keys[0]]
+    nodes2 = node_groups[keys[1]]
+
+    len1 = max(int(len(nodes1)*ratio),1)
+    len2 = max(int(len(nodes2)*ratio),1)
+    nodes1 = nodes1[-len1:]
+    nodes2 = nodes2[-len2:]
+
+    adata = adata.copy() if iscopy else adata
+    tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{keys[0]}_e{ratio}", vs2_name=f"{keys[1]}_e{ratio}",**kwargs)
+    return adata if iscopy else None
+
+
+def tree_markers_dump_table(adata, name='markers_3_97_vs_0_11_rest_0.3withParents', filename="x.csv"):
+    """
+    dump markers to tables:
+    supported format: csv, xls, xlsx, tsv, txt
+
+    """
+
+    if name not in adata.uns.keys():
+        raise ValueError(f"{name} is not in adata.uns.keys()")
+
+    rank_groups = adata.uns[name].uns['rank_genes_groups']
+    df = pd.DataFrame({"names" : [i[0] for i in rank_groups['names'].tolist()],
+                        "scores" : [i[0] for i in rank_groups['scores'].tolist()],
+                        "pvals"  : [i[0] for i in rank_groups['pvals'].tolist()],
+                        "pvals_adj" : [i[0] for i in rank_groups['pvals_adj'].tolist()],
+                        "logfoldchanges" : [i[0] for i in rank_groups['logfoldchanges'].tolist()], }
+                      )
+
+    if filename.endswith("csv"):
+        df.to_csv(filename)
+    elif filename.endswith("xlsx") or filename.endswith("xls"):
+        df.to_excel(filename)
+    elif filename.endswith("tsv") or filename.endswith("txt"):
+        df.to_csv(filename, sep="\t")
+    else:
+        raise ValueError(f"filename {filename} is not supported, support csv, xls, xlsx, tsv, txt")
+
+
+def TF_gene_correlation(adata, tfbdata, name='markers_3_97_vs_0_11_rest_0.3withParents'):
+    """
+    calculate the correlation between TF and genes for a comparison of markers
+    This is only calculate the correlation without caring about the order of cells
+
+
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object with gene expression
+    tfbdata: AnnData
+        AnnData object with TF binding data
+    name: str
+        the name of the differentiation branches
+    """
+    from collections import Counter, defaultdict
+    from scipy.stats import pearsonr
+
+    zdata = tfbdata.uns[name].copy()
+    group_obs =  zdata.obs_names
+    group_obs1 = set([x[:-3] for x in zdata.obs_names if x.endswith('n1')])
+    group_obs2 = set([x[:-3] for x in zdata.obs_names if x.endswith('n2')])
+    compare_obs = list(group_obs1 | group_obs2)
+
+    TFs = [x[0] for x in zdata.uns['rank_genes_groups']['names']]
+    shared_symbol = list(set(adata.var_names) & set(TFs))
+
+    expression_mtx = adata[compare_obs, shared_symbol].X
+    TF_mtx = tfbdata[compare_obs, shared_symbol].X
+
+    d_corr = defaultdict(float)
+    for idx, sym in enumerate(shared_symbol):
+        expression = expression_mtx[:, idx].toarray().ravel()
+        TF =  TF_mtx[:, idx].toarray().ravel()
+        corr = pearsonr(expression, TF)[0]
+        if np.isnan(corr):
+            continue
+        d_corr[sym] = pearsonr(expression, TF)[0]
+    corr_ordered = sorted(d_corr.items(), key=lambda x:x[1], reverse=True)
+
+    return corr_ordered
+
+
+def tree_branches_smooth_window(adata,
+                             start_branching_node,
+                             end_branching_node,
+                             fate_tree = "fate_tree",
+                             smooth_window_ratio=0.1,
+                             ):
+
+    """
+         |--O-----------O-----a
+         |
+         |
+     >>>>|ab
+         |
+         |>>O>>>>>>>>>>>>>>>>>>>>O>>>>b
+
+    start_branching_node is ab
+    end_branching_node is b
+    the function would traverse all nodes(bins) from ab to b (path:>>>>)
+    average the expression of the each nodes by cells presented in this node.
+    next smooth the by a smooth_window_ratio * len(number of bins)
+    """
+    if start_branching_node not in adata.uns['fate_tree'].nodes:
+        raise ValueError(f"start_branching_node {start_branching_node} is not in the fate tree")
+    if end_branching_node not in adata.uns['fate_tree'].nodes:
+        raise ValueError(f"end_branching_node {end_branching_node} is not in the fate tree")
+
+    bins = find_a_branch_all_predecessors(adata.uns[fate_tree], start_branching_node) + \
+                    find_a_branch_all_predecessors(adata.uns[fate_tree], end_branching_node)
+
+    #for now only use normlized data, ArchR uses counts
+
+    d_edge2node = _edge_two_ends(adata)
+    list_bin_expression = []
+    for idx, bin_ in enumerate(bins):
+        e_nodes = adata.uns[fate_tree].nodes[bin_]['ecount']
+        d_nodes_nodes1 = _edgefreq_to_nodefreq(edge_freq=e_nodes, d_edge2node=d_edge2node)
+        X_nodes1 = adata.X[list(d_nodes_nodes1.keys()),:].toarray()
+        X_nodes1 = X_nodes1 * np.array(list(d_nodes_nodes1.values()))[:, np.newaxis]
+        ## can change strategy in here. now is mean
+        list_bin_expression.append(X_nodes1.mean(axis=0))
+    mat = np.stack(list_bin_expression, axis=1) ## genes x bins
+
+    ## smoothing: using window = 0.1 * total number of bins
+    smooth_window_ratio = smooth_window_ratio
+    window = int(np.ceil(len(bins)*smooth_window_ratio))
+    smooth_mat = np.apply_along_axis(lambda x: np.convolve(x, np.ones(window)/window, mode='same'), axis=1, arr=mat)
+    smooth_df = pd.DataFrame(smooth_mat, index=adata.var_names, columns=bins)
+
+    return smooth_df
+
+def branch_TF_gene_correlation(tf_df:pd.DataFrame, gene_df:pd.DataFrame):
+    """
+    calculate the correlation between TF and genes using pseudo time matrix
+    return list of tuples recording the correlations ordered by correlation descendingly.
+    """
+    from collections import Counter, defaultdict
+    from scipy.stats import pearsonr
+    ## All to upper
+    tf_df.index = [x.upper() for x in tf_df.index]
+    gene_df.index = [x.upper() for x in gene_df.index]
+    ## shared symbols
+    shared_symbol = list(set(tf_df.index) & set(gene_df.index))
+
+    d_corr = defaultdict(float)
+    for idx, sym in enumerate(shared_symbol):
+        TF = tf_df.loc[sym, :].values
+        expression = gene_df.loc[sym, :].values
+        corr = pearsonr(expression, TF)[0]
+        if np.isnan(corr):
+            continue
+        d_corr[sym] = pearsonr(expression, TF)[0]
+    corr_ordered = sorted(d_corr.items(), key=lambda x:x[1], reverse=True)
+    return corr_ordered
+
+def branch_heatmap_matrix(tf_df:pd.DataFrame,
+                          max_features:int=100,
+                          var_cutoff:float=0.9,
+                          label_markers:List=None):
+    """
+    order, filtering and scaling by rows of a pseudo time matrix
+    select maximum max_features genes by variance
+    if label_markers is offered, then the genes in label_markers would be selected first
+    scale by rows and cutoff the valuse by abs(2)
+    """
+    if label_markers is None:
+        ## calculate var of each row
+        rowvars = np.array(tf_df).var(axis=1)
+        #varQ to do the filtering
+        varq = get_quantiles(rowvars)
+        varq_idx = np.argsort(rowvars)[::-1]
+        tf_df = tf_df.iloc[varq_idx, :]
+
+        n = len(tf_df)
+        if max_features is not None:
+            n = max_features
+        elif var_cutoff is not None:
+            n = len(tf_df) * (1-var_cutoff)
+        tf_df = tf_df.iloc[:n, :]
+    else:
+        tf_df = tf_df.loc[label_markers, :]
+
+    vectors = tf_df.values
+    scaler = StandardScaler()
+    scaled_rows = scaler.fit_transform(vectors.T).T
+    scaled_rows[scaled_rows <-2] = -2
+    scaled_rows[scaled_rows >2] = 2
+    row_order = np.argmax(scaled_rows, axis=1)
+    row_index = np.argsort(row_order)
+
+    if label_markers is None:
+        df = pd.DataFrame( scaled_rows[row_index, :], index=tf_df.index[row_index], columns=tf_df.columns)
+        return df
+    else:
+        df = pd.DataFrame(scaled_rows, index=label_markers, columns=tf_df.columns)
+        return df
+

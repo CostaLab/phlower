@@ -428,3 +428,21 @@ def has_islands(adjacency_matrix):
                         visited[neighbor] = True
 
     return np.any(~visited)
+
+def get_quantiles(v = None, length = None):
+  if length is None:
+    length = len(v)
+
+  if len(v) < length:
+    v2 = [0] * length
+    v2[:len(v)] <- v[:len(v)]
+  else:
+    v2 = v
+  order = v2.argsort()
+  ranks = order.argsort()
+
+  p = np.trunc(ranks)/len(v2)
+  if len(v) < length:
+    p <- p[:len(v)]
+
+  return p

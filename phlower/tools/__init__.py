@@ -60,3 +60,4 @@ from .graphconstr import *
 from .hodgedecomp import *
 from .triangulation import *
 from .tree_feature_markers import *
+from .tree_utils import *
