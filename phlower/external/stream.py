@@ -32,15 +32,19 @@ def tree_label_dict(adata,
                     ):
     htree = adata.uns[tree]
     d1= nx.get_node_attributes(adata.uns[tree], from_)
-    d2 = nx.get_node_attributes(adata.uns[tree], to_)
+
+
+    if to_ == "original":
+        d2 = nx.get_node_attributes(adata.uns[tree], to_)
+    elif to_ == "node_name":
+        d2 = {i:i for i in adata.uns[tree].nodes()}
+    #print(d2)
 
     if branch_label:
         dd = {v:d2[k] for k,v in d1.items()}
     else: ## only keep leave annotation
         dd = {v:d2[k][0] if len(d2[k]) == 1 else ""  for k,v in d1.items()}
-
     return dd
-
 
 
 
@@ -130,8 +134,9 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
 
     dd = {}
     if text_attr == "original":
-        dd = tree_label_dict(adata,tree = "stream_tree",from_ = "label",to_ = 'original')
-
+        dd = tree_label_dict(adata,tree = "stream_tree",from_ = "label",to_ = "original")
+    elif text_attr == "node_name":
+        dd = tree_label_dict(adata,tree = "stream_tree",from_ = "label",to_ = "node_name",branch_label=True )
 
     if(fig_path is None):
         fig_path = adata.uns['workdir']
@@ -148,12 +153,12 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
             print("warning: titles number is not consistent with color")
 
 
-    for acolor in color:
-        if acolor not in adata.obs.columns:
-            pass
-        else:
-            print("warning: change {acolor} to type string if not!")
-            adata.obs[acolor] = adata.obs[acolor].astype(str)
+    #for acolor in color: cluster name should be string
+    #    if acolor not in adata.obs.columns:
+    #        pass
+    #    else:
+    #        print("warning: change {acolor} to type string if not!")
+    #        adata.obs[acolor] = adata.obs[acolor].astype(str)
 
     color = list(dict.fromkeys(color))
 
@@ -162,6 +167,7 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
     for ann in color:
         if(ann in adata.obs.columns):
             dict_ann[ann] = adata.obs[ann]
+            #print(adata.obs[ann]) ##----------------------------
         elif(ann in adata.var_names):
             dict_ann[ann] = adata.obs_vector(ann)
         else:
@@ -414,12 +420,12 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
 
 
 
-    for acolor in color:
-        if acolor not in adata.obs.columns:
-            pass
-        else:
-            print("warning: change {acolor} to type string if not!")
-            adata.obs[acolor] = adata.obs[acolor].astype(str)
+    #for acolor in color: cluster name should be string
+    #    if acolor not in adata.obs.columns:
+    #        pass
+    #    else:
+    #        print("warning: change {acolor} to type string if not!")
+    #        adata.obs[acolor] = adata.obs[acolor].astype(str)
 
 
     ###remove duplicate keys
