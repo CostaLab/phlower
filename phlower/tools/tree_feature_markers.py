@@ -6,17 +6,23 @@ import pandas as pd
 import networkx as nx
 from sklearn.preprocessing import StandardScaler
 from anndata import AnnData
-from typing import Union, List
+from typing import Union, List, Tuple, Dict
 from .tree_utils import _edge_two_ends, _edgefreq_to_nodefreq
 from ..util import get_quantiles
 
 
-
-
-def find_a_branch_all_predecessors(tree, daughter_node):
+def find_a_branch_all_predecessors(tree:nx.DiGraph=None,
+                                   daughter_node:str=None):
     """
     find all predecessors of a node of same family, i.e. all nodes with the same prefix
     return list starts with the most grand father node
+
+    Parameters
+    ----------
+    tree: networkx.DiGraph
+        fate tree
+    daughter_node: str
+        the node to find all predecessors
     """
     ret_list = [daughter_node]
     prefix = daughter_node.split("_")[0] + '_'
@@ -33,10 +39,38 @@ def find_a_branch_all_predecessors(tree, daughter_node):
     return ret_list[::-1]
 #endf find_a_branch_all_predecessors
 
+def find_last_branching(tree:nx.DiGraph=None,
+                        daughter_node:str=None):
+    """
+    find all predecessors of a node of same family, i.e. all nodes with the same prefix
+    return list starts with the most grand father node
 
-def _divide_nodes_to_branches(tree,
-                              branching_node,
-                             ):
+    Parameters
+    ----------
+    tree: networkx.DiGraph
+        fate tree
+    daughter_node: str
+        the node to find all predecessors
+    """
+    ret_list = [daughter_node]
+    prefix = daughter_node.split("_")[0] + '_'
+    current_daughter = daughter_node
+    while True:
+        father = list(tree.predecessors(current_daughter))
+        if len(father) != 1:
+            break
+        if father[0].startswith(prefix): ##only extract nodes from same family
+            ret_list.append(father[0])
+            current_daughter = father[0]
+        else:
+            break
+    father = list(tree.predecessors(current_daughter))
+    return father[0]
+#endf find_last_branching
+
+
+def _divide_nodes_to_branches(tree:nx.DiGraph=None,
+                              branching_node:str=None):
     """
         |--o--o--o---o--o--o--o--o---a
         |
@@ -67,7 +101,8 @@ def _divide_nodes_to_branches(tree,
 #endf _divide_nodes_to_branches
 
 
-def _edgefreq_to_nodefreq(edge_freq, d_edge2node):
+def _edgefreq_to_nodefreq(edge_freq:List[tuple]=None,
+                          d_edge2node:Dict=None):
     """
     from edge frequency to node frequency
     for each edge, it has two nodes, the node frequency is the sum of edge frequency
@@ -106,11 +141,18 @@ def tree_nodes_markers(adata: AnnData,
     ----------
     adata: AnnData
         Annotated data matrix with cell attributes.
-    node1: str
-        node1 name from fate_tree
-    node2: str
-        node2 name from fate_tree
-
+    nodes1: str
+        nodes1 names from fate_tree
+    nodes2: str
+        nodes2 names from fate_tree
+    iscopy: bool
+        if True, return a copy of adata, otherwise, update adata
+    vs1_name: str
+        the name of vs1, default is nodes1
+    vs2_name: str
+        the name of vs2, default is nodes2
+    kwargs:
+        additional parameters for sc.tl.rank_genes_groups
     """
     adata = adata.copy() if iscopy else adata
     if nodes1 is None:
@@ -245,6 +287,10 @@ def tree_branches_markers(adata: AnnData,
         whether to include the branching node branch in the comparison
     ratio: float
         the ratio of the number of cells in the branch to be compared to the number of cells in the other branches
+    iscopy: bool
+        whether to return a copy of the AnnData object
+    kwargs:
+        additional arguments passed to tree_nodes_markers
 
     """
     import functools
@@ -286,14 +332,14 @@ def tree_branches_markers(adata: AnnData,
 
     tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{branch_1}", vs2_name=vs2_name,**kwargs)
     return adata if iscopy else None
-
-
-
+#endf tree_branches_markers
 
 
 def tree_2branch_markers_start(adata: AnnData,
-                               branching_node:str,
+                               branch_1:str,
+                               branch_2:str,
                                include_branching_node: bool = False,
+                               name_append: str = "",
                                ratio:float=0.3,
                                iscopy:bool=False,
                                **kwargs):
@@ -318,34 +364,55 @@ def tree_2branch_markers_start(adata: AnnData,
     ----------
     adata: AnnData
         AnnData object
-    branching_node: str
-        the branching node to have branches, here is ab
+    branch_1: str
+        the branching node to have branches, here could be a
+    branch_2: str
+        the branching node to have branches, here could be b
+    include_branching_node: bool
+        whether to include the branching node branch in the comparison
+    ratio: float
+        the ratio of the nodes in a branch to be compared to the number of nodes in the other branch
+    iscopy: bool
+        whether to return a copy of the AnnData object
+    kwargs: dict
+        the parameters for tree_nodes_markers
     """
+    nodes1 = find_a_branch_all_predecessors(adata.uns['fate_tree'], branch_1)
+    nodes2 = find_a_branch_all_predecessors(adata.uns['fate_tree'], branch_2)
 
+    branching_node1 = find_last_branching(adata.uns['fate_tree'], branch_1)
+    branching_node2 = find_last_branching(adata.uns['fate_tree'], branch_2)
+    assert branching_node1 == branching_node2, "branching node is not the same"
 
-    node_groups = _divide_nodes_to_branches(adata.uns['fate_tree'], branching_node)
-    assert(len(node_groups)==2)
-    keys = list(node_groups.keys())
-    nodes1 = node_groups[keys[0]]
-    nodes2 = node_groups[keys[1]]
     len1 = max(int(len(nodes1)*ratio),1)
     len2 = max(int(len(nodes2)*ratio),1)
     nodes1 = nodes1[:len1]
     nodes2 = nodes2[:len2]
 
+    if include_branching_node:
+        branching_branch = find_a_branch_all_predecessors(adata.uns['fate_tree'], branching_node1)
+        len_branching_branch = max(int(len(branching_branch)*ratio), 1)
+        nodes_branching = (branching_branch[-1*len_branching_branch:])
+        nodes2 += nodes_branching
+
+
     adata = adata.copy() if iscopy else adata
-    tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{keys[0]}_a{ratio}", vs2_name=f"{keys[1]}_a{ratio}",**kwargs)
+    against_name = f"{branch_2}" if not name_append else f"{branch_2}_{name_append}"
+    tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{branch_1}", vs2_name=against_name,**kwargs)
     return adata if iscopy else None
+#endf tree_2branch_markers_start
 
 def tree_2branch_markers_end(adata: AnnData,
-                            branching_node:str,
-                            include_branching_node: bool = False,
-                            ratio:float=0.3,
-                            iscopy:bool=False,
+                             branch_1:str,
+                             branch_2:str,
+                             include_branching_node: bool = False,
+                             name_append: str = "",
+                             ratio:float=0.3,
+                             iscopy:bool=False,
                              **kwargs):
 
     """
-        |--O-----------O>>>>>a
+        |--O-----------O<<<<<a
         |
         |
     --<<|ab
@@ -361,29 +428,61 @@ def tree_2branch_markers_end(adata: AnnData,
 
     (>>>>>) against (<<<)
 
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object
+    branching_node: str
+        the branching node to have branches, here is ab
+    include_branching_node: bool
+        whether to include the branching node branch in the comparison
+    ratio: float
+        the ratio of the nodes in a branch to be compared to the number of nodes in the other branch
+    iscopy: bool
+        whether to return a copy of the adata object
+    kwargs: dict
+        the parameters for the tree_nodes_markers function
     """
+    nodes1 = find_a_branch_all_predecessors(adata.uns['fate_tree'], branch_1)
+    nodes2 = find_a_branch_all_predecessors(adata.uns['fate_tree'], branch_2)
 
-    node_groups = _divide_nodes_to_branches(adata.uns['fate_tree'], branching_node)
-    assert(len(node_groups)==2)
-    keys = list(node_groups.keys())
-    nodes1 = node_groups[keys[0]]
-    nodes2 = node_groups[keys[1]]
+    branching_node1 = find_last_branching(adata.uns['fate_tree'], branch_1)
+    branching_node2 = find_last_branching(adata.uns['fate_tree'], branch_2)
+    assert branching_node1 == branching_node2, "branching node is not the same"
 
     len1 = max(int(len(nodes1)*ratio),1)
     len2 = max(int(len(nodes2)*ratio),1)
     nodes1 = nodes1[-len1:]
     nodes2 = nodes2[-len2:]
 
+    if include_branching_node:
+        branching_branch = find_a_branch_all_predecessors(adata.uns['fate_tree'], branching_node1)
+        len_branching_branch = max(int(len(branching_branch)*ratio), 1)
+        nodes_branching = (branching_branch[-1*len_branching_branch:])
+        nodes2 += nodes_branching
+
     adata = adata.copy() if iscopy else adata
-    tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{keys[0]}_e{ratio}", vs2_name=f"{keys[1]}_e{ratio}",**kwargs)
+    against_name = f"{branch_2}" if not name_append else f"{branch_2}_{name_append}"
+    tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{branch_1}", vs2_name=against_name, **kwargs)
     return adata if iscopy else None
+#endf tree_2branch_markers_end
 
 
-def tree_markers_dump_table(adata, name='markers_3_97_vs_0_11_rest_0.3withParents', filename="x.csv"):
+def tree_markers_dump_table(adata: AnnData,
+                            name:str='markers_3_97_vs_0_11_rest_0.3withParents',
+                            filename:str="x.csv"):
     """
     dump markers to tables:
     supported format: csv, xls, xlsx, tsv, txt
 
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object
+    name: str
+        the name of the markers
+    filename: str
+        the filename of the table
     """
 
     if name not in adata.uns.keys():
@@ -405,9 +504,11 @@ def tree_markers_dump_table(adata, name='markers_3_97_vs_0_11_rest_0.3withParent
         df.to_csv(filename, sep="\t")
     else:
         raise ValueError(f"filename {filename} is not supported, support csv, xls, xlsx, tsv, txt")
+#endf tree_markers_dump_table
 
-
-def TF_gene_correlation(adata, tfbdata, name='markers_3_97_vs_0_11_rest_0.3withParents'):
+def TF_gene_correlation(adata: AnnData,
+                        tfbdata: AnnData,
+                        name:str='markers_3_97_vs_0_11_rest_0.3withParents'):
     """
     calculate the correlation between TF and genes for a comparison of markers
     This is only calculate the correlation without caring about the order of cells
@@ -448,14 +549,15 @@ def TF_gene_correlation(adata, tfbdata, name='markers_3_97_vs_0_11_rest_0.3withP
     corr_ordered = sorted(d_corr.items(), key=lambda x:x[1], reverse=True)
 
     return corr_ordered
+#endf TF_gene_correlation
 
 
-def tree_branches_smooth_window(adata,
-                             start_branching_node,
-                             end_branching_node,
-                             fate_tree = "fate_tree",
-                             smooth_window_ratio=0.1,
-                             ):
+def tree_branches_smooth_window(adata: AnnData,
+                                start_branching_node: str,
+                                end_branching_node: str,
+                                fate_tree: str= "fate_tree",
+                                smooth_window_ratio: float=0.1,
+                                ):
 
     """
          |--O-----------O-----a
@@ -470,6 +572,19 @@ def tree_branches_smooth_window(adata,
     the function would traverse all nodes(bins) from ab to b (path:>>>>)
     average the expression of the each nodes by cells presented in this node.
     next smooth the by a smooth_window_ratio * len(number of bins)
+
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object with gene expression or TF binding data
+    start_branching_node: str
+        the name of the start branching node
+    end_branching_node: str
+        the name of the end branching node
+    fate_tree: str
+        the name of the fate tree
+    smooth_window_ratio: float
+        the ratio of the smooth window
     """
     if start_branching_node not in adata.uns['fate_tree'].nodes:
         raise ValueError(f"start_branching_node {start_branching_node} is not in the fate tree")
@@ -499,11 +614,20 @@ def tree_branches_smooth_window(adata,
     smooth_df = pd.DataFrame(smooth_mat, index=adata.var_names, columns=bins)
 
     return smooth_df
+#endf tree_branches_smooth_window
 
-def branch_TF_gene_correlation(tf_df:pd.DataFrame, gene_df:pd.DataFrame):
+def branch_TF_gene_correlation(tf_df:pd.DataFrame,
+                               gene_df:pd.DataFrame):
     """
     calculate the correlation between TF and genes using pseudo time matrix
     return list of tuples recording the correlations ordered by correlation descendingly.
+
+    Parameters
+    ----------
+    tf_df: pd.DataFrame
+        the TF expression matrix, index is TF name, columns are bins
+    gene_df: pd.DataFrame
+        the gene expression matrix, index is gene name, columns are bins
     """
     from collections import Counter, defaultdict
     from scipy.stats import pearsonr
@@ -523,6 +647,7 @@ def branch_TF_gene_correlation(tf_df:pd.DataFrame, gene_df:pd.DataFrame):
         d_corr[sym] = pearsonr(expression, TF)[0]
     corr_ordered = sorted(d_corr.items(), key=lambda x:x[1], reverse=True)
     return corr_ordered
+#endf branch_TF_gene_correlation
 
 def branch_heatmap_matrix(tf_df:pd.DataFrame,
                           max_features:int=100,
@@ -533,6 +658,17 @@ def branch_heatmap_matrix(tf_df:pd.DataFrame,
     select maximum max_features genes by variance
     if label_markers is offered, then the genes in label_markers would be selected first
     scale by rows and cutoff the valuse by abs(2)
+
+    Parameters
+    ----------
+    tf_df: pd.DataFrame
+        pseudo time matrix
+    max_features: int
+        maximum number of genes to be selected
+    var_cutoff: float
+        variance cutoff to select genes
+    label_markers: List
+        list of genes to be selected first
     """
     if label_markers is None:
         ## calculate var of each row
@@ -565,4 +701,4 @@ def branch_heatmap_matrix(tf_df:pd.DataFrame,
     else:
         df = pd.DataFrame(scaled_rows, index=label_markers, columns=tf_df.columns)
         return df
-
+#endf branch_heatmap_matrix

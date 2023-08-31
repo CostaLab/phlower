@@ -1,6 +1,7 @@
 from anndata import AnnData
 from typing import Union, Optional, Sequence, Tuple, Mapping, Iterable, Callable
 import numpy as np
+import pandas as pd
 import networkx as nx
 from ..util import networkx_node_to_df
 
@@ -77,12 +78,22 @@ def get_rank_genes_group(adata, name):
         raise ValueError("name not in adata.uns.keys()")
     return adata.uns[name].uns['rank_genes_groups']
 
-
+def get_markers_df(adata, name):
+    rank_groups = adata.uns[name].uns['rank_genes_groups']
+    df = pd.DataFrame({"names" : [i[0] for i in rank_groups['names'].tolist()],
+                        "scores" : [i[0] for i in rank_groups['scores'].tolist()],
+                        "pvals"  : [i[0] for i in rank_groups['pvals'].tolist()],
+                        "pvals_adj" : [i[0] for i in rank_groups['pvals_adj'].tolist()],
+                        "logfoldchanges" : [i[0] for i in rank_groups['logfoldchanges'].tolist()], }
+                      )
+    return df
 
 def fate_tree_full_dataframe(adata, tree='fate_tree', graph_name=None):
     dff = networkx_node_to_df(adata.uns[tree])
     d_edge2node = _edge_two_ends(adata)
     dff['ncount'] = dff['ecount'].apply(lambda x: list(_edgefreq_to_nodefreq(x, d_edge2node).items()))
     return dff
+
+
 
 

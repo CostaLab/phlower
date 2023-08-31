@@ -502,6 +502,9 @@ def nxdraw_harmonic(adata: AnnData,
     with_potential: use potential to flip the evector or not
     ax: matplotlib axis, the axis to plot
     """
+    ##TODO:
+    ## pie show the cell types, would be really slow
+    ## randomly select an end to specify the celltype.
 
     ax = ax or plt.gca()
 
@@ -1341,6 +1344,7 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
         cumsum = cumsums[idx]
 
         #print(cumsum[0], cumsum[1], color_palette[i], cluster)
+        print(**args)
         sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, label=cluster, **args) #
 
         if sample_ratio < 1:
