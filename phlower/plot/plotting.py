@@ -600,12 +600,15 @@ def nxdraw_harmonic(adata: AnnData,
                     graph_name: str=None,
                     evector_name: str=None,
                     title: str= "",
-                    vector_dims:List[V] = [0,1],
+                    dims:List[V] = [0,1],
                     node_size:float=1,
                     show_center = True,
                     with_potential = 'u',
                     edge_cell_types = None,
+                    show_legend = True,
+                    markerscale = 1,
                     ax = None,
+                    seed =2022,
                     **args):
     """
     plot holes from eigen decomposition of L1
@@ -637,8 +640,8 @@ def nxdraw_harmonic(adata: AnnData,
     if evector_name not in adata.uns:
         raise ValueError(f"{evector_name} not in adata.uns, please check!")
 
-    H0 = adata.uns[evector_name][vector_dims[0]]
-    H1 = adata.uns[evector_name][vector_dims[1]]
+    H0 = adata.uns[evector_name][dims[0]]
+    H1 = adata.uns[evector_name][dims[1]]
 
     if with_potential is not None:
         elist = adata.uns[graph_name].edges()
@@ -648,16 +651,24 @@ def nxdraw_harmonic(adata: AnnData,
         H1 = [i*j for i,j in zip(H1, direction)]
 
     if edge_cell_types is not None:
-        edge_ends_dict = _edge_two_ends(adata.uns[graph_name])
+        edge_ends_dict = _edge_two_ends(adata, graph_name=graph_name)
         if edge_cell_types not in adata.obs.keys():
             raise ValueError("edge_cell_types not in adata.obs")
         celltypes = adata.obs[edge_cell_types]
 
-
+        # random select an end of an edge.
+        np.random.seed(seed)
+        rand_ct_idx = np.random.randint(2, size=len(H0))
+        cts = [celltypes[edge_ends_dict[i][rand_ct_idx[i]]] for i in range(len(H0))]
+        for ct in np.unique(cts):
+            idx = np.where(np.array(cts)==ct)[0]
+            ax.scatter(H0[idx], H1[idx], s=node_size, label=ct, **args)
+        if show_legend:
+            ax.legend(markerscale=markerscale, loc="center left", bbox_to_anchor=(1, 0.5))
     else:
         ax.scatter(H0, H1, s=node_size,  **args)
     if show_center:
-        ax.scatter(0, 0, s=node_size*5,  c='red')
+        ax.scatter(0, 0, s=node_size*5,  c='black')
 
     if title:
         ax.set_title(title)
