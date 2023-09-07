@@ -39,6 +39,7 @@ def print_stream_labels(adata, tree='stream_tree', attr='original'):
     return functools.reduce(lambda a,b: set(a)|set(b), arr_tuple)
 
 
+
 def change_stream_labels(adata, tree='stream_tree', attr='original', from_to_dict={}, iscopy=False):
     """
     Change the labels of the stream tree nodes.
@@ -69,6 +70,22 @@ def get_minimum_nodes(adata, tree='fate_tree', name='4_67'):
     appendix = min([int(node.split('_')[1]) for node in nodes])
     return predix + '_' + str(appendix)
 
+def get_maximum_nodes(adata, tree='fate_tree', name='4_67'):
+    """
+    for fate_tree, each branch has a series of nodes increasingly ordered,
+    the maximum nodes are the last nodes of each branch
+    """
+
+    if name =='root':
+        return 'root'
+
+    nodes = adata.uns[tree].nodes()
+    predix = name.split('_')[0]
+    nodes = [node for node in nodes if node.startswith(predix)]
+    appendix = max([int(node.split('_')[1]) for node in nodes])
+    return predix + '_' + str(appendix)
+#endf get_maximum_nodes
+
 
 def get_rank_genes_group(adata, name):
     """
@@ -94,6 +111,24 @@ def fate_tree_full_dataframe(adata, tree='fate_tree', graph_name=None):
     dff['ncount'] = dff['ecount'].apply(lambda x: list(_edgefreq_to_nodefreq(x, d_edge2node).items()))
     return dff
 
+def assign_graph_node_attr_to_adata(adata, graph_name='X_pca_ddhodge_g', from_attr='pos', to_attr='pos', iscopy=False):
+    """
+    xxx
+    """
+    adata = adata.copy() if iscopy else adata
+
+    if graph_name not in adata.uns.keys():
+        raise ValueError("graph_name not in adata.uns.keys()")
+    if from_attr not in adata.uns[graph_name].nodes[0].keys():
+        raise ValueError("from_attr not in adata.uns[graph_name].nodes[0].keys()")
+    if to_attr in adata.obsm.keys():
+        print("Warning: to attr already in adata.obsm.keys(), will be overwritten")
+    attr = [i[1] for i in sorted(nx.get_node_attributes(adata.uns[graph_name], from_attr).items(), key=lambda x: x[0])]
+    adata.obs[to_attr] = attr
+
+    return adata if iscopy else None
+
+#endf assign_graph_node_attr_to_adata
 
 
 

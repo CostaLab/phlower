@@ -20,6 +20,7 @@ from .dimensionreduction import run_umap, run_pca
 from .clustering import dbscan, leiden, louvain
 from .hodgedecomp import knee_eigen
 from ..util import pairwise, find_knee, tuple_increase, is_node_attr_existing
+from .tree_utils import assign_graph_node_attr_to_adata
 
 
 def random_climb_knn(adata,
@@ -290,6 +291,104 @@ def trajs_clustering(adata, embedding = 'trajs_harmonic_dm', clustering_method: 
 #endf trajs_clustering
 
 
+
+def harmonic_trajs_ranks(adata: AnnData,
+                         group_name:str = 'group',
+                         trajs_lists = 'knn_trajs',
+                         trajs_clusters = 'trajs_clusters',
+                         trajs_use = 1000,
+                         retain_clusters = [],
+                         node_attribute = 'u',
+                         top_n = 30,
+                         min_kde_quant_rm = 0.1,
+                         kde_sample_n = 1000,
+                         verbose=True,
+                         seed = 2022,
+                         ):
+    from collections import Counter, defaultdict
+    from scipy.stats import gaussian_kde
+
+    np.random.seed(seed)
+    trajs_use = min(trajs_use, len(adata.uns[trajs_lists]))
+    cluster_list = adata.uns[trajs_clusters]
+    if len(retain_clusters) == 0:
+        retain_clusters = set(cluster_list)
+    assert(set(retain_clusters).issubset(set(cluster_list)))
+    if not isinstance(cluster_list, np.ndarray):
+        cluster_list = np.array(cluster_list)
+
+    if verbose:
+        print(f"check trajectory clusters: {retain_clusters}")
+
+    d_node_freq = {}
+    for cluster in retain_clusters:
+        ### trajs are all nodes not edges
+        itrajs = [i for i in np.where(cluster_list == cluster)[0]]
+        if len(itrajs) > trajs_use:
+            itrajs = np.random.choice(itrajs, trajs_use, replace=False)
+
+        node_list = []
+        for itraj in itrajs:
+            node_list.extend(adata.uns[trajs_lists][itraj])
+
+        #kde = gaussian_kde(node_list)(node_list)
+        #quantile = 0.1
+        #kde_keep = np.where(kde > np.quantile(kde, quantile))[0]
+        #node_list = np.array(node_list)[kde_keep]
+        node_list = np.array(node_list)
+        if node_attribute not in adata.obs.keys():
+            assign_graph_node_attr_to_adata(adata, adata.uns["graph_basis"], from_attr=node_attribute, to_attr=node_attribute)
+
+        u = adata.obs[node_attribute].iloc[list(Counter(node_list).keys())]
+        topN = u.iloc[np.argsort(u)[::-1][:top_n]]
+        d_node_freq[cluster] = topN
+
+    ##record traject clusters with same ends
+    d_c = defaultdict(list)# key(end_cluster), val(traject_clusters)
+    d_c_detail = defaultdict(list)#
+    for cluster in retain_clusters:
+        c = Counter(adata.obs['group'].loc[list(d_node_freq[cluster].index)])
+        d_c[c.most_common()[0][0]].append(cluster)
+        d_c_detail[cluster].append(c)
+        if verbose:
+            print("trajcluster: group&count", cluster, c.most_common()[0])
+
+    adata.uns['end_cluster_counter_trajs'] = d_c_detail
+    return {k:v for k,v in d_c.items() if len(v) > 1}
+#endf
+
+def merge_trajectory_clusters(adata: AnnData,
+                              group_name:str = 'group',
+                              trajs_lists = 'knn_trajs',
+                              trajs_clusters = 'trajs_clusters',
+                              trajs_use = 100,
+                              retain_clusters = [],
+                              node_attribute = 'u',
+                              top_n = 30,
+                              verbose=True,
+                              dry_run=False,
+                              iscopy = False,
+                              ):
+
+    adata = adata.copy() if iscopy else adata
+
+    d_c = harmonic_trajs_ranks(adata, group_name, trajs_lists, trajs_clusters, trajs_use, retain_clusters, node_attribute, top_n, verbose=verbose)
+
+    for k,v in d_c.items():
+        idx = np.where(np.isin(np.array(adata.uns[trajs_clusters]), v))
+        if verbose:
+            print(f"merge trajectory cluster {v} to be {v[0]}" )
+        if not dry_run:
+            adata.uns[trajs_clusters][idx] = v[0] ## assign to be the first one
+    else:
+        if verbose:
+            print(f"no trajectory cluster to be merged")
+
+    return adata if iscopy else None
+#endf merge_trajectory_clusters
+
+
+
 def select_trajectory_clusters(adata,  cluster_name="trajs_clusters", trajs_name='knn_trajs', rm_cluster_ratio=0.005, manual_rm_clusters=[], iscopy=False, verbose=True):
     """
     adata: AnnData
@@ -350,10 +449,9 @@ def select_trajectory_clusters(adata,  cluster_name="trajs_clusters", trajs_name
     adata.uns['full_traj_matrix_flatten'] = adata.uns['full_traj_matrix_flatten'][keep_idx, :]
     if 'full_traj_matrix_flatten_norm' in adata.uns.keys():
         adata.uns['full_traj_matrix_flatten_norm'] = adata.uns['full_traj_matrix_flatten_norm'][keep_idx, :]
-        if verbose:
-            print("full_traj_matrix_flatten_norm")
     adata.uns['trajs_harmonic_dm'] = np.delete(np.array(adata.uns['trajs_harmonic_dm']), rm_idxs, axis=0)
     adata.uns['trajs_dm'] = np.delete(np.array(adata.uns['trajs_dm']), rm_idxs, axis=0)
+
 
     return adata if iscopy else None
 #endf select_trajectory_clusters

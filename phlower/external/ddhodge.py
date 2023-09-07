@@ -89,6 +89,9 @@ def ddhodge(
     adata.uns[f'{basis}_ddhodge_psi'] = d['psi']
     #adata.uns[f'{basis}_ddhodge_phi'] = d['phi']
     adata.uns[f'{basis}_ddhodge_eig'] = d['eig']
+    u = [i[1] for i in sorted(nx.get_node_attributes(d['g'], 'u').items(), key=lambda x: x[0])]
+    adata.obs['u'] = np.array(u)
+
     if layout:
         if verbose:
             print(datetime.now(), 'calculate layouts')

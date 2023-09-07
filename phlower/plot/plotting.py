@@ -19,7 +19,7 @@ def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
     return zip(path, path[1:])
 
 
-
+## harmonic_backbone_3d
 
 
 ##TODO:
@@ -33,36 +33,43 @@ def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
 ##TODO
 ## can I color edges by edges in the cumsum space?
 
-
-##TODO:
-## harmonic backbone
-## 1. use the average coordinate of each bin
-## 2. use fate tree nodes to connect
-## 3. only show stream tree point
-
 def harmonic_backbone(adata: AnnData,
-                      fate_tree =  "fate_tree",
-                      backbone_width=3,
-                      backbone_color="black",
-                      backbone_joint_size=100,
-                      backbone_joint_color="black",
-                      arrow_size=0,
-                      arrow_color="black",
-                      full_traj_matrix="full_traj_matrix",
-                      clusters = "trajs_clusters",
-                      evector_name = None,
-                      retain_clusters=[],
-                      dims = [0,1],
-                      show_legend=True,
-                      legend_loc="center left",
-                      bbox_to_anchor=(1, 0.5),
-                      markerscale=4,
+                      fate_tree:str =  "fate_tree",
+                      backbone_width:float=3,
+                      backbone_color:str="black",
+                      backbone_joint_size:float=100,
+                      backbone_joint_color:str="black",
+                      arrow_size:float=0,
+                      arrow_color:str="black",
+                      full_traj_matrix:str="full_traj_matrix",
+                      clusters:str = "trajs_clusters",
+                      evector_name:str = None,
+                      retain_clusters:List=[],
+                      dims:List[int] = [0,1],
+                      show_legend:bool=True,
+                      legend_loc:str="center left",
+                      bbox_to_anchor:List=(1, 0.5),
+                      markerscale:float=4,
                       ax = None,
-                      sample_ratio = 0.1,
-                      xylabel=True,
+                      sample_ratio:float = 0.1,
+                      xylabel:bool=True,
                       color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                       **args
                       ):
+    """
+    plot backbone in cumsum sapce
+    1. call plot_trajectory_harmonic_lines
+    2. plot fate_tree nodes
+    3. plot fate_tree edges
+    4. add arrows to the tree edges.
+
+
+    Parameters
+    ----------
+    adata: AnnData
+    """
+
+
     from matplotlib import collections  as mc
 
     def intermediate(p1, p2, nb_points=8):
@@ -77,6 +84,11 @@ def harmonic_backbone(adata: AnnData,
 
         return (p1[0] + nb_points * x_spacing,  p1[1] +  nb_points * y_spacing)
 
+
+
+    dims = [0,1] if len(dims) == 0 else dims
+    if len(dims) < 2:
+        raise ValueError(f"dims should be at least 2, but {dims} is given!")
 
     ax = ax or plt.gca()
     plot_trajectory_harmonic_lines(adata,

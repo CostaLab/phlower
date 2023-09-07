@@ -8,6 +8,7 @@ import numpy as np
 from tqdm import tqdm
 import networkx as nx
 from anndata import AnnData
+from datetime import datetime
 from scipy.spatial import distance
 from scipy.stats import gaussian_kde
 from sklearn.neighbors import KDTree
@@ -50,6 +51,7 @@ def harmonic_stream_tree(adata: AnnData,
                         kde_sample_n = 10000,
                         random_seed = 2022,
                         stream_workdir='',
+                        verbose = False,
                         iscopy=False,
                         ):
     """
@@ -117,6 +119,8 @@ def harmonic_stream_tree(adata: AnnData,
     if "workdir" not in adata.uns:
         adata.uns['workdir'] = stream_workdir
 
+    if verbose:
+        print(datetime.now(), "trajectory groups ranking...")
     d =  harmonic_trajs_bins(adata = adata,
                              graph_name = graph_name,
                              evector_name = evector_name,
@@ -130,11 +134,25 @@ def harmonic_stream_tree(adata: AnnData,
                              min_kde_quant_rm = min_kde_quant_rm,
                              kde_sample_n = kde_sample_n,
                              random_seed = random_seed)
+    if verbose:
+        print(datetime.now(), "sync bins to by pseudo time...")
     ddf = time_sync_bins(d, attr=time_sync_u, min_bin_number=min_bin_number)
+    if verbose:
+        print(datetime.now(), "calculating distances between bin pairs...")
+
     pairwise_bdict = pairwise_hbranching_dict(ddf, bottom_up=node_bottom_up, cut_threshold=cut_threshold)
+
+    if verbose:
+        print(datetime.now(), "fate tree creating...")
+
     htree,root = create_branching_tree(pairwise_bdict, keys=None)
+    if verbose:
+        print(datetime.now(), "tree attributes adding...")
     fate_tree = create_detail_tree(adata, htree, root, ddf, trim_end=trim_end, graph_name=graph_name, layout_name=layout_name)
     adata.uns['fate_tree'] = fate_tree
+    if verbose:
+        print(datetime.now(), "plugin to STREAM...")
+
     if pca_name in adata.obsm:
         add_node_pca(adata, pca_name=pca_name)
     if layout_name != adata.uns["graph_basis"]:
@@ -723,6 +741,7 @@ def harmonic_trajs_bins(adata: AnnData,
                         min_kde_quant_rm = 0.1,
                         kde_sample_n = 1000,
                         random_seed = 2022,
+                        verbose = False,
                         ):
     """
     return bins of each trajectory clustere edges

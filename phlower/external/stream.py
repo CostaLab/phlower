@@ -21,7 +21,7 @@ from .scikit_posthocs import posthoc_conover
 
 ##TODO: use kde information to merge the buckets
 ##TODO: if duplicated nodes is an issue, we can calculate center of each vertex, if set the node to the nearest vertex.
-
+##TODO: increase the size of stream_sc size based on the score.
 
 
 def tree_label_dict(adata,
