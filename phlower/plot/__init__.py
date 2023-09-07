@@ -26,6 +26,7 @@ from .plotting import (
         M_plot_trajectory_harmonic_points_3d,
         L_plot_eigen_line,
         plot_pie_fate_tree,
+        harmonic_backbone,
 )
 
 from .velocity import (fate_velocity_plot)

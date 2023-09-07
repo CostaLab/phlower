@@ -18,6 +18,122 @@ V = TypeVar('V')
 def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
     return zip(path, path[1:])
 
+
+
+
+
+##TODO:
+## velocity plots can also in the harmonic space
+
+
+##TODO
+# can plot density in the cumsum space
+
+
+##TODO
+## can I color edges by edges in the cumsum space?
+
+
+##TODO:
+## harmonic backbone
+## 1. use the average coordinate of each bin
+## 2. use fate tree nodes to connect
+## 3. only show stream tree point
+
+def harmonic_backbone(adata: AnnData,
+                      fate_tree =  "fate_tree",
+                      backbone_width=3,
+                      backbone_color="black",
+                      backbone_joint_size=100,
+                      backbone_joint_color="black",
+                      arrow_size=0,
+                      arrow_color="black",
+                      full_traj_matrix="full_traj_matrix",
+                      clusters = "trajs_clusters",
+                      evector_name = None,
+                      retain_clusters=[],
+                      dims = [0,1],
+                      show_legend=True,
+                      legend_loc="center left",
+                      bbox_to_anchor=(1, 0.5),
+                      markerscale=4,
+                      ax = None,
+                      sample_ratio = 0.1,
+                      xylabel=True,
+                      color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                      **args
+                      ):
+    from matplotlib import collections  as mc
+
+    def intermediate(p1, p2, nb_points=8):
+        """"Return end nb_points equally spaced points
+        between p1 and p2"""
+        # If we have 8 intermediate points, we have 8+1=9 spaces
+        # between p1 and p2
+        #print(p1)
+        #print(p2)
+        x_spacing = (p2[0] - p1[0]) / (nb_points + 1)
+        y_spacing = (p2[1] - p1[1]) / (nb_points + 1)
+
+        return (p1[0] + nb_points * x_spacing,  p1[1] +  nb_points * y_spacing)
+
+
+    ax = ax or plt.gca()
+    plot_trajectory_harmonic_lines(adata,
+                                   full_traj_matrix=full_traj_matrix,
+                                   clusters=clusters,
+                                   evector_name=evector_name,
+                                   retain_clusters=retain_clusters,
+                                   dims=dims,
+                                   show_legend=show_legend,
+                                   legend_loc=legend_loc,
+                                   bbox_to_anchor=bbox_to_anchor,
+                                   markerscale=markerscale,
+                                   ax=ax,
+                                   sample_ratio=sample_ratio,
+                                   xylabel=xylabel,
+                                   color_palette=color_palette,
+                                   zorder=1,
+                                   )
+    #print("dims", dims)
+    #print("cumsum", adata.uns[fate_tree].nodes["1_18"]['cumsum'])
+    #for node in adata.uns[fate_tree].nodes:
+    #    print(node, ":")
+    #    print(adata.uns[fate_tree].nodes[node]['cumsum'][1])
+    harmon_x = [adata.uns[fate_tree].nodes[i]['cumsum'][dims[0]] for i in adata.uns[fate_tree].nodes if i !='root']
+    harmon_y = [adata.uns[fate_tree].nodes[i]['cumsum'][dims[1]] for i in adata.uns[fate_tree].nodes if i !='root']
+    ax.scatter(harmon_x, harmon_y, s=backbone_joint_size, c=backbone_joint_color, marker='o', alpha=1, edgecolors='none', zorder=3)
+    edges = [e for e in  adata.uns[fate_tree].edges if e[0]!='root']
+
+    pos = {i:adata.uns[fate_tree].nodes[i]['cumsum'][dims[0:2]] for i in adata.uns[fate_tree].nodes if i !='root'}
+    #lines = [[(0, 1), (1, 1)], [(2, 3), (3, 3)], [(1, 2), (1, 3)]]
+    lines = [[tuple(pos[e[0]]), tuple(pos[e[1]])] for e in edges]
+    lc = mc.LineCollection(lines, colors=backbone_color, linewidths=backbone_width)
+    lc.set_zorder(2)
+    ax.add_collection(lc)
+
+    if arrow_size > 0:
+        headwidth=3 * arrow_size
+        headlength=5  * arrow_size
+        headaxislength=4.5 * arrow_size
+        for i in range(len(lines)):
+            x,y = intermediate(p1=lines[i][0], p2=lines[i][1], nb_points=2)
+            ax.quiver(x,
+                      y,
+                      lines[i][1][0]-x,
+                      lines[i][1][1]-y,
+                      zorder=4,
+                      headwidth=headwidth,
+                      headlength=headlength,
+                      headaxislength=headaxislength,
+                      color='black')
+
+
+#endf harmonic_backbone
+
+
+
+
 def plot_trajectory_harmonic_lines_3d(adata: AnnData,
                                       full_traj_matrix="full_traj_matrix",
                                       clusters = "trajs_clusters",
@@ -488,6 +604,7 @@ def nxdraw_harmonic(adata: AnnData,
                     node_size:float=1,
                     show_center = True,
                     with_potential = 'u',
+                    edge_cell_types = None,
                     ax = None,
                     **args):
     """
@@ -505,6 +622,7 @@ def nxdraw_harmonic(adata: AnnData,
     ##TODO:
     ## pie show the cell types, would be really slow
     ## randomly select an end to specify the celltype.
+    from ..tools.tree_utils import _edge_two_ends
 
     ax = ax or plt.gca()
 
@@ -529,9 +647,15 @@ def nxdraw_harmonic(adata: AnnData,
         H0 = [i*j for i,j in zip(H0, direction)]
         H1 = [i*j for i,j in zip(H1, direction)]
 
+    if edge_cell_types is not None:
+        edge_ends_dict = _edge_two_ends(adata.uns[graph_name])
+        if edge_cell_types not in adata.obs.keys():
+            raise ValueError("edge_cell_types not in adata.obs")
+        celltypes = adata.obs[edge_cell_types]
 
 
-    ax.scatter(H0, H1, s=node_size,  **args)
+    else:
+        ax.scatter(H0, H1, s=node_size,  **args)
     if show_center:
         ax.scatter(0, 0, s=node_size*5,  c='red')
 
@@ -1062,6 +1186,7 @@ def plot_embedding(cluster_list = [],
     if len(cluster_list)==0 or embedding is None:
         print("Error: cluster_list and embedding should be not None!")
         return
+    #print(len(cluster_list), embedding.shape[0])
     assert(len(cluster_list) == embedding.shape[0])
     assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
 
@@ -1344,7 +1469,6 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
         cumsum = cumsums[idx]
 
         #print(cumsum[0], cumsum[1], color_palette[i], cluster)
-        print(**args)
         sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, label=cluster, **args) #
 
         if sample_ratio < 1:

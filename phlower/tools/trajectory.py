@@ -290,6 +290,75 @@ def trajs_clustering(adata, embedding = 'trajs_harmonic_dm', clustering_method: 
 #endf trajs_clustering
 
 
+def select_trajectory_clusters(adata,  cluster_name="trajs_clusters", trajs_name='knn_trajs', rm_cluster_ratio=0.005, manual_rm_clusters=[], iscopy=False, verbose=True):
+    """
+    adata: AnnData
+        AnnData object
+    cluster_name: str
+        the name of the clusters, "trajs_clusters" by default
+    trajs_name: str
+        the name of the trajs, "knn_trajs" by default
+    rm_cluster_ratio: float
+        smaller the ratio of the cluster number would be removed, 0.005(50 for 10,000) by default
+    manual_rm_clusters: list
+        the clusters to remove manually, [] by default
+    iscopy: bool
+        whether to return a copy of adata or not, False by default
+    """
+    from collections import Counter
+    pass
+    adata = adata.copy() if iscopy else adata
+
+    ## 1. get remove number
+    threshold = len(adata.uns[trajs_name]) * rm_cluster_ratio
+    ## 2. get the cluster number to remove
+    d_count = Counter(adata.uns[cluster_name])
+    rm_clusters = [k for k, v in d_count.items() if v < threshold]
+    ## 3. remove the clusters
+    rm_clusters = rm_clusters + manual_rm_clusters
+    if verbose:
+        print(f"clusters to remove({len(rm_clusters)})")
+        print("\t".join([f"{str(i)}: {d_count.get(i, -1)}" for i in rm_clusters]))
+    ## 4. compile idxs to remove
+    rm_idxs = np.where(np.isin(np.array(adata.uns[cluster_name]), rm_clusters))[0]
+    if verbose:
+        print(f"remove clusters: #removed_trajectories({len(rm_idxs)}), #remain_trajectories({len(adata.uns[trajs_name]) - len(rm_idxs)})")
+
+    ## 5. update all including:
+        ## a. clusters
+        ## b. trajs
+        ## c. full_traj_matrix
+        ## d. full_traj_matrix_flatten
+        ## e. full_traj_matrix_flatten_norm if exists
+        ## f. trajs_harmonic_dm
+        ## g. trajs_dm
+    if verbose:
+        print("updateing..")
+        print("clusters", cluster_name)
+        print("trajs", trajs_name)
+        print("full_traj_matrix")
+        print("full_traj_matrix_flatten")
+        print("full_traj_matrix_flatten_norm")
+        print("trajs_harmonic_dm")
+        print("trajs_dm")
+
+    adata.uns[cluster_name] = np.delete(adata.uns[cluster_name], rm_idxs)
+    adata.uns[trajs_name] = np.delete(adata.uns[trajs_name], rm_idxs)
+
+    keep_idx = np.delete(np.arange(len(adata.uns['full_traj_matrix'])), rm_idxs)
+    adata.uns['full_traj_matrix'] = np.delete(np.array(adata.uns['full_traj_matrix']), rm_idxs)
+    adata.uns['full_traj_matrix_flatten'] = adata.uns['full_traj_matrix_flatten'][keep_idx, :]
+    if 'full_traj_matrix_flatten_norm' in adata.uns.keys():
+        adata.uns['full_traj_matrix_flatten_norm'] = adata.uns['full_traj_matrix_flatten_norm'][keep_idx, :]
+        if verbose:
+            print("full_traj_matrix_flatten_norm")
+    adata.uns['trajs_harmonic_dm'] = np.delete(np.array(adata.uns['trajs_harmonic_dm']), rm_idxs, axis=0)
+    adata.uns['trajs_dm'] = np.delete(np.array(adata.uns['trajs_dm']), rm_idxs, axis=0)
+
+    return adata if iscopy else None
+#endf select_trajectory_clusters
+
+
 def G_random_climb(g:nx.Graph, attr:str='u', roots_ratio:float=0.1, n:int=10000, seeds:int=2022) -> list:
     """
     random climb of a graph according to the attr

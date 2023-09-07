@@ -115,7 +115,9 @@ def adjedges(A:Union[csc_matrix, csr_matrix, np.ndarray], W, k=4):
         zerofilter = csr_matrix(zerofilter)
 
     nA[zerofilter] = 0
-    nA.eliminate_zeros()
+
+    if scipy.sparse.issparse(nA):
+        nA.eliminate_zeros()
     kedges = graph_altmat(nA).edges()
     return kedges
 #endf adjedges
