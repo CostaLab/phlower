@@ -11,7 +11,7 @@ from collections import defaultdict
 from typing import Iterable, List, Union, Optional, Set, Tuple, TypeVar
 from ..tools.trajectory import M_create_matrix_coordinates_trajectory_Hspace
 
-from ..util import get_uniform_multiplication, kde_eastimate, norm01
+from ..util import get_uniform_multiplication, kde_eastimate, norm01, module_check_install
 from ..tools.harmonic_pseudo_tree import get_nodes_celltype_counts
 
 V = TypeVar('V')
@@ -20,6 +20,8 @@ def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
 
 
 ## harmonic_backbone_3d
+
+##TODO: 3d SVG using maptplotlib https://jakevdp.github.io/PythonDataScienceHandbook/04.12-three-dimensional-plotting.html
 
 
 ##TODO:
@@ -32,6 +34,125 @@ def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:
 
 ##TODO
 ## can I color edges by edges in the cumsum space?
+
+def harmonic_backbone_3d(adata: AnnData,
+                         fate_tree:str =  "fate_tree",
+                         backbone_width:float=3,
+                         backbone_color:str="black",
+                         backbone_joint_size:float=10,
+                         backbone_joint_color:str="black",
+                         #arrow_size:float=0,
+                         #arrow_color:str="black",
+                         full_traj_matrix:str="full_traj_matrix",
+                         clusters:str = "trajs_clusters",
+                         evector_name:str = None,
+                         retain_clusters:List=[],
+                         dims:List[int] = [0,1,2],
+                         figsize:Tuple[int,int] = (800,800),
+                         ax = None,
+                         sample_ratio:float = 0.1,
+                         xylabel:bool=True,
+                         show_legend = True,
+                         fig_path=None,
+                         return_fig=False,
+                         color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                         **args
+                         ):
+    """
+    plot backbone in cumsum sapce
+    1. call plot_trajectory_harmonic_lines
+    2. plot fate_tree nodes
+    3. plot fate_tree edges
+    4. add arrows to the tree edges.
+
+
+    Parameters
+    ----------
+    adata: AnnData
+    """
+    dims=list(dims)
+    if sample_ratio <=0:
+        import plotly.graph_objects as go
+        fig = go.Figure(data=go.Scatter3d(x=[0],
+                                     y=[0],
+                                     z=[0],
+                                     marker=dict(
+                                         color='grey',
+                                         size=0
+                                     ),
+                                     showlegend=False))
+
+        fig.update_layout(
+                    legend= {'itemsizing': 'constant'}, ## increase the point size in legend.
+                    autosize=False,
+                    width=figsize[1],
+                    height=figsize[0],)
+
+    else:
+
+        fig = plot_trajectory_harmonic_lines_3d(adata,
+                                                full_traj_matrix=full_traj_matrix,
+                                                clusters = clusters,
+                                                evector_name = evector_name,
+                                                retain_clusters=retain_clusters,
+                                                figsize = figsize,
+                                                dims = dims,
+                                                show_legend=show_legend,
+                                                sample_ratio = sample_ratio,
+                                                color_palette = color_palette,
+                                                fig_path=None,
+                                                return_fig = True,
+                                                **args)
+
+
+    harmon_x = [adata.uns[fate_tree].nodes[i]['cumsum'][dims[0]] for i in adata.uns[fate_tree].nodes if i !='root']
+    harmon_y = [adata.uns[fate_tree].nodes[i]['cumsum'][dims[1]] for i in adata.uns[fate_tree].nodes if i !='root']
+    harmon_z = [adata.uns[fate_tree].nodes[i]['cumsum'][dims[2]] for i in adata.uns[fate_tree].nodes if i !='root']
+    ## add backbone points
+    fig.add_scatter3d(x=harmon_x,
+                      y=harmon_y,
+                      z=harmon_z,
+                      marker=dict(size=backbone_joint_size, color=backbone_joint_color),
+                      #line=dict(color='green',width=50),
+                      showlegend=False,
+                      mode='markers',
+                     )
+    edges = [e for e in  adata.uns[fate_tree].edges if e[0]!='root']
+
+    pos = {i:adata.uns[fate_tree].nodes[i]['cumsum'][dims[0:3]] for i in adata.uns[fate_tree].nodes if i !='root'}
+    ##lines = [[(0, 1), (1, 1)], [(2, 3), (3, 3)], [(1, 2), (1, 3)]]
+    lines = [[tuple(pos[e[0]]), tuple(pos[e[1]])] for e in edges]
+    for idx in range(len(lines)):
+        fig.add_scatter3d(x=[lines[idx][0][0], lines[idx][1][0]],
+                          y=[lines[idx][0][1], lines[idx][1][1]],
+                          z=[lines[idx][0][2], lines[idx][1][2]],
+                          mode='lines',
+                          showlegend=False,
+                          line=dict(width=backbone_width, color=backbone_color),
+                         )
+    #lc = mc.LineCollection(lines, colors=backbone_color, linewidths=backbone_width)
+    #lc.set_zorder(2)
+    #ax.add_collection(lc)
+
+
+    if not return_fig:
+        fig.show()
+    if fig_path is not None:
+        if fig_path.endswith(".html") or fig_path.endswith(".htm"):
+            fig.write_html(fig_path)
+        elif fig_path.endswith(".svg") or \
+                fig_path.endswith(".pdf") or \
+                fig_path.endswith(".eps") or \
+                fig_path.endswith(".webp") or \
+                fig_path.endswith(".png") or \
+                fig_path.endswith(".jpg") or \
+                fig_path.endswith(".jpeg"):
+            module_check_install("kaleido")
+            fig.write_image(fig_path, engine="kaleido")
+    return fig if return_fig else None
+
+#endf harmonic_backbone_3d
+
 
 def harmonic_backbone(adata: AnnData,
                       fate_tree:str =  "fate_tree",
@@ -139,8 +260,6 @@ def harmonic_backbone(adata: AnnData,
                       headlength=headlength,
                       headaxislength=headaxislength,
                       color='black')
-
-
 #endf harmonic_backbone
 
 
@@ -157,6 +276,7 @@ def plot_trajectory_harmonic_lines_3d(adata: AnnData,
                                       sample_ratio = 0.1,
                                       color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                       fig_path=None,
+                                      return_fig = False,
                                       **args):
     """
     Parameters
@@ -182,7 +302,7 @@ def plot_trajectory_harmonic_lines_3d(adata: AnnData,
 
     mat_coord_Hspace = M_create_matrix_coordinates_trajectory_Hspace(adata.uns[evector_name][0:max(dims)+1],
                                                                      adata.uns[full_traj_matrix])
-    M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
+    return M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                                         cluster_list = list(adata.uns[clusters]),
                                         retain_clusters=retain_clusters,
                                         dims = dims,
@@ -190,6 +310,7 @@ def plot_trajectory_harmonic_lines_3d(adata: AnnData,
                                         sample_ratio = sample_ratio,
                                         color_palette = color_palette,
                                         fig_path=fig_path,
+                                        return_fig = return_fig,
                                         **args)
 
 
@@ -258,6 +379,7 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
                                        sample_ratio = 0.1,
                                        color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                        fig_path=None,
+                                       return_fig = False,
                                        **args):
     """
     Parameters
@@ -284,18 +406,19 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
 
     print(max(dims)+1)
     mat_coor_flatten_trajectory = [adata.uns[evector_name][0:max(dims)+1, :] @ mat for mat in adata.uns[full_traj_matrix_flatten].toarray()]
-    M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
-                                         cluster_list = list(adata.uns[clusters]),
-                                         retain_clusters = retain_clusters,
-                                         dims = dims,
-                                         node_size = node_size,
-                                         show_legend = show_legend,
-                                         figsize = figsize,
-                                         sample_ratio = sample_ratio,
-                                         color_palette = color_palette,
-                                         fig_path=fig_path,
-                                         **args
-                                         )
+    return M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
+                                                cluster_list = list(adata.uns[clusters]),
+                                                retain_clusters = retain_clusters,
+                                                dims = dims,
+                                                node_size = node_size,
+                                                show_legend = show_legend,
+                                                figsize = figsize,
+                                                sample_ratio = sample_ratio,
+                                                color_palette = color_palette,
+                                                fig_path=fig_path,
+                                                return_fig = return_fig,
+                                                **args
+                                                )
 
 
 def plot_trajectory_harmonic_points(adata: AnnData,
@@ -620,6 +743,7 @@ def nxdraw_harmonic(adata: AnnData,
                     show_legend = True,
                     markerscale = 1,
                     ax = None,
+                    color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                     seed =2022,
                     **args):
     """
@@ -672,9 +796,9 @@ def nxdraw_harmonic(adata: AnnData,
         np.random.seed(seed)
         rand_ct_idx = np.random.randint(2, size=len(H0))
         cts = [celltypes[edge_ends_dict[i][rand_ct_idx[i]]] for i in range(len(H0))]
-        for ct in np.unique(cts):
+        for i, ct in enumerate(np.unique(cts)):
             idx = np.where(np.array(cts)==ct)[0]
-            ax.scatter(H0[idx], H1[idx], s=node_size, label=ct, **args)
+            ax.scatter(np.array(H0)[idx], np.array(H1)[idx], s=node_size, label=ct, c=color_palette[i], **args)
         if show_legend:
             ax.legend(markerscale=markerscale, loc="center left", bbox_to_anchor=(1, 0.5))
     else:
@@ -1353,6 +1477,7 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                                         sample_ratio = 1,
                                         color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                         fig_path = None,
+                                        return_fig=False,
                                         **args):
     """
     Parameters
@@ -1401,7 +1526,8 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                                               showlegend=show_legend,
                                               name = str(cluster),
                                               marker_size = 150,
-                                              mode='lines'
+                                              mode='lines',
+                                              **args
                                           ))
         else:
             fig.add_scatter3d(x=cumsum[0],
@@ -1414,7 +1540,8 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                             legendgroup=str(cluster),
                             showlegend=show_legend,
                             name = str(cluster),
-                            mode='lines'
+                            mode='lines',
+                            **args
             )
         if sample_ratio < 1:
             np.random.seed(2022)
@@ -1431,7 +1558,8 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                             name = str(cluster),
                             showlegend=False,
                             legendgroup=str(cluster),
-                            mode='lines'
+                            mode='lines',
+                            **args
             )
     fig.update_layout(
                     legend= {'itemsizing': 'constant'}, ## increase the point size in legend.
@@ -1439,10 +1567,23 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                     width=figsize[1],
                     height=figsize[0],)
 
-
-    fig.show()
+    if not return_fig:
+        fig.show()
     if fig_path is not None:
-        fig.write_html(fig_path)
+        if fig_path.endswith(".html") or fig_path.endswith(".htm"):
+            fig.write_html(fig_path)
+        elif fig_path.endswith(".svg") or \
+                fig_path.endswith(".pdf") or \
+                fig_path.endswith(".eps") or \
+                fig_path.endswith(".webp") or \
+                fig_path.endswith(".png") or \
+                fig_path.endswith(".jpg") or \
+                fig_path.endswith(".jpeg"):
+            module_check_install("kaleido")
+            fig.write_image(fig_path, engine="kaleido")
+    return fig if return_fig else None
+
+
 
 
 def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
@@ -1492,14 +1633,15 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
         cumsum = cumsums[idx]
 
         #print(cumsum[0], cumsum[1], color_palette[i], cluster)
-        sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, label=cluster, **args) #
+        ##(ci=None) to cancel confidence intervals computing
+        sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, label=cluster, ci=None,  estimator=None,n_boot=0, **args) #
 
         if sample_ratio < 1:
             np.random.seed(2022)
             v = np.random.choice(v, max(int(len(v)*sample_ratio), 1), replace=False)
         for idx in v[1:]:
             cumsum = cumsums[idx]
-            sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, **args) #
+            sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, ci=None,  estimator=None, n_boot=0, **args) #
 
     if xylabel:
         ax.set_xlabel(f"cumsum_{dims[0]}")
@@ -1526,6 +1668,7 @@ def M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
                                          sample_ratio = 1,
                                          color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                          fig_path = None,
+                                         return_fig = False,
                                          **args):
     """
     Parameters
@@ -1595,9 +1738,21 @@ def M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
                 width=figsize[1],
                 height=figsize[0],)
 
-    fig.show()
+    if not return_fig:
+        fig.show()
     if fig_path is not None:
-        fig.write_html(fig_path)
+        if fig_path.endswith(".html") or fig_path.endswith(".htm"):
+            fig.write_html(fig_path)
+        elif fig_path.endswith(".svg") or \
+                fig_path.endswith(".pdf") or \
+                fig_path.endswith(".eps") or \
+                fig_path.endswith(".webp") or \
+                fig_path.endswith(".png") or \
+                fig_path.endswith(".jpg") or \
+                fig_path.endswith(".jpeg"):
+            module_check_install("kaleido")
+            fig.write_image(fig_path, engine='kaleido')
+    return fig if return_fig else None
 
 
 def M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
