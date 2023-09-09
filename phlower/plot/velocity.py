@@ -1,5 +1,6 @@
 import re
 import warnings
+import networkx as nx
 from copy import deepcopy
 from io import StringIO
 from itertools import combinations
@@ -15,6 +16,67 @@ import matplotlib.patheffects as pe
 from .plotting import nxdraw_group
 
 ## adjusted from: https://github.com/kunwang34/PhyloVelo
+def fate_velocity_plot_cumsum(
+    adata,
+    fate_tree='fate_tree',
+    layout_name='cumsum',
+    group_name ="group",
+    graph_name=None,
+    figtype: "str:stream, grid, point" = "grid",
+    #nn: "str:knn, radius" = "radius",
+    grid_density: int = 50,
+    streamdensity: int = 1,
+    n_neighbors: int = 4,
+    embedd_label=True,
+    embedd_label_style="text",
+    embedd_label_font=10,
+    show_legend: bool = False,
+    show_cumsum= True,
+    radius: float = 0.5,
+    ax=None,
+    node_alpha: float = 0.5,
+    maxlinewidth = 5,
+    alpha: float = 0.5,
+    #streamdensity: float = 1.5,
+
+    **kwargs
+):
+
+    if group_name not in adata.obs:
+        raise Exception("group name not found")
+
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"]
+
+    if "graph_basis" in adata.uns and not layout_name:
+        layout_name = adata.uns["graph_basis"]
+
+    if fate_tree not in adata.uns:
+        raise Exception("fate tree not found")
+
+    ax = plt.gca() if ax is None else ax
+    if layout_name == "cumsum":
+        grid_length = grid_diagonal_length_cumsum(adata.uns[fate_tree], grid_density=grid_density)
+    else:
+        grid_length = grid_diagonal_length(adata.obsm[layout_name], grid_density)
+    bin_umap, bin_velocity = bin_umap_velocity(adata, fate_tree, layout_name, grid_length=grid_length, radius=radius)
+    coor_velocity_plot(bin_umap,
+                       bin_velocity,
+                       ax=ax,
+                       grid_density=grid_density,
+                       figtype=figtype,
+                       streamdensity=streamdensity,
+                       n_neighbors=n_neighbors,
+                       maxlinewidth = maxlinewidth,
+                       radius=radius,
+                       alpha=alpha,
+                       **kwargs)
+    if show_cumsum:
+        from .plotting import plot_trajectory_harmonic_lines
+        plot_trajectory_harmonic_lines(adata, sample_ratio=0.1, show_legend=False, ax=ax)
+
+#endf fate_velocity_plot
+
 
 def fate_velocity_plot(
     adata,
@@ -55,9 +117,12 @@ def fate_velocity_plot(
         raise Exception("fate tree not found")
 
     ax = plt.gca() if ax is None else ax
-    grid_length = grid_diagonal_length(adata.obsm[layout_name], grid_density)
+    if layout_name == "cumsum":
+        grid_length = grid_diagonal_length_cumsum(adata.uns[fate_tree], grid_density=grid_density)
+    else:
+        grid_length = grid_diagonal_length(adata.obsm[layout_name], grid_density)
     bin_umap, bin_velocity = bin_umap_velocity(adata, fate_tree, layout_name, grid_length=grid_length, radius=radius)
-    Coor_velocity_plot(bin_umap,
+    coor_velocity_plot(bin_umap,
                        bin_velocity,
                        ax=ax,
                        grid_density=grid_density,
@@ -93,6 +158,24 @@ def grid_diagonal_length(umap, grid_density=20):
     grid_len = max(x_len, y_len) / grid_density
     return np.sqrt(2)*grid_len
 
+def grid_diagonal_length_cumsum(fate_tree, grid_density=20):
+
+    cumsum = nx.get_node_attributes(fate_tree, 'cumsum')
+
+    x_values = np.array([i[0] for i in cumsum.values() if len(i)>=2])
+    y_values = np.array([i[1] for i in cumsum.values() if len(i)>=2])
+    #print(x_values.min(), x_values.max())
+    #print(y_values.min(), y_values.max())
+
+
+    x_min, x_max = x_values.min(), x_values.max()
+    y_min, y_max = y_values.min(), y_values.max()
+    x_len = x_max - x_min
+    y_len = y_max - y_min
+    grid_len = max(x_len, y_len) / grid_density
+    return np.sqrt(2)*grid_len
+
+
 
 def bin_umap_velocity(adata,
                       fate_tree='fate_tree',
@@ -109,8 +192,17 @@ def bin_umap_velocity(adata,
     bin_umap = []
     bin_velocity = []
     for a,e in adata.uns[fate_tree].edges():
-        xa= adata.uns['fate_tree'].nodes[a][layout_name]
-        xe= adata.uns['fate_tree'].nodes[e][layout_name]
+        if layout_name != 'cumsum':
+            xa= adata.uns['fate_tree'].nodes[a][layout_name]
+            xe= adata.uns['fate_tree'].nodes[e][layout_name]
+        else:
+            #print("a,e:", a,e)
+            if a == "root" or e == "root":
+                continue
+            xa= adata.uns['fate_tree'].nodes[a]['cumsum'][:2]
+            xe= adata.uns['fate_tree'].nodes[e]['cumsum'][:2]
+
+        #print("xa, xe:", xa, xe, xa-xe, grid_length)
         if np.linalg.norm(xa-xe)*3 > grid_length:
             n = int(np.linalg.norm(xa-xe)*radius*2/grid_length)
             for i in range(n):
@@ -179,7 +271,7 @@ def Coor_velocity_embedding_to_grid(bin_umap:np.array,
     return Xg,Yg,Ug,Vg
 #endf velocity_embedding_to_grid
 
-def Coor_velocity_plot(
+def coor_velocity_plot(
     pts,
     vel,
     ax,

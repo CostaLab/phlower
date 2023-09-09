@@ -448,3 +448,13 @@ def get_quantiles(v = None, length = None):
     p <- p[:len(v)]
 
   return p
+
+
+def module_check_install(module_name):
+    import os
+    try:
+        __import__(module_name)
+    except ImportError:
+        print("Installing %s" % module_name)
+        os.system (f"pip install {module_name}")
+

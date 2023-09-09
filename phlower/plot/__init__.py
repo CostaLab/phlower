@@ -27,8 +27,9 @@ from .plotting import (
         L_plot_eigen_line,
         plot_pie_fate_tree,
         harmonic_backbone,
+        harmonic_backbone_3d,
 )
 
-from .velocity import (fate_velocity_plot)
+from .velocity import (fate_velocity_plot, fate_velocity_plot_cumsum)
 from .tree_feature_markers import *
 from .adata import *

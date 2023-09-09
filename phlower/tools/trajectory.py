@@ -294,7 +294,7 @@ def trajs_clustering(adata, embedding = 'trajs_harmonic_dm', clustering_method: 
 
 def harmonic_trajs_ranks(adata: AnnData,
                          group_name:str = 'group',
-                         trajs_lists = 'knn_trajs',
+                         trajs_name = 'knn_trajs',
                          trajs_clusters = 'trajs_clusters',
                          trajs_use = 1000,
                          retain_clusters = [],
@@ -309,7 +309,7 @@ def harmonic_trajs_ranks(adata: AnnData,
     from scipy.stats import gaussian_kde
 
     np.random.seed(seed)
-    trajs_use = min(trajs_use, len(adata.uns[trajs_lists]))
+    trajs_use = min(trajs_use, len(adata.uns[trajs_name]))
     cluster_list = adata.uns[trajs_clusters]
     if len(retain_clusters) == 0:
         retain_clusters = set(cluster_list)
@@ -329,7 +329,7 @@ def harmonic_trajs_ranks(adata: AnnData,
 
         node_list = []
         for itraj in itrajs:
-            node_list.extend(adata.uns[trajs_lists][itraj])
+            node_list.extend(adata.uns[trajs_name][itraj])
 
         #kde = gaussian_kde(node_list)(node_list)
         #quantile = 0.1
@@ -359,7 +359,7 @@ def harmonic_trajs_ranks(adata: AnnData,
 
 def merge_trajectory_clusters(adata: AnnData,
                               group_name:str = 'group',
-                              trajs_lists = 'knn_trajs',
+                              trajs_name = 'knn_trajs',
                               trajs_clusters = 'trajs_clusters',
                               trajs_use = 100,
                               retain_clusters = [],
@@ -372,7 +372,7 @@ def merge_trajectory_clusters(adata: AnnData,
 
     adata = adata.copy() if iscopy else adata
 
-    d_c = harmonic_trajs_ranks(adata, group_name, trajs_lists, trajs_clusters, trajs_use, retain_clusters, node_attribute, top_n, verbose=verbose)
+    d_c = harmonic_trajs_ranks(adata, group_name, trajs_name, trajs_clusters, trajs_use, retain_clusters, node_attribute, top_n, verbose=verbose)
 
     for k,v in d_c.items():
         idx = np.where(np.isin(np.array(adata.uns[trajs_clusters]), v))
@@ -380,20 +380,58 @@ def merge_trajectory_clusters(adata: AnnData,
             print(f"merge trajectory cluster {v} to be {v[0]}" )
         if not dry_run:
             adata.uns[trajs_clusters][idx] = v[0] ## assign to be the first one
-    else:
-        if verbose:
-            print(f"no trajectory cluster to be merged")
+
+    if not d_c  and verbose:
+        print(f"no trajectory cluster to be merged")
 
     return adata if iscopy else None
 #endf merge_trajectory_clusters
 
 
+def unique_trajectory_clusters(adata: AnnData,
+                              group_name:str = 'group',
+                              trajs_name = 'knn_trajs',
+                              trajs_clusters = 'trajs_clusters',
+                              trajs_use = 100,
+                              retain_clusters = [],
+                              node_attribute = 'u',
+                              top_n = 30,
+                              verbose=True,
+                              iscopy = False,
+                              ):
 
-def select_trajectory_clusters(adata,  cluster_name="trajs_clusters", trajs_name='knn_trajs', rm_cluster_ratio=0.005, manual_rm_clusters=[], iscopy=False, verbose=True):
+    adata = adata.copy() if iscopy else adata
+
+    d_c = harmonic_trajs_ranks(adata, group_name, trajs_name, trajs_clusters, trajs_use, retain_clusters, node_attribute, top_n, verbose=verbose)
+    d_cluster_counts = Counter(adata.uns[trajs_clusters])
+    rm_list = []
+    for k,v in d_c.items():
+        ## find the cluster which has largest number
+        largest_idx = np.argmax(np.array([d_cluster_counts[i] for i in  v]))
+        rm_clusters = np.delete(np.array(v), largest_idx)
+        rm_list.extend(rm_clusters)
+        if verbose:
+            print(f"to remove clusters {rm_clusters} due to be duplicated" )
+    if not d_c  and verbose:
+        print(f"no duplicated trajectory cluster to be removed")
+    remove_trajectory_clusters(adata, rm_clusters, trajs_clusters, trajs_name, iscopy=False, verbose=verbose)
+
+    return adata if iscopy else None
+#endf unique_trajectory_clusters
+
+
+
+def select_trajectory_clusters(adata,
+                               trajs_clusters="trajs_clusters",
+                               trajs_name='knn_trajs',
+                               rm_cluster_ratio=0.005,
+                               manual_rm_clusters=[],
+                               iscopy=False,
+                               verbose=True):
     """
     adata: AnnData
         AnnData object
-    cluster_name: str
+    trajs_clusters: str
         the name of the clusters, "trajs_clusters" by default
     trajs_name: str
         the name of the trajs, "knn_trajs" by default
@@ -411,15 +449,29 @@ def select_trajectory_clusters(adata,  cluster_name="trajs_clusters", trajs_name
     ## 1. get remove number
     threshold = len(adata.uns[trajs_name]) * rm_cluster_ratio
     ## 2. get the cluster number to remove
-    d_count = Counter(adata.uns[cluster_name])
+    d_count = Counter(adata.uns[trajs_clusters])
     rm_clusters = [k for k, v in d_count.items() if v < threshold]
     ## 3. remove the clusters
     rm_clusters = rm_clusters + manual_rm_clusters
     if verbose:
         print(f"clusters to remove({len(rm_clusters)})")
         print("\t".join([f"{str(i)}: {d_count.get(i, -1)}" for i in rm_clusters]))
-    ## 4. compile idxs to remove
-    rm_idxs = np.where(np.isin(np.array(adata.uns[cluster_name]), rm_clusters))[0]
+    remove_trajectory_clusters(adata, rm_clusters, trajs_clusters, trajs_name, iscopy=False, verbose=verbose)
+
+    return adata if iscopy else None
+#endf select_trajectory_clusters
+
+def remove_trajectory_clusters(adata,
+                               rm_clusters,
+                               trajs_clusters="trajs_clusters",
+                               trajs_name='knn_trajs',
+                               iscopy=False,
+                               verbose=True):
+
+    adata = adata.copy() if iscopy else adata
+
+    rm_idxs = np.where(np.isin(np.array(adata.uns[trajs_clusters]), rm_clusters))[0]
+
     if verbose:
         print(f"remove clusters: #removed_trajectories({len(rm_idxs)}), #remain_trajectories({len(adata.uns[trajs_name]) - len(rm_idxs)})")
 
@@ -433,7 +485,7 @@ def select_trajectory_clusters(adata,  cluster_name="trajs_clusters", trajs_name
         ## g. trajs_dm
     if verbose:
         print("updateing..")
-        print("clusters", cluster_name)
+        print("clusters", trajs_clusters)
         print("trajs", trajs_name)
         print("full_traj_matrix")
         print("full_traj_matrix_flatten")
@@ -441,7 +493,7 @@ def select_trajectory_clusters(adata,  cluster_name="trajs_clusters", trajs_name
         print("trajs_harmonic_dm")
         print("trajs_dm")
 
-    adata.uns[cluster_name] = np.delete(adata.uns[cluster_name], rm_idxs)
+    adata.uns[trajs_clusters] = np.delete(adata.uns[trajs_clusters], rm_idxs)
     adata.uns[trajs_name] = np.delete(adata.uns[trajs_name], rm_idxs)
 
     keep_idx = np.delete(np.arange(len(adata.uns['full_traj_matrix'])), rm_idxs)
@@ -452,9 +504,9 @@ def select_trajectory_clusters(adata,  cluster_name="trajs_clusters", trajs_name
     adata.uns['trajs_harmonic_dm'] = np.delete(np.array(adata.uns['trajs_harmonic_dm']), rm_idxs, axis=0)
     adata.uns['trajs_dm'] = np.delete(np.array(adata.uns['trajs_dm']), rm_idxs, axis=0)
 
-
     return adata if iscopy else None
-#endf select_trajectory_clusters
+#endf remove_trajectory_clusters
+
 
 
 def G_random_climb(g:nx.Graph, attr:str='u', roots_ratio:float=0.1, n:int=10000, seeds:int=2022) -> list:

@@ -758,7 +758,6 @@ def nxdraw_harmonic(adata: AnnData,
     with_potential: use potential to flip the evector or not
     ax: matplotlib axis, the axis to plot
     """
-    ##TODO:
     ## pie show the cell types, would be really slow
     ## randomly select an end to specify the celltype.
     from ..tools.tree_utils import _edge_two_ends

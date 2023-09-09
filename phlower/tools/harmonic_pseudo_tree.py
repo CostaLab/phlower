@@ -160,6 +160,9 @@ def harmonic_stream_tree(adata: AnnData,
     create_bstream_tree(adata, layout_name=layout_name, iscopy=False)
     if layout_name != adata.uns["graph_basis"]:
         add_pca_to_stream(adata, attr=adata.uns["graph_basis"])
+    if verbose:
+        print(datetime.now(), "done...")
+
     return adata if iscopy else None
 #endf harmonic_stream_tree
 
