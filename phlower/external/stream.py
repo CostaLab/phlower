@@ -46,9 +46,42 @@ def tree_label_dict(adata,
         dd = {v:d2[k][0] if len(d2[k]) == 1 else ""  for k,v in d1.items()}
     return dd
 
+def tree_label_convert(adata, tree, from_, to_, from_attr_list, verbose=False):
+    """
+    when tree has several label attributes
+    convert from_ to to_
+    for phlower stream tree, the original is the tuple type attr, for convenience, can ignore tuples when pass parameters
+    """
+    if from_ == "node_name":
+        d1 = {i:i for i in adata.uns[tree].nodes()}
+    else:
+        d1= nx.get_node_attributes(adata.uns[tree], from_)
+
+    if verbose:
+        print("from_attr_list", from_attr_list)
+    if from_ == "original":
+        if all(isinstance(x, tuple) for x in from_attr_list):
+            pass
+        else: ## cover the case you don't have to use tuple for original
+            from_attr_list = [tuple([x]) for x in from_attr_list if not isinstance(x, tuple)]
 
 
+    if to_ == "node_name":
+        d2 = {i:i for i in adata.uns[tree].nodes()}
+    else:
+        d2= nx.get_node_attributes(adata.uns[tree], to_)
+    if verbose:
+        print("d1", d1)
+        print("d2", d2)
 
+    d3 = {v:d2[k] for k,v in d1.items()}
+    if verbose:
+        print("d3", d3 )
+        print("from_attr_list", from_attr_list)
+    ret_list = [d3[i] for i in from_attr_list]
+
+    return ret_list
+#endf
 
 def assign_root(adata,
                 root='root',
@@ -128,6 +161,15 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
     """
     #print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03")
 
+    if isinstance(preference, dict):
+        if list(preference.keys())[0] == "original":
+            preference = tree_label_convert(adata, "stream_tree", from_="original", to_='label', from_attr_list=preference["original"])
+        elif list(preference.keys())[0] == "node_name":
+            preference = tree_label_convert(adata, "stream_tree", from_="node_name", to_='label', from_attr_list=preference["node_name"])
+        elif list(preference.keys())[0] == "label":
+            preference = tree_label_convert(adata, "stream_tree", from_="label", to_='label', from_attr_list=preference["label"])
+
+    print(preference)
     root = assign_root(adata, root=root)
     figs = []
 
@@ -404,6 +446,15 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
     #print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03")
     root = assign_root(adata, root=root)
     figs = []
+
+    ## if preference is a dict, convert to stream label to ordering
+    if isinstance(preference, dict):
+        if list(preference.keys())[0] == "original":
+            preference = tree_label_convert(adata, "stream_tree", from_="original", to_='label', from_attr_list=preference["original"])
+        elif list(preference.keys())[0] == "node_name":
+            preference = tree_label_convert(adata, "stream_tree", from_="node_name", to_='label', from_attr_list=preference["node_name"])
+        elif list(preference.keys())[0] == "label":
+            preference = tree_label_convert(adata, "stream_tree", from_="label", to_='label', from_attr_list=preference["label"])
 
     if(fig_path is None):
         fig_path = adata.uns['workdir']
