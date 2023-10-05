@@ -41,6 +41,8 @@ def harmonic_backbone_3d(adata: AnnData,
                          backbone_color:str="black",
                          backbone_joint_size:float=10,
                          backbone_joint_color:str="black",
+                         is_color_backbone_joint:bool=False,
+                         is_color_backbone:bool=False,
                          #arrow_size:float=0,
                          #arrow_color:str="black",
                          full_traj_matrix:str="full_traj_matrix",
@@ -104,35 +106,102 @@ def harmonic_backbone_3d(adata: AnnData,
                                                 return_fig = True,
                                                 **args)
 
+    cluster_list = np.array(adata.uns[clusters])
+    if len(retain_clusters) == 0:
+        retain_clusters = set(cluster_list)
+    assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
 
-    harmon_x = [adata.uns[fate_tree].nodes[i]['cumsum'][dims[0]] for i in adata.uns[fate_tree].nodes if i !='root']
-    harmon_y = [adata.uns[fate_tree].nodes[i]['cumsum'][dims[1]] for i in adata.uns[fate_tree].nodes if i !='root']
-    harmon_z = [adata.uns[fate_tree].nodes[i]['cumsum'][dims[2]] for i in adata.uns[fate_tree].nodes if i !='root']
-    ## add backbone points
-    fig.add_scatter3d(x=harmon_x,
-                      y=harmon_y,
-                      z=harmon_z,
-                      marker=dict(size=backbone_joint_size, color=backbone_joint_color),
-                      #line=dict(color='green',width=50),
-                      showlegend=False,
-                      mode='markers',
-                     )
-    edges = [e for e in  adata.uns[fate_tree].edges if e[0]!='root']
 
-    pos = {i:adata.uns[fate_tree].nodes[i]['cumsum'][dims[0:3]] for i in adata.uns[fate_tree].nodes if i !='root'}
-    ##lines = [[(0, 1), (1, 1)], [(2, 3), (3, 3)], [(1, 2), (1, 3)]]
-    lines = [[tuple(pos[e[0]]), tuple(pos[e[1]])] for e in edges]
-    for idx in range(len(lines)):
-        fig.add_scatter3d(x=[lines[idx][0][0], lines[idx][1][0]],
-                          y=[lines[idx][0][1], lines[idx][1][1]],
-                          z=[lines[idx][0][2], lines[idx][1][2]],
-                          mode='lines',
+    harmon_x = np.array([adata.uns[fate_tree].nodes[i]['cumsum'][dims[0]] for i in adata.uns[fate_tree].nodes if i !='root'])
+    harmon_y = np.array([adata.uns[fate_tree].nodes[i]['cumsum'][dims[1]] for i in adata.uns[fate_tree].nodes if i !='root'])
+    harmon_z = np.array([adata.uns[fate_tree].nodes[i]['cumsum'][dims[2]] for i in adata.uns[fate_tree].nodes if i !='root'])
+
+    nodes_name = np.array([i for i in adata.uns[fate_tree].nodes if i !='root'])
+
+    from ..tools.tree_utils import get_tree_leaves_attr
+    leaves = get_tree_leaves_attr(adata.uns[fate_tree], attr='original')
+    leaf_branches_dict ={} ### trajcluster: branches
+    all_leaf_branches = []
+    for k,v in leaves.items():
+        k_predix = k.split('_')[0]
+        branches = [i for i in nodes_name if i.startswith(k_predix)]
+        leaf_branches_dict[v] = branches
+        all_leaf_branches.extend(branches)
+
+    if is_color_backbone_joint:
+        for i, acluster in enumerate(retain_clusters):
+            branch_node = leaf_branches_dict[acluster]
+            idx = np.where(np.isin(nodes_name, branch_node))[0]
+            fig.add_scatter3d(x=harmon_x[idx],
+                              y=harmon_y[idx],
+                              z=harmon_z[idx],
+                              marker=dict(size=backbone_joint_size, color=color_palette[i]),
+                              #line=dict(color='green',width=50),
+                              showlegend=False,
+                              mode='markers',
+                             )
+        rest_branches = [i for i in nodes_name if i not in all_leaf_branches]
+        rest_idx = np.where(np.isin(nodes_name, rest_branches))[0]
+        fig.add_scatter3d(x=harmon_x[rest_idx],
+                          y=harmon_y[rest_idx],
+                          z=harmon_z[rest_idx],
+                          marker=dict(size=backbone_joint_size, color=backbone_joint_color),
+                          #line=dict(color='green',width=50),
                           showlegend=False,
-                          line=dict(width=backbone_width, color=backbone_color),
+                          mode='markers',
                          )
-    #lc = mc.LineCollection(lines, colors=backbone_color, linewidths=backbone_width)
-    #lc.set_zorder(2)
-    #ax.add_collection(lc)
+    else:
+        ## add backbone points
+        fig.add_scatter3d(x=harmon_x,
+                          y=harmon_y,
+                          z=harmon_z,
+                          marker=dict(size=backbone_joint_size, color=backbone_joint_color),
+                          #line=dict(color='green',width=50),
+                          showlegend=False,
+                          mode='markers',
+                         )
+
+
+    edges = [e for e in  adata.uns[fate_tree].edges if e[0]!='root']
+    edges_end = [e[1] for e in  adata.uns[fate_tree].edges if e[0]!='root']
+    pos = {i:adata.uns[fate_tree].nodes[i]['cumsum'][dims[0:3]] for i in adata.uns[fate_tree].nodes if i !='root'}
+    lines = [[tuple(pos[e[0]]), tuple(pos[e[1]])] for e in edges]
+
+    if is_color_backbone:
+        for i, acluster in enumerate(retain_clusters):
+            branch_node = leaf_branches_dict[acluster]
+            idxs = np.where(np.isin(edges_end, branch_node))[0]
+            for idx in idxs:
+                fig.add_scatter3d(x=[lines[idx][0][0], lines[idx][1][0]],
+                                  y=[lines[idx][0][1], lines[idx][1][1]],
+                                  z=[lines[idx][0][2], lines[idx][1][2]],
+                                  mode='lines',
+                                  showlegend=False,
+                                  line=dict(width=backbone_width, color=color_palette[i]),
+                                 )
+        rest_idx = np.where(~np.isin(edges_end, all_leaf_branches))[0]
+        for idx in rest_idx:
+            fig.add_scatter3d(x=[lines[idx][0][0], lines[idx][1][0]],
+                              y=[lines[idx][0][1], lines[idx][1][1]],
+                              z=[lines[idx][0][2], lines[idx][1][2]],
+                              mode='lines',
+                              showlegend=False,
+                              line=dict(width=backbone_width, color=backbone_color),
+                             )
+
+    else:
+        ##lines = [[(0, 1), (1, 1)], [(2, 3), (3, 3)], [(1, 2), (1, 3)]]
+        for idx in range(len(lines)):
+            fig.add_scatter3d(x=[lines[idx][0][0], lines[idx][1][0]],
+                              y=[lines[idx][0][1], lines[idx][1][1]],
+                              z=[lines[idx][0][2], lines[idx][1][2]],
+                              mode='lines',
+                              showlegend=False,
+                              line=dict(width=backbone_width, color=backbone_color),
+                             )
+        #lc = mc.LineCollection(lines, colors=backbone_color, linewidths=backbone_width)
+        #lc.set_zorder(2)
+        #ax.add_collection(lc)
 
 
     if not return_fig:

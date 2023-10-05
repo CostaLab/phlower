@@ -31,7 +31,12 @@ def tree_label_dict(adata,
                     branch_label = False,
                     ):
     htree = adata.uns[tree]
-    d1= nx.get_node_attributes(adata.uns[tree], from_)
+
+    if from_  != "node_name":
+        d1= nx.get_node_attributes(adata.uns[tree], from_)
+    else:
+        d1 = {i:i for i in adata.uns[tree].nodes()}
+    #d1= nx.get_node_attributes(adata.uns[tree], from_)
 
 
     if to_ == "original":
@@ -160,6 +165,9 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
         Store the coordinates of nodes ('nodes') and edges ('edges') in subwaymap plot.
     """
     #print("Minor adjusted from https://github.com/pinellolab/STREAM  d20cc1faea58df10c53ee72447a9443f4b6c8e03")
+    ## 1. node_name is the node name
+    ## 2. label is like S1 S2.... from stream
+    ## 3. original is the name we specified
 
     if isinstance(preference, dict):
         if list(preference.keys())[0] == "original":

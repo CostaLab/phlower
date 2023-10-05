@@ -347,7 +347,7 @@ def harmonic_trajs_ranks(adata: AnnData,
     d_c = defaultdict(list)# key(end_cluster), val(traject_clusters)
     d_c_detail = defaultdict(list)#
     for cluster in retain_clusters:
-        c = Counter(adata.obs['group'].loc[list(d_node_freq[cluster].index)])
+        c = Counter(adata.obs[group_name].loc[list(d_node_freq[cluster].index)])
         d_c[c.most_common()[0][0]].append(cluster)
         d_c_detail[cluster].append(c)
         if verbose:
@@ -408,13 +408,13 @@ def unique_trajectory_clusters(adata: AnnData,
     for k,v in d_c.items():
         ## find the cluster which has largest number
         largest_idx = np.argmax(np.array([d_cluster_counts[i] for i in  v]))
-        rm_clusters = np.delete(np.array(v), largest_idx)
+        rm_clusters = list(np.delete(np.array(v), largest_idx))
         rm_list.extend(rm_clusters)
         if verbose:
             print(f"to remove clusters {rm_clusters} due to be duplicated" )
     if not d_c  and verbose:
         print(f"no duplicated trajectory cluster to be removed")
-    remove_trajectory_clusters(adata, rm_clusters, trajs_clusters, trajs_name, iscopy=False, verbose=verbose)
+    remove_trajectory_clusters(adata, rm_list, trajs_clusters, trajs_name, iscopy=False, verbose=verbose)
 
     return adata if iscopy else None
 #endf unique_trajectory_clusters
@@ -425,7 +425,7 @@ def select_trajectory_clusters(adata,
                                trajs_clusters="trajs_clusters",
                                trajs_name='knn_trajs',
                                rm_cluster_ratio=0.005,
-                               manual_rm_clusters=[],
+                               manual_rm_clusters=[-1],
                                iscopy=False,
                                verbose=True):
     """

@@ -130,5 +130,91 @@ def assign_graph_node_attr_to_adata(adata, graph_name='X_pca_ddhodge_g', from_at
 
 #endf assign_graph_node_attr_to_adata
 
+def get_tree_leaves_attr(tree: nx.DiGraph, attr: str = 'original'):
+    """
+    the implementation of fate tree merge is using the tuple for each node, thus, the tuple lengths are only 1 for the leaf nodes.
+    we just extract the name of the leaf nodes as string
+    return dict: {node_name: leaf attribute with string or int format}
+    """
+    leaves = [x for x in tree.nodes() if tree.out_degree(x)==0 and tree.in_degree(x)==1]
+
+    ret_dict = {}
+    for leaf in leaves:
+        attr_val = tree.nodes[leaf][attr]
+        if isinstance(attr_val, tuple):
+            attr_val = attr_val[0]
+        if isinstance(attr_val, tuple):
+            attr_val = attr_val[0]
+        if isinstance(attr_val, tuple):
+            attr_val = attr_val[0]
+
+        ret_dict[leaf] = attr_val
+
+    #{leaf: tree.nodes[leaf][attr][0][0] if  isinstance(tree.nodes[leaf][attr][0],  tuple) else  tree.nodes[leaf][attr][0] for leaf in leaves }
+    return ret_dict
+#endf get_tree_leaves_attr
 
 
+def get_all_attr_names(tree):
+    """
+    return all the attribute names of the tree nodes
+    """
+    first_node = list(tree.nodes())[0]
+    return list(tree.nodes[first_node].keys())
+#endf get_all_attr_names
+
+
+def tree_label_dict(adata,
+                    tree = "fate_tree",
+                    from_ = "node_name",
+                    to_ = 'original',
+                    branch_label = False,
+                    ):
+    htree = adata.uns[tree]
+    if from_  != "node_name":
+        d1= nx.get_node_attributes(adata.uns[tree], from_)
+    else:
+        d1 = {i:i for i in adata.uns[tree].nodes()}
+    #d1= nx.get_node_attributes(adata.uns[tree], from_)
+
+    if to_ == "original":
+        d2 = nx.get_node_attributes(adata.uns[tree], to_)
+    elif to_ == "node_name":
+        d2 = {i:i for i in adata.uns[tree].nodes()}
+    #print(d2)
+
+    if branch_label:
+        dd = {v:d2[k] for k,v in d1.items()}
+    else: ## only keep leave annotation
+        dd = {v:d2[k][0] if len(d2[k]) == 1 else ""  for k,v in d1.items()}
+    return dd
+#endf tree_label_dict
+
+
+def tree_original_dict(tree, leaf_name):
+    """
+    Given a node original name like '27-PODO' or ('27-PODO',) or ('27-PODO', "9-PT/LOH"),
+    find all the original names in the path return a dict {node_name: original_name}
+
+    Parameters
+    ----------
+    tree: networkx.DiGraph
+        fate tree
+    leaf_name: str or tuple
+        the original name of the leaf node
+    """
+    attrs = nx.get_node_attributes(tree, 'original')
+    leaf_type = "tuple" if isinstance(leaf_name, tuple) else "str"
+    d = {}
+    if leaf_type == "str":
+        for k,v in attrs.items():
+            if len(v[0]) > 1:
+                continue
+            if v[0][0] == leaf_name:
+                d[k] = v
+    elif leaf_type == "tuple":
+        for k,v in attrs.items():
+            if set(v[0]) == set(leaf_name):
+                d[k] = v
+    return d
+#endf tree_original_dict

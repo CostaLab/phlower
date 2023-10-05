@@ -36,6 +36,7 @@ def fate_velocity_plot_cumsum(
     ax=None,
     node_alpha: float = 0.5,
     maxlinewidth = 5,
+    lines_sample_ratio=0.3,
     alpha: float = 0.5,
     #streamdensity: float = 1.5,
 
@@ -73,7 +74,7 @@ def fate_velocity_plot_cumsum(
                        **kwargs)
     if show_cumsum:
         from .plotting import plot_trajectory_harmonic_lines
-        plot_trajectory_harmonic_lines(adata, sample_ratio=0.1, show_legend=False, ax=ax)
+        plot_trajectory_harmonic_lines(adata, sample_ratio=lines_sample_ratio, show_legend=False, ax=ax)
 
 #endf fate_velocity_plot
 

@@ -16,7 +16,7 @@ from tqdm import trange
 from networkx.algorithms.components.connected import connected_components
 from collections import Counter, defaultdict
 from ..util import bsplit, pairwise, term_frequency_cosine, find_cut_point, find_cut_point_bu
-
+from .hodgedecomp import knee_eigen
 from .trajectory import M_create_matrix_coordinates_trajectory_Hspace
 from .tree_utils import _edge_two_ends
 
@@ -32,28 +32,29 @@ from ..external.stream_extra import (add_pos_to_graph,
 
 
 def harmonic_stream_tree(adata: AnnData,
-                        graph_name: str = None,
-                        evector_name=None,
-                        layout_name: str = None,
-                        eigen_n = -1,
-                        min_bin_number = 5,
-                        cut_threshold = 1,
-                        trim_end = False,
-                        full_traj_matrix = 'full_traj_matrix',
-                        trajs_clusters = 'trajs_clusters',
-                        trajs_use = 10000,
-                        retain_clusters = [],
-                        node_attribute = 'u',
-                        time_sync_u = "edge_mid_u",
-                        pca_name = "X_pca",
-                        node_bottom_up = True,
-                        min_kde_quant_rm = 0.1,
-                        kde_sample_n = 10000,
-                        random_seed = 2022,
-                        stream_workdir='',
-                        verbose = False,
-                        iscopy=False,
-                        ):
+                         graph_name: str = None,
+                         evector_name=None,
+                         layout_name: str = None,
+                         cluster:str = "group",
+                         eigen_n = -1,
+                         min_bin_number = 5,
+                         cut_threshold = 1,
+                         trim_end = False,
+                         full_traj_matrix = 'full_traj_matrix',
+                         trajs_clusters = 'trajs_clusters',
+                         trajs_use = 10000,
+                         retain_clusters = [],
+                         node_attribute = 'u',
+                         time_sync_u = "edge_mid_u",
+                         pca_name = "X_pca",
+                         node_bottom_up = True,
+                         min_kde_quant_rm = 0.1,
+                         kde_sample_n = 10000,
+                         random_seed = 2022,
+                         stream_workdir='',
+                         verbose = False,
+                         iscopy=False,
+                         ):
     """
     create a pseudo tree based on the grouped trajectories using cumulative trajectory embedding to decide branching
 
@@ -148,7 +149,7 @@ def harmonic_stream_tree(adata: AnnData,
     htree,root = create_branching_tree(pairwise_bdict, keys=None)
     if verbose:
         print(datetime.now(), "tree attributes adding...")
-    fate_tree = create_detail_tree(adata, htree, root, ddf, trim_end=trim_end, graph_name=graph_name, layout_name=layout_name)
+    fate_tree = create_detail_tree(adata, htree, root, ddf, trim_end=trim_end, graph_name=graph_name, layout_name=layout_name, cluster=cluster)
     adata.uns['fate_tree'] = fate_tree
     if verbose:
         print(datetime.now(), "plugin to STREAM...")

@@ -7,7 +7,7 @@ import networkx as nx
 from sklearn.preprocessing import StandardScaler
 from anndata import AnnData
 from typing import Union, List, Tuple, Dict
-from .tree_utils import _edge_two_ends, _edgefreq_to_nodefreq
+from .tree_utils import _edge_two_ends, _edgefreq_to_nodefreq, tree_original_dict
 from ..util import get_quantiles
 
 
@@ -38,6 +38,24 @@ def find_a_branch_all_predecessors(tree:nx.DiGraph=None,
             break
     return ret_list[::-1]
 #endf find_a_branch_all_predecessors
+
+def find_end_leaf(tree:nx.DiGraph=None,
+                  current_node:str=None):
+    """
+    find the leaf from current
+
+    Parameters
+    ----------
+    tree: networkx.DiGraph
+        fate tree
+    current_node: str
+        the node to find the leaf
+    """
+    return list(nx.dfs_tree(tree, current_node))[-1]
+#endf find_end_leaf
+
+
+
 
 def find_last_branching(tree:nx.DiGraph=None,
                         daughter_node:str=None):
@@ -125,6 +143,7 @@ def tree_nodes_markers(adata: AnnData,
                        iscopy = False,
                        vs1_name:str = None,
                        vs2_name:str = None,
+                       vs_name:str = None,
                        **kwargs):
     """
     use scanpy to find markers
@@ -151,6 +170,8 @@ def tree_nodes_markers(adata: AnnData,
         the name of vs1, default is nodes1
     vs2_name: str
         the name of vs2, default is nodes2
+    vs_name: str
+        if specified, use this name as the name of vs1 and vs2
     kwargs:
         additional parameters for sc.tl.rank_genes_groups
     """
@@ -171,8 +192,8 @@ def tree_nodes_markers(adata: AnnData,
         if node1 not in adata.uns["fate_tree"].nodes():
             raise ValueError(f"{node1} is not in fate_tree")
 
-
-    vs_name = f"{vs1_name}_vs_{vs2_name}" if vs1_name is not None and vs2_name is not None else None
+    if not vs1_name:
+        vs_name = f"{vs1_name}_vs_{vs2_name}" if vs1_name is not None and vs2_name is not None else None
     d_edge2node = _edge_two_ends(adata)
     ## construct nodes1 array
     nodes1_name = nodes1
@@ -336,14 +357,16 @@ def tree_branches_markers(adata: AnnData,
 
 
 def tree_2branch_markers(adata: AnnData,
-                               branch_1:str,
-                               branch_2:str,
-                               include_pre_branch: bool = False,
-                               name_append: str = "",
-                               ratio:float=0.3,
-                               compare_position:str = "start",
-                               iscopy:bool=False,
-                               **kwargs):
+                         branch_1:str,
+                         branch_2:str,
+                         tree_attr:str="original",
+                         include_pre_branch: bool = False,
+                         name_append: str = "",
+                         ratio:float=0.3,
+                         compare_position:str = "start",
+                         vs_name:str=None,
+                         iscopy:bool=False,
+                         **kwargs):
 
     """
     if compare_position is start:
@@ -380,6 +403,8 @@ def tree_2branch_markers(adata: AnnData,
         the branching node to have branches, here could be a
     branch_2: str
         the branching node to have branches, here could be b
+    tree_attr: str
+        the attribute of the tree to be used， default is node_name, could also be original
     include_pre_branch: bool
         whether to include the branching node branch in the comparison
     ratio: float
@@ -389,11 +414,27 @@ def tree_2branch_markers(adata: AnnData,
     kwargs: dict
         the parameters for tree_nodes_markers
     """
+    if tree_attr == "node_name":
+        pass
+    elif tree_attr == "original":
+        #convert original to node_name
+        branch_1_d = tree_original_dict(adata.uns['fate_tree'], branch_1)
+        branch_2_d = tree_original_dict(adata.uns['fate_tree'], branch_2)
+        if len(branch_1_d) <1 or len(branch_2_d) <1:
+            raise Exception(f"branch_1 or branch_2 is not in the tree")
+
+        branch_1 = find_end_leaf(adata.uns['fate_tree'], list(branch_1_d.keys())[0])
+        branch_2 = find_end_leaf(adata.uns['fate_tree'], list(branch_2_d.keys())[0])
+
+
+    print(branch_1, branch_2)
     nodes1 = find_a_branch_all_predecessors(adata.uns['fate_tree'], branch_1)
     nodes2 = find_a_branch_all_predecessors(adata.uns['fate_tree'], branch_2)
 
     branching_node1 = find_last_branching(adata.uns['fate_tree'], branch_1)
     branching_node2 = find_last_branching(adata.uns['fate_tree'], branch_2)
+
+
     assert branching_node1 == branching_node2, "branching node is not the same"
 
     len1 = max(int(len(nodes1)*ratio),1)
@@ -416,7 +457,7 @@ def tree_2branch_markers(adata: AnnData,
 
     adata = adata.copy() if iscopy else adata
     against_name = f"{branch_2}" if not name_append else f"{branch_2}_{name_append}"
-    tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{branch_1}", vs2_name=against_name,**kwargs)
+    tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{branch_1}", vs2_name=against_name, vs_name=vs_name, **kwargs)
     return adata if iscopy else None
 #endf tree_2branch_markers_start
 
@@ -506,8 +547,9 @@ def TF_gene_correlation(adata: AnnData,
 
 
 def tree_branches_smooth_window(adata: AnnData,
-                                start_branching_node: str,
-                                end_branching_node: str,
+                                start_branching_node: str="",
+                                end_branching_node: str="",
+                                tree_attr:str="original",
                                 fate_tree: str= "fate_tree",
                                 smooth_window_ratio: float=0.1,
                                 ):
@@ -531,7 +573,7 @@ def tree_branches_smooth_window(adata: AnnData,
     adata: AnnData
         AnnData object with gene expression or TF binding data
     start_branching_node: str
-        the name of the start branching node
+        the name of the start branching node, if "", use the lastest branching node
     end_branching_node: str
         the name of the end branching node
     fate_tree: str
@@ -539,6 +581,16 @@ def tree_branches_smooth_window(adata: AnnData,
     smooth_window_ratio: float
         the ratio of the smooth window
     """
+
+    if tree_attr == "node_name":
+        pass
+    elif tree_attr == "original":
+        #convert original to node_name
+        end_branching_node_d = tree_original_dict(adata.uns['fate_tree'], end_branching_node)
+        end_branching_node = find_end_leaf(adata.uns['fate_tree'], list(end_branching_node_d.keys())[0])
+    if not start_branching_node:
+        start_branching_node = find_last_branching(adata.uns[fate_tree], end_branching_node)
+
     if start_branching_node not in adata.uns['fate_tree'].nodes:
         raise ValueError(f"start_branching_node {start_branching_node} is not in the fate tree")
     if end_branching_node not in adata.uns['fate_tree'].nodes:
