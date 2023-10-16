@@ -5,6 +5,21 @@ import pandas as pd
 import networkx as nx
 from ..util import networkx_node_to_df
 
+def flatten_tuple(nested_tuple):
+    # check if tuple is empty
+    if not(bool(nested_tuple)):
+        return nested_tuple
+
+     # to check instance of tuple is empty or not
+    if isinstance(nested_tuple[0], tuple):
+
+        # call function with subtuple as argument
+        return flatten_tuple(*nested_tuple[:1]) + flatten_tuple(nested_tuple[1:])
+
+    # call function with subtuple as argument
+    return nested_tuple[:1] + flatten_tuple(nested_tuple[1:])
+
+
 
 def _edgefreq_to_nodefreq(edge_freq, d_edge2node):
     """
@@ -215,6 +230,8 @@ def tree_original_dict(tree, leaf_name):
     elif leaf_type == "tuple":
         for k,v in attrs.items():
             if set(v[0]) == set(leaf_name):
+                d[k] = v
+            elif set(flatten_tuple(v[0])) == set(flatten_tuple(leaf_name)):
                 d[k] = v
     return d
 #endf tree_original_dict

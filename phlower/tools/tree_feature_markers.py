@@ -6,7 +6,7 @@ import pandas as pd
 import networkx as nx
 from sklearn.preprocessing import StandardScaler
 from anndata import AnnData
-from typing import Union, List, Tuple, Dict
+from typing import Union, List, Tuple, Dict, Set
 from .tree_utils import _edge_two_ends, _edgefreq_to_nodefreq, tree_original_dict
 from ..util import get_quantiles
 
@@ -39,7 +39,7 @@ def find_a_branch_all_predecessors(tree:nx.DiGraph=None,
     return ret_list[::-1]
 #endf find_a_branch_all_predecessors
 
-def find_end_leaf(tree:nx.DiGraph=None,
+def find_branch_end(tree:nx.DiGraph=None,
                   current_node:str=None):
     """
     find the leaf from current
@@ -51,8 +51,11 @@ def find_end_leaf(tree:nx.DiGraph=None,
     current_node: str
         the node to find the leaf
     """
-    return list(nx.dfs_tree(tree, current_node))[-1]
-#endf find_end_leaf
+    node_list = list(nx.dfs_tree(tree, current_node))
+    prefix = node_list[0].split("_")[0] + "_"
+    node_list = [node for node in node_list if node.startswith(prefix)]
+    return node_list[-1]
+#endf find_branch_end
 
 
 
@@ -355,15 +358,146 @@ def tree_branches_markers(adata: AnnData,
     return adata if iscopy else None
 #endf tree_branches_markers
 
-
-def tree_2branch_markers(adata: AnnData,
-                         branch_1:str,
-                         branch_2:str,
+def tree_mbranch_markers(adata: AnnData,
+                         branches_1: set([tuple]),
+                         branches_2: set([tuple]),
                          tree_attr:str="original",
                          include_pre_branch: bool = False,
                          name_append: str = "",
                          ratio:float=0.3,
-                         compare_position:str = "start",
+                         compare_position:str = "start", # or end
+                         vs_name:str=None,
+                         iscopy:bool=False,
+                         **kwargs):
+
+    """
+    if compare_position is start:
+
+            |>>O>>>>>>>----O-----a
+            |
+        -<<<|ab
+            |
+            |<<O<<<<<<<<------------O----b
+            |
+            |>>O>>>>>>>>------------O----c
+
+    if compare_position is end:
+
+            |--O-----------O<<<<<a
+            |
+            |
+        --<<|ab
+            |
+            |--O------------->>>>>>>O>>>>b
+            |
+            |--O------------->>>>>>>O>>>>c
+
+    1. find different markers that regulate branch set(a) and branch set(b, c)
+    2. the markers can be the start of the branch or the end of the branch
+    3. this function focus on the start of the branch
+        i)   find all of the nodes of the branch a and branch b
+        ii)  select a good ratio of the nodes as the start of the branch(>>>>)
+        iii) find the markers that regulate the start of the branch
+
+    (>>>>>) against (<<<)
+
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object
+    branch_1: set
+        the branching node to have branches, here could be a
+    branch_2: set
+        the branching node to have branches, here could be b
+    tree_attr: str
+        the attribute of the tree to be used， default is node_name, could also be original
+    include_pre_branch: bool
+        whether to include the branching node branch in the comparison
+    ratio: float
+        the ratio of the nodes in a branch to be compared to the number of nodes in the other branch
+    compare_position: str
+        the position to compare, could be `start` or `end`
+    iscopy: bool
+        whether to return a copy of the AnnData object
+    kwargs: dict
+        the parameters for tree_nodes_markers
+    """
+
+    if not isinstance(branches_1, set):
+        raise ValueError("branches_1 must be a set")
+    if not isinstance(branches_2, set):
+        raise ValueError("branches_2 must be a set")
+
+
+    nodes1_list = []
+    nodes2_list = []
+
+    for branch_1 in branches_1:
+        if tree_attr == "node_name":
+            pass
+        elif tree_attr == "original":
+            #convert original to node_name
+            branch_1_d = tree_original_dict(adata.uns['fate_tree'], branch_1)
+            if len(branch_1_d) <1 :
+                raise Exception(f"branch_1 is not in the tree")
+            branch_1 = find_branch_end(adata.uns['fate_tree'], list(branch_1_d.keys())[0])
+        nodes1 = find_a_branch_all_predecessors(adata.uns['fate_tree'], branch_1)
+        nodes1_list.extend(nodes1)
+
+    for branch_2 in branches_2:
+        if tree_attr == "node_name":
+            pass
+        elif tree_attr == "original":
+            #convert original to node_name
+            branch_2_d = tree_original_dict(adata.uns['fate_tree'], branch_2)
+            if len(branch_2_d) <1:
+                raise Exception(f"branch_1 or branch_2 is not in the tree")
+            branch_2 = find_branch_end(adata.uns['fate_tree'], list(branch_2_d.keys())[0])
+        nodes2 = find_a_branch_all_predecessors(adata.uns['fate_tree'], branch_2)
+        nodes2_list.extend(nodes2)
+
+    nodes1 = nodes1_list
+    nodes2 = nodes2_list
+
+#    branching_node1 = find_last_branching(adata.uns['fate_tree'], branch_1)
+#    branching_node2 = find_last_branching(adata.uns['fate_tree'], branch_2)
+#
+#
+#    assert branching_node1 == branching_node2, "branching node is not the same"
+
+    len1 = max(int(len(nodes1)*ratio),1)
+    len2 = max(int(len(nodes2)*ratio),1)
+    if compare_position == "start":
+        nodes1 = nodes1[:len1]
+        nodes2 = nodes2[:len2]
+    elif compare_position == "end":
+        nodes1 = nodes1[-1*len1:]
+        nodes2 = nodes2[-1*len2:]
+    else:
+        raise Exception(f"compare_position {compare_position} is not supported, options: start, end")
+
+#    if include_pre_branch:
+#        pre_branch = find_a_branch_all_predecessors(adata.uns['fate_tree'], branching_node1)
+#        len_pre_branch = max(int(len(pre_branch)*ratio), 1)
+#        nodes_branching = (pre_branch[-1*len_pre_branch:])
+#        nodes2 += nodes_branching
+
+
+    adata = adata.copy() if iscopy else adata
+    against_name = f"{branch_2}" if not name_append else f"{branch_2}_{name_append}"
+    tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{branch_1}", vs2_name=against_name, vs_name=vs_name, **kwargs)
+    return adata if iscopy else None
+#endf tree_mbranch_markers
+
+
+def tree_2branch_markers(adata: AnnData,
+                         branch_1: Union[str, tuple] ,
+                         branch_2: Union[str, tuple],
+                         tree_attr:str="original",
+                         include_pre_branch: bool = False,
+                         name_append: str = "",
+                         ratio:float=0.3,
+                         compare_position:str = "start", # or end
                          vs_name:str=None,
                          iscopy:bool=False,
                          **kwargs):
@@ -409,6 +543,8 @@ def tree_2branch_markers(adata: AnnData,
         whether to include the branching node branch in the comparison
     ratio: float
         the ratio of the nodes in a branch to be compared to the number of nodes in the other branch
+    compare_position: str
+        the position to compare, could be `start` or `end`
     iscopy: bool
         whether to return a copy of the AnnData object
     kwargs: dict
@@ -420,11 +556,13 @@ def tree_2branch_markers(adata: AnnData,
         #convert original to node_name
         branch_1_d = tree_original_dict(adata.uns['fate_tree'], branch_1)
         branch_2_d = tree_original_dict(adata.uns['fate_tree'], branch_2)
+        print(branch_1_d)
+        print(branch_2_d)
         if len(branch_1_d) <1 or len(branch_2_d) <1:
             raise Exception(f"branch_1 or branch_2 is not in the tree")
 
-        branch_1 = find_end_leaf(adata.uns['fate_tree'], list(branch_1_d.keys())[0])
-        branch_2 = find_end_leaf(adata.uns['fate_tree'], list(branch_2_d.keys())[0])
+        branch_1 = find_branch_end(adata.uns['fate_tree'], list(branch_1_d.keys())[0])
+        branch_2 = find_branch_end(adata.uns['fate_tree'], list(branch_2_d.keys())[0])
 
 
     print(branch_1, branch_2)
@@ -459,7 +597,7 @@ def tree_2branch_markers(adata: AnnData,
     against_name = f"{branch_2}" if not name_append else f"{branch_2}_{name_append}"
     tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{branch_1}", vs2_name=against_name, vs_name=vs_name, **kwargs)
     return adata if iscopy else None
-#endf tree_2branch_markers_start
+#endf tree_2branch_markers
 
 
 def tree_markers_dump_table(adata: AnnData,
@@ -587,7 +725,7 @@ def tree_branches_smooth_window(adata: AnnData,
     elif tree_attr == "original":
         #convert original to node_name
         end_branching_node_d = tree_original_dict(adata.uns['fate_tree'], end_branching_node)
-        end_branching_node = find_end_leaf(adata.uns['fate_tree'], list(end_branching_node_d.keys())[0])
+        end_branching_node = find_branch_end(adata.uns['fate_tree'], list(end_branching_node_d.keys())[0])
     if not start_branching_node:
         start_branching_node = find_last_branching(adata.uns[fate_tree], end_branching_node)
 
