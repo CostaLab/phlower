@@ -10,8 +10,131 @@ from typing import Union, List, Tuple, Dict, Set
 from .tree_utils import _edge_two_ends, _edgefreq_to_nodefreq, tree_original_dict
 from ..util import get_quantiles
 
+def find_samelevel_daugthers(fate_tree:nx.DiGraph=None, start_node:str=None):
+    """
+    give a node, find it's one branching node for each sub-branch
+    """
 
-def find_a_branch_all_predecessors(tree:nx.DiGraph=None,
+    tranversed_nodes = list(nx.bfs_tree(fate_tree, start_node))#'0_0'
+    start_prefix = start_node.split("_")[0]
+    tranversed_nodes = [node for node in tranversed_nodes if not node.startswith(start_prefix)] #ignore main branch
+    prefix_list = [node.split("_")[0] for node in tranversed_nodes]
+    prefix_set = set()
+    for i,p in enumerate(prefix_list):
+        if p not in prefix_set:
+            prefix_set.add(p)
+        else:
+            break
+    return tranversed_nodes[:i]
+#endf find_samelevel_daugthers
+
+def time_slot_sets(node_list):
+    """
+    nodes format: idx_timeslot
+    given a node_list, compile a list, each element is a set of nodes in the same time slot
+    """
+    node_list = list(node_list)
+    appendix = [int(node.split("_")[1]) for node in node_list]
+    idxs = np.argsort(appendix)
+    curr_idx = idxs[0]
+    ret_list = []
+    for idx in idxs:
+        if appendix[idx] != appendix[curr_idx]:
+            ret_list.append(set([node_list[idx]]))
+        elif len(ret_list) == 0:
+            ret_list.append(set([node_list[idx]]))
+        else:
+            ret_list[-1].add(node_list[idx])
+        curr_idx = idx
+    return ret_list
+#endf times slot
+
+def add_merge_node(fate_tree, new_tree, father, nodes, name, f_original):
+    from collections import Counter
+    from functools import reduce
+    new_tree.add_edge(father, name)
+    #merge ecount
+    #if fate_tree.has_node()
+    d_list = [Counter(dict(fate_tree.nodes[n]['ecount'])) for n in nodes]
+    d_ecount = reduce(lambda a,b: a+b, d_list)
+    ecount = [(k,v) for k,v in d_ecount.items()]
+    nx.set_node_attributes(new_tree, {name:ecount}, name='ecount')
+
+    #set original
+    original = (f_original[0], int(name.split('_')[1]))
+    nx.set_node_attributes(new_tree, {name:original}, name='original')
+    #TODO:
+        #merge X_pca_ddhodge
+        #merge u
+        #merge cumsum
+        #merge X_pac
+    return new_tree
+
+
+def helping_merged_tree(adata, fate_tree='fate_tree', start_node='0_0', outname='fate_main_tree', iscopy=False):
+    """
+    from tree:
+                             |---------------
+          |------------------|
+          |                  |------
+          |              |------------
+    ------|--------------|
+          |              |------------
+          |       |------------------
+          |-------|
+                  |-------------
+
+    to tree:
+          |------------------|---------------
+          |
+          |
+    ------|--------------|------------
+          |
+          |
+          |-------|------------------
+    """
+
+    adata = adata.copy() if iscopy else adata
+    fate_tree = adata.uns[fate_tree]
+
+    father = find_branch_end(fate_tree, start_node) #0_0
+    daughter_nodes = find_samelevel_daugthers(fate_tree, father) #1_1, 3_1, 4_1
+    merge_branch_dict = {}# key:val = last_node:its_merged nodes
+    for d_node in daughter_nodes:
+        bnodes = list(nx.dfs_tree(fate_tree, d_node)) #1_1, 1_2, ...
+        bfather = bnodes[0] ##1_1
+
+        bpoint = find_branch_end(fate_tree, bfather) ## 1_8
+        bs_idx = np.where(np.array(bnodes) == bpoint)[0][0] ## 1_8 index
+        ##1_8: [{5_9,8_9},{5_11},{5_14, 8_14}]
+        merge_branch_dict[bnodes[bs_idx]] = time_slot_sets(bnodes[bs_idx+1:])
+
+    ## 1.new_tree to remove nodes need to be merges
+    new_tree = fate_tree.copy()
+    for k, v in merge_branch_dict.items():
+        rm_list = [j for i in v for j in i]
+        for n in rm_list:
+            new_tree.remove_node(n)
+    ## 2. add new nodes with same prefix as father 1_8
+    for k, v in merge_branch_dict.items():
+        father = k
+        prefix = k.split("_")[0]
+        ## for a time slot like 9, merge 5_9 and 8_9 into 1_9
+        for aset in v:
+            appendix = list(aset)[0].split('_')[1]
+            new_node_name = f'{prefix}_{appendix}'
+            if fate_tree.has_node(father):
+                add_merge_node(fate_tree, new_tree, father, aset, new_node_name, fate_tree.nodes[father]['original']) ## connect to last existing node
+            else:
+                add_merge_node(fate_tree, new_tree, father, aset, new_node_name, new_tree.nodes[father]['original'])  ## connect to the new node
+            father = new_node_name
+    adata.uns[outname] = new_tree
+    return adata if iscopy else None
+#endf helping_merged_tree
+
+
+
+def find_a_branch_all_predecessors(fate_tree:nx.DiGraph=None,
                                    daughter_node:str=None):
     """
     find all predecessors of a node of same family, i.e. all nodes with the same prefix
@@ -19,7 +142,7 @@ def find_a_branch_all_predecessors(tree:nx.DiGraph=None,
 
     Parameters
     ----------
-    tree: networkx.DiGraph
+    fate_tree: networkx.DiGraph
         fate tree
     daughter_node: str
         the node to find all predecessors
@@ -28,7 +151,7 @@ def find_a_branch_all_predecessors(tree:nx.DiGraph=None,
     prefix = daughter_node.split("_")[0] + '_'
     current_daughter = daughter_node
     while True:
-        father = list(tree.predecessors(current_daughter))
+        father = list(fate_tree.predecessors(current_daughter))
         if len(father) != 1:
             break
         if father[0].startswith(prefix): ##only extract nodes from same family
@@ -143,10 +266,11 @@ def _edgefreq_to_nodefreq(edge_freq:List[tuple]=None,
 def tree_nodes_markers(adata: AnnData,
                        nodes1:Union[str, List[str]] = None,
                        nodes2:Union[str, List[str]] = None,
-                       iscopy = False,
+                       fate_tree = 'fate_tree',
                        vs1_name:str = None,
                        vs2_name:str = None,
                        vs_name:str = None,
+                       iscopy = False,
                        **kwargs):
     """
     use scanpy to find markers
@@ -189,10 +313,10 @@ def tree_nodes_markers(adata: AnnData,
     if isinstance(nodes2, str):
         nodes2 = [nodes2]
     for node2 in nodes2:
-        if node2 not in adata.uns["fate_tree"].nodes():
+        if node2 not in adata.uns[fate_tree].nodes():
             raise ValueError(f"{node2} is not in fate_tree")
     for node1 in nodes1:
-        if node1 not in adata.uns["fate_tree"].nodes():
+        if node1 not in adata.uns[fate_tree].nodes():
             raise ValueError(f"{node1} is not in fate_tree")
 
     if not vs1_name:
@@ -204,11 +328,11 @@ def tree_nodes_markers(adata: AnnData,
         nodes1_name = '.'.join(nodes1)
         nodes1_tuple = []
         for node1 in nodes1:
-            node1_tuple = adata.uns['fate_tree'].nodes[node1]['ecount']
+            node1_tuple = adata.uns[fate_tree].nodes[node1]['ecount']
             nodes1_tuple.extend(node1_tuple)
     ## construct node1 array
     else:
-        nodes1_tuple = adata.uns['fate_tree'].nodes[nodes1]['ecount']
+        nodes1_tuple = adata.uns[fate_tree].nodes[nodes1]['ecount']
 
     d_nodes_nodes1 = _edgefreq_to_nodefreq(edge_freq=nodes1_tuple, d_edge2node=d_edge2node)
     X_nodes1 = adata.X[list(d_nodes_nodes1.keys()),:]
@@ -225,11 +349,11 @@ def tree_nodes_markers(adata: AnnData,
         nodes2_name = '.'.join(nodes2)
         nodes2_tuple = []
         for node2 in nodes2:
-            node2_tuple = adata.uns['fate_tree'].nodes[node2]['ecount']
+            node2_tuple = adata.uns[fate_tree].nodes[node2]['ecount']
             nodes2_tuple.extend(node2_tuple)
     ## construct node2 array
     else:
-        nodes2_tuple = adata.uns['fate_tree'].nodes[nodes2]['ecount']
+        nodes2_tuple = adata.uns[fate_tree].nodes[nodes2]['ecount']
 
     d_nodes_nodes2 = _edgefreq_to_nodefreq(edge_freq=nodes2_tuple, d_edge2node=d_edge2node)
     X_nodes2 = adata.X[list(d_nodes_nodes2.keys()),:]
@@ -277,6 +401,7 @@ def tree_branches_markers(adata: AnnData,
                           include_pre_branch: bool = False,
                           name_append: str = None,
                           ratio:float=0.3,
+                          fate_tree = 'fate_tree',
                           iscopy:bool=False,
                           **kwargs):
 
@@ -319,7 +444,7 @@ def tree_branches_markers(adata: AnnData,
     """
     import functools
 
-    node_groups = _divide_nodes_to_branches(adata.uns['fate_tree'], branching_node)
+    node_groups = _divide_nodes_to_branches(adata.uns[fate_tree], branching_node)
     #print(node_groups)
     ## branch_1 is defined in here
     branch_1_predix = branch_1.split('_')[0]
@@ -339,7 +464,7 @@ def tree_branches_markers(adata: AnnData,
 
     ## add branching node to branches_2_predix
     if include_pre_branch:
-        pre_branch = find_a_branch_all_predecessors(adata.uns['fate_tree'], branching_node)
+        pre_branch = find_a_branch_all_predecessors(adata.uns[fate_tree], branching_node)
         len_pre_branch = max(int(len(pre_branch)*ratio), 1)
         node_groups["branching"] = (pre_branch[-1*len_pre_branch:])
         branches_2_predix.append("branching")
@@ -354,14 +479,30 @@ def tree_branches_markers(adata: AnnData,
     if name_append is not None:
         vs2_name = f"{vs2_name}_{name_append}"
 
-    tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{branch_1}", vs2_name=vs2_name,**kwargs)
+    tree_nodes_markers(adata, nodes1, nodes2,  fate_tree=fate_tree, vs1_name=f"{branch_1}", vs2_name=vs2_name,**kwargs)
     return adata if iscopy else None
 #endf tree_branches_markers
+
+
+#def tree_full_mbranch_markers():
+#    """
+#    merge each branch for main branches comparison
+#    Idea:
+#        1. Merge fate_tree by the time slot number
+#        2. We next can use top percent of cells to do the comparison
+#    """
+#    pass
+#
+##endf tree_full_mbranch_markers
+
+
+
 
 def tree_mbranch_markers(adata: AnnData,
                          branches_1: set([tuple]),
                          branches_2: set([tuple]),
                          tree_attr:str="original",
+                         fate_tree:str='fate_tree',
                          include_pre_branch: bool = False,
                          name_append: str = "",
                          ratio:float=0.3,
@@ -437,11 +578,11 @@ def tree_mbranch_markers(adata: AnnData,
             pass
         elif tree_attr == "original":
             #convert original to node_name
-            branch_1_d = tree_original_dict(adata.uns['fate_tree'], branch_1)
+            branch_1_d = tree_original_dict(adata.uns[fate_tree], branch_1)
             if len(branch_1_d) <1 :
                 raise Exception(f"branch_1 is not in the tree")
-            branch_1 = find_branch_end(adata.uns['fate_tree'], list(branch_1_d.keys())[0])
-        nodes1 = find_a_branch_all_predecessors(adata.uns['fate_tree'], branch_1)
+            branch_1 = find_branch_end(adata.uns[fate_tree], list(branch_1_d.keys())[0])
+        nodes1 = find_a_branch_all_predecessors(adata.uns[fate_tree], branch_1)
         nodes1_list.extend(nodes1)
 
     for branch_2 in branches_2:
@@ -449,18 +590,18 @@ def tree_mbranch_markers(adata: AnnData,
             pass
         elif tree_attr == "original":
             #convert original to node_name
-            branch_2_d = tree_original_dict(adata.uns['fate_tree'], branch_2)
+            branch_2_d = tree_original_dict(adata.uns[fate_tree], branch_2)
             if len(branch_2_d) <1:
                 raise Exception(f"branch_1 or branch_2 is not in the tree")
-            branch_2 = find_branch_end(adata.uns['fate_tree'], list(branch_2_d.keys())[0])
-        nodes2 = find_a_branch_all_predecessors(adata.uns['fate_tree'], branch_2)
+            branch_2 = find_branch_end(adata.uns[fate_tree], list(branch_2_d.keys())[0])
+        nodes2 = find_a_branch_all_predecessors(adata.uns[fate_tree], branch_2)
         nodes2_list.extend(nodes2)
 
     nodes1 = nodes1_list
     nodes2 = nodes2_list
 
-#    branching_node1 = find_last_branching(adata.uns['fate_tree'], branch_1)
-#    branching_node2 = find_last_branching(adata.uns['fate_tree'], branch_2)
+#    branching_node1 = find_last_branching(adata.uns[fate_tree], branch_1)
+#    branching_node2 = find_last_branching(adata.uns[fate_tree], branch_2)
 #
 #
 #    assert branching_node1 == branching_node2, "branching node is not the same"
@@ -477,7 +618,7 @@ def tree_mbranch_markers(adata: AnnData,
         raise Exception(f"compare_position {compare_position} is not supported, options: start, end")
 
 #    if include_pre_branch:
-#        pre_branch = find_a_branch_all_predecessors(adata.uns['fate_tree'], branching_node1)
+#        pre_branch = find_a_branch_all_predecessors(adata.uns[fate_tree], branching_node1)
 #        len_pre_branch = max(int(len(pre_branch)*ratio), 1)
 #        nodes_branching = (pre_branch[-1*len_pre_branch:])
 #        nodes2 += nodes_branching
@@ -485,7 +626,7 @@ def tree_mbranch_markers(adata: AnnData,
 
     adata = adata.copy() if iscopy else adata
     against_name = f"{branch_2}" if not name_append else f"{branch_2}_{name_append}"
-    tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{branch_1}", vs2_name=against_name, vs_name=vs_name, **kwargs)
+    tree_nodes_markers(adata, nodes1, nodes2, fate_tree=fate_tree,  vs1_name=f"{branch_1}", vs2_name=against_name, vs_name=vs_name, **kwargs)
     return adata if iscopy else None
 #endf tree_mbranch_markers
 
@@ -494,6 +635,7 @@ def tree_2branch_markers(adata: AnnData,
                          branch_1: Union[str, tuple] ,
                          branch_2: Union[str, tuple],
                          tree_attr:str="original",
+                         fate_tree:str='fate_tree',
                          include_pre_branch: bool = False,
                          name_append: str = "",
                          ratio:float=0.3,
@@ -554,23 +696,23 @@ def tree_2branch_markers(adata: AnnData,
         pass
     elif tree_attr == "original":
         #convert original to node_name
-        branch_1_d = tree_original_dict(adata.uns['fate_tree'], branch_1)
-        branch_2_d = tree_original_dict(adata.uns['fate_tree'], branch_2)
+        branch_1_d = tree_original_dict(adata.uns[fate_tree], branch_1)
+        branch_2_d = tree_original_dict(adata.uns[fate_tree], branch_2)
         print(branch_1_d)
         print(branch_2_d)
         if len(branch_1_d) <1 or len(branch_2_d) <1:
             raise Exception(f"branch_1 or branch_2 is not in the tree")
 
-        branch_1 = find_branch_end(adata.uns['fate_tree'], list(branch_1_d.keys())[0])
-        branch_2 = find_branch_end(adata.uns['fate_tree'], list(branch_2_d.keys())[0])
+        branch_1 = find_branch_end(adata.uns[fate_tree], list(branch_1_d.keys())[0])
+        branch_2 = find_branch_end(adata.uns[fate_tree], list(branch_2_d.keys())[0])
 
 
     print(branch_1, branch_2)
-    nodes1 = find_a_branch_all_predecessors(adata.uns['fate_tree'], branch_1)
-    nodes2 = find_a_branch_all_predecessors(adata.uns['fate_tree'], branch_2)
+    nodes1 = find_a_branch_all_predecessors(adata.uns[fate_tree], branch_1)
+    nodes2 = find_a_branch_all_predecessors(adata.uns[fate_tree], branch_2)
 
-    branching_node1 = find_last_branching(adata.uns['fate_tree'], branch_1)
-    branching_node2 = find_last_branching(adata.uns['fate_tree'], branch_2)
+    branching_node1 = find_last_branching(adata.uns[fate_tree], branch_1)
+    branching_node2 = find_last_branching(adata.uns[fate_tree], branch_2)
 
 
     assert branching_node1 == branching_node2, "branching node is not the same"
@@ -587,7 +729,7 @@ def tree_2branch_markers(adata: AnnData,
         raise Exception(f"compare_position {compare_position} is not supported, options: start, end")
 
     if include_pre_branch:
-        pre_branch = find_a_branch_all_predecessors(adata.uns['fate_tree'], branching_node1)
+        pre_branch = find_a_branch_all_predecessors(adata.uns[fate_tree], branching_node1)
         len_pre_branch = max(int(len(pre_branch)*ratio), 1)
         nodes_branching = (pre_branch[-1*len_pre_branch:])
         nodes2 += nodes_branching
@@ -595,7 +737,7 @@ def tree_2branch_markers(adata: AnnData,
 
     adata = adata.copy() if iscopy else adata
     against_name = f"{branch_2}" if not name_append else f"{branch_2}_{name_append}"
-    tree_nodes_markers(adata, nodes1, nodes2,  vs1_name=f"{branch_1}", vs2_name=against_name, vs_name=vs_name, **kwargs)
+    tree_nodes_markers(adata, nodes1, nodes2, fate_tree=fate_tree, vs1_name=f"{branch_1}", vs2_name=against_name, vs_name=vs_name, **kwargs)
     return adata if iscopy else None
 #endf tree_2branch_markers
 
@@ -688,7 +830,7 @@ def tree_branches_smooth_window(adata: AnnData,
                                 start_branching_node: str="",
                                 end_branching_node: str="",
                                 tree_attr:str="original",
-                                fate_tree: str= "fate_tree",
+                                fate_tree: str= 'fate_tree',
                                 smooth_window_ratio: float=0.1,
                                 ):
 
@@ -724,14 +866,14 @@ def tree_branches_smooth_window(adata: AnnData,
         pass
     elif tree_attr == "original":
         #convert original to node_name
-        end_branching_node_d = tree_original_dict(adata.uns['fate_tree'], end_branching_node)
-        end_branching_node = find_branch_end(adata.uns['fate_tree'], list(end_branching_node_d.keys())[0])
+        end_branching_node_d = tree_original_dict(adata.uns[fate_tree], end_branching_node)
+        end_branching_node = find_branch_end(adata.uns[fate_tree], list(end_branching_node_d.keys())[0])
     if not start_branching_node:
         start_branching_node = find_last_branching(adata.uns[fate_tree], end_branching_node)
 
-    if start_branching_node not in adata.uns['fate_tree'].nodes:
+    if start_branching_node not in adata.uns[fate_tree].nodes:
         raise ValueError(f"start_branching_node {start_branching_node} is not in the fate tree")
-    if end_branching_node not in adata.uns['fate_tree'].nodes:
+    if end_branching_node not in adata.uns[fate_tree].nodes:
         raise ValueError(f"end_branching_node {end_branching_node} is not in the fate tree")
 
     bins = find_a_branch_all_predecessors(adata.uns[fate_tree], start_branching_node) + \

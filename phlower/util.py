@@ -171,6 +171,9 @@ def find_knee(x,y, plot=False):
     find the knee point of the curve
     """
     assert(len(x) == len(y))
+
+    """
+    #deprecated, use distance to begin end segment, working not well
     allcoord = np.vstack((x, y)).T
     npoints = len(x)
     firstpoint = allcoord[0]
@@ -182,6 +185,7 @@ def find_knee(x,y, plot=False):
     vec_to_line = vec_from_first - vec_from_first_parallel
     distToLine = np.sqrt(np.sum(vec_to_line ** 2, axis=1))
     idx_of_best_point = np.argmax(distToLine)
+    """
 
     ev = y
     d = {}
