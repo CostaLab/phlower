@@ -1,4 +1,5 @@
 import os
+import re
 import scipy
 import scanpy as sc
 import numpy as np
@@ -7,12 +8,23 @@ import networkx as nx
 from sklearn.preprocessing import StandardScaler
 from anndata import AnnData
 from typing import Union, List, Tuple, Dict, Set
-from .tree_utils import _edge_two_ends, _edgefreq_to_nodefreq, tree_original_dict
+from .tree_utils import (_edge_two_ends,
+                         _edgefreq_to_nodefreq,
+                         tree_original_dict,
+                         remove_duplicated_index,
+                         TF_to_genes)
 from ..util import get_quantiles
 
 def find_samelevel_daugthers(fate_tree:nx.DiGraph=None, start_node:str=None):
     """
-    give a node, find it's one branching node for each sub-branch
+    give a node, find it's first branching node for each sub-branch
+
+    Parameters
+    ----------
+    fate_tree: networkx.DiGraph
+        fate tree
+    start_node: str
+        the node to find the branching point to get all daughter branches at same level
     """
 
     tranversed_nodes = list(nx.bfs_tree(fate_tree, start_node))#'0_0'
@@ -31,7 +43,12 @@ def find_samelevel_daugthers(fate_tree:nx.DiGraph=None, start_node:str=None):
 def time_slot_sets(node_list):
     """
     nodes format: idx_timeslot
-    given a node_list, compile a list, each element is a set of nodes in the same time slot
+    given a node_list, compile an asending list(by time), each element is a set of nodes in the same time slot
+
+    Parameters
+    ----------
+    node_list: list
+        list of nodes format: idx_timeslot
     """
     node_list = list(node_list)
     appendix = [int(node.split("_")[1]) for node in node_list]
@@ -50,6 +67,25 @@ def time_slot_sets(node_list):
 #endf times slot
 
 def add_merge_node(fate_tree, new_tree, father, nodes, name, f_original):
+    """
+    Add a new node with attributes attached.
+    Currently only add attribute: ecount, original.
+
+    Parameters
+    ----------
+    fate_tree: nx.DiGraph
+        original fate_tree
+    new_tree: nx.DiGraph
+        new fate_tree by merge all subbranches.
+    father: str
+        the father node of the new node
+    nodes: set
+        nodes to be merged, mainly add up the edges counting
+    name: str
+        name of the new node
+    f_original: str
+        original name for the predix using in the new node.
+    """
     from collections import Counter
     from functools import reduce
     new_tree.add_edge(father, name)
@@ -69,6 +105,7 @@ def add_merge_node(fate_tree, new_tree, father, nodes, name, f_original):
         #merge cumsum
         #merge X_pac
     return new_tree
+#endf add_merge_node
 
 
 def helping_merged_tree(adata, fate_tree='fate_tree', start_node='0_0', outname='fate_main_tree', iscopy=False):
@@ -92,6 +129,19 @@ def helping_merged_tree(adata, fate_tree='fate_tree', start_node='0_0', outname=
           |
           |
           |-------|------------------
+
+    Parameters
+    ----------
+    adata: AnnData
+        adata object where fate_tree in adata.uns
+    fate_tree: str
+        key of fate_tree in adata.uns
+    start_node: str
+        the node to find the branching point to get all daughter branches at same level
+    outname: str
+        key of the new fate_tree in adata.uns
+    iscopy: bool
+        if True, return a copy of adata, otherwise, inplace
     """
 
     adata = adata.copy() if iscopy else adata
@@ -163,7 +213,7 @@ def find_a_branch_all_predecessors(fate_tree:nx.DiGraph=None,
 #endf find_a_branch_all_predecessors
 
 def find_branch_end(tree:nx.DiGraph=None,
-                  current_node:str=None):
+                    current_node:str=None):
     """
     find the leaf from current
 
@@ -250,6 +300,13 @@ def _edgefreq_to_nodefreq(edge_freq:List[tuple]=None,
     """
     from edge frequency to node frequency
     for each edge, it has two nodes, the node frequency is the sum of edge frequency
+
+    Parameters
+    ----------
+    edge_freq: List[tuple]
+        edge frequencies
+    d_edge2node: Dict
+        edge to node dictionary
     """
     from collections import defaultdict
     d_node_freq = defaultdict(int)
@@ -291,6 +348,8 @@ def tree_nodes_markers(adata: AnnData,
         nodes1 names from fate_tree
     nodes2: str
         nodes2 names from fate_tree
+    fate_tree: str
+        fate tree name in adata.uns
     iscopy: bool
         if True, return a copy of adata, otherwise, update adata
     vs1_name: str
@@ -436,6 +495,8 @@ def tree_branches_markers(adata: AnnData,
         whether to include the branching node branch in the comparison
     ratio: float
         the ratio of the number of cells in the branch to be compared to the number of cells in the other branches
+    fate_tree: str
+        the fate tree name
     iscopy: bool
         whether to return a copy of the AnnData object
     kwargs:
@@ -551,7 +612,9 @@ def tree_mbranch_markers(adata: AnnData,
     branch_2: set
         the branching node to have branches, here could be b
     tree_attr: str
-        the attribute of the tree to be used， default is node_name, could also be original
+        the attribute of the tree to be used: default is node_name, could also be original
+    fate_tree: str
+        the fate tree name
     include_pre_branch: bool
         whether to include the branching node branch in the comparison
     ratio: float
@@ -680,7 +743,9 @@ def tree_2branch_markers(adata: AnnData,
     branch_2: str
         the branching node to have branches, here could be b
     tree_attr: str
-        the attribute of the tree to be used， default is node_name, could also be original
+        the attribute of the tree to be used: default is node_name, could also be original
+    fate_tree: str
+        the fate tree name
     include_pre_branch: bool
         whether to include the branching node branch in the comparison
     ratio: float
@@ -807,13 +872,51 @@ def TF_gene_correlation(adata: AnnData,
     compare_obs = list(group_obs1 | group_obs2)
 
     TFs = [x[0] for x in zdata.uns['rank_genes_groups']['names']]
-    shared_symbol = list(set(adata.var_names) & set(TFs))
+    d_tf2gene = TF_to_genes(TFs, False)
 
-    expression_mtx = adata[compare_obs, shared_symbol].X
-    TF_mtx = tfbdata[compare_obs, shared_symbol].X
+    d_gene2tf= {}
+    #for k, v in d_tf2gene.items():
+    #    if k not in d_gene2tf:
+    #        d_gene2tf[v] = k
+
+    for k, v in d_tf2gene.items():
+        #if k not in d_gene2tf:
+        d_gene2tf[v] = d_gene2tf.get(v, []) + [k]
+#    for k, v in d_gene2tf.items():
+#        if len(v) > 1:
+#            print(k, v)
+    for k, v in d_gene2tf.items():
+        if len(v) == 1:
+            d_gene2tf[k] = v[0]
+        elif len(v) > 1:
+            if k in v:
+                d_gene2tf[k] = k
+            else:
+                d_gene2tf[k] = v[0]
+                if "VAR." in v[0]:
+                    #print(k, v)
+                    vv = re.sub(r"\(VAR\.\d+\)", "", v[0])
+                    d_gene2tf[k] = vv
+
+            #print(k, v)
+
+    #d_gene2tf = {v: k for k, v in d_tf2gene.items()}
+    #shared = [(i, d_tf2gene[i]) for i in adata.var_names if i in d_tf2gene]
+
+    shared = [(i, d_gene2tf[i]) for i in adata.var_names if i in d_gene2tf]
+    print(len(shared))
+    shared_genes = np.array([i[0] for i in shared])
+    shared_tfs = np.array([i[1] for i in shared])
+    remove_duplicated_index = remove_duplicated_index(shared_genes)
+    shared_genes = shared_genes[remove_duplicated_index]
+    shared_tfs = shared_tfs[remove_duplicated_index]
+    print(len(shared_genes))
+
+    expression_mtx = adata[compare_obs, shared_genes].X
+    TF_mtx = tfbdata[compare_obs, shared_tfs].X
 
     d_corr = defaultdict(float)
-    for idx, sym in enumerate(shared_symbol):
+    for idx, sym in enumerate(shared_tfs):
         expression = expression_mtx[:, idx].toarray().ravel()
         TF =  TF_mtx[:, idx].toarray().ravel()
         corr = pearsonr(expression, TF)[0]
@@ -824,6 +927,39 @@ def TF_gene_correlation(adata: AnnData,
 
     return corr_ordered
 #endf TF_gene_correlation
+
+def branch_TF_gene_correlation(tf_df:pd.DataFrame,
+                               gene_df:pd.DataFrame):
+    """
+    calculate the correlation between TF and genes using pseudo time matrix
+    return list of tuples recording the correlations ordered by correlation descendingly.
+
+    Parameters
+    ----------
+    tf_df: pd.DataFrame
+        the TF expression matrix, index is TF name, columns are bins
+    gene_df: pd.DataFrame
+        the gene expression matrix, index is gene name, columns are bins
+    """
+    from collections import Counter, defaultdict
+    from scipy.stats import pearsonr
+    ## All to upper
+    tf_df.index = [x.upper() for x in tf_df.index]
+    gene_df.index = [x.upper() for x in gene_df.index]
+    ## shared symbols
+    shared_symbol = list(set(tf_df.index) & set(gene_df.index))
+
+    d_corr = defaultdict(float)
+    for idx, sym in enumerate(shared_symbol):
+        TF = tf_df.loc[sym, :].values
+        expression = gene_df.loc[sym, :].values
+        corr = pearsonr(expression, TF)[0]
+        if np.isnan(corr):
+            continue
+        d_corr[sym] = pearsonr(expression, TF)[0]
+    corr_ordered = sorted(d_corr.items(), key=lambda x:x[1], reverse=True)
+    return corr_ordered
+#endf branch_TF_gene_correlation
 
 
 def tree_branches_smooth_window(adata: AnnData,
@@ -901,38 +1037,6 @@ def tree_branches_smooth_window(adata: AnnData,
     return smooth_df
 #endf tree_branches_smooth_window
 
-def branch_TF_gene_correlation(tf_df:pd.DataFrame,
-                               gene_df:pd.DataFrame):
-    """
-    calculate the correlation between TF and genes using pseudo time matrix
-    return list of tuples recording the correlations ordered by correlation descendingly.
-
-    Parameters
-    ----------
-    tf_df: pd.DataFrame
-        the TF expression matrix, index is TF name, columns are bins
-    gene_df: pd.DataFrame
-        the gene expression matrix, index is gene name, columns are bins
-    """
-    from collections import Counter, defaultdict
-    from scipy.stats import pearsonr
-    ## All to upper
-    tf_df.index = [x.upper() for x in tf_df.index]
-    gene_df.index = [x.upper() for x in gene_df.index]
-    ## shared symbols
-    shared_symbol = list(set(tf_df.index) & set(gene_df.index))
-
-    d_corr = defaultdict(float)
-    for idx, sym in enumerate(shared_symbol):
-        TF = tf_df.loc[sym, :].values
-        expression = gene_df.loc[sym, :].values
-        corr = pearsonr(expression, TF)[0]
-        if np.isnan(corr):
-            continue
-        d_corr[sym] = pearsonr(expression, TF)[0]
-    corr_ordered = sorted(d_corr.items(), key=lambda x:x[1], reverse=True)
-    return corr_ordered
-#endf branch_TF_gene_correlation
 
 def branch_heatmap_matrix(tf_df:pd.DataFrame,
                           max_features:int=100,

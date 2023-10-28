@@ -4,7 +4,20 @@ import numpy as np
 import pandas as pd
 from typing import Union, List
 
-def plot_rank_gene_group(adata, name='markers_1_21_vs_0_17.2_21', n_genes=10, **kwargs):
+def plot_rank_gene_group(adata,
+                         name='markers_1_21_vs_0_17.2_21',
+                         n_genes=10,
+                         **kwargs):
+    """
+    Parameters
+    ----------
+    adata: AnnData
+        An AnnData object.
+    name: str
+        The name of the differential expression analysis result.
+    n_genes: int
+        The number of genes to plot.
+    """
     if name not in adata.uns:
         raise ValueError('Name not found in adata.uns, please run `sc.tl.tree_nodes_markers` first.')
     sc.pl.rank_genes_groups(adata.uns[name], n_genes=n_genes, **kwargs)
@@ -48,8 +61,34 @@ def volcano(df: pd.DataFrame,
     """
     Parameters
     ----------
+    df: pd.DataFrame
+        A dataframe with columns of gene names, log2 fold changes, and p-values.
+    gene_column: str
+        The column name of gene names.
+    log2fc_column: str
+        The column name of log2 fold changes.
+    pval_column: str
+        The column name of p-values.
+    genes_to_highlight: list
+        A list of genes to highlight.
+    log2fc_threshold: int or list
+        The threshold of log2 fold changes to highlight.
+    pval_threshold: float
+        The threshold of p-values to highlight.
+    show_legend: bool
+        Whether to show the legend.
+    up_color: str
+        The color of up-regulated genes.
+    down_color: str
+        The color of down-regulated genes.
+    not_sig_color: str
+        The color of non-significant genes.
     is_adjust_text: bool
         whether to adjust text to avoid overlap, very slow
+    ax: matplotlib.axes.Axes
+        A matplotlib axes object.
+    text_size: int
+        The size of text.
     """
     from adjustText import adjust_text
     nplog10_ = lambda x: -np.log10(x)

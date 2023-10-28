@@ -71,6 +71,49 @@ def harmonic_backbone_3d(adata: AnnData,
     Parameters
     ----------
     adata: AnnData
+        adata object
+    fate_tree: str
+        fate tree name in adata.uns
+    backbone_width: float
+        width of the backbone, default 3
+    backbone_color: str
+        color of the backbone, default black
+    backbone_joint_size: float
+        size of the backbone joint, default 10
+    backbone_joint_color: str
+        color of the backbone joint, default black
+    is_color_backbone_joint: bool
+        if color the backbone joint, default False to color as black
+    is_color_backbone: bool
+        if color the backbone, default False to color as black
+    full_traj_matrix: str
+        full trajectory matrix name in adata.uns, default 'full_traj_matrix'
+    clusters: str
+        clusters name in adata.uns, default 'trajs_clusters'
+    evector_name: str
+        evector name in adata.uns, default None
+    retain_clusters: List
+        retain clusters in the clusters, default [] to use all
+    dims: List[int]
+        dimensions to plot, default [0,1,2]
+    figsize: Tuple[int,int]
+        figure size, default (800,800)
+    ax: matplotlib.axes.Axes
+        axes to plot on, default None
+    sample_ratio: float
+        sample ratio to plot, default 0.1
+    xylabel: bool
+        if show xy label, default True
+    show_legend: bool
+        if show legend, default True
+    fig_path: str
+        figure path to save, default None
+    return_fig: bool
+        if return the figure, default False
+    color_palette: List[str]
+        color palette to use, default sns.color_palette(cc.glasbey, n_colors=50).as_hex()
+    **args:
+        fig.add_scatter3d args
     """
     dims=list(dims)
     if sample_ratio <=0:
@@ -257,6 +300,47 @@ def harmonic_backbone(adata: AnnData,
     Parameters
     ----------
     adata: AnnData
+        an Annodata object
+    fate_tree: str
+        key of the fate tree in adata.uns, default is 'fate_tree'
+    backbone_width: float
+        width of the backbone lines, default is 3
+    backbone_color: str
+        color of the backbone lines, default is 'black'
+    backbone_joint_size: float
+        size of the backbone joints, default is 100
+    backbone_joint_color: str
+        color of the backbone joints, default is 'black'
+    arrow_size: float
+        size of the arrows, default is 0
+    arrow_color: str
+        color of the arrows, default is 'black'
+    full_traj_matrix: str
+        key of the full trajectory matrix in adata.obsm, default is 'full_traj_matrix'
+    clusters: str
+        key of the clusters in adata.obs, default is 'trajs_clusters'
+    evector_name: str
+        key of the eigen vector in adata.uns, default is None
+    retain_clusters: List
+        list of clusters to be retained, default is [] to use all
+    dims: List[int]
+        list of dimensions to be used, default is [0,1]
+    show_legend: bool
+        whether to show legend, default is True
+    legend_loc: str
+        location of the legend, default is 'center left'
+    bbox_to_anchor: List
+        bbox_to_anchor of the legend, default is (1, 0.5)
+    markerscale: float
+        markerscale of the legend, default is 4
+    ax: matplotlib axis
+        axis to plot the figure, default is None
+    sample_ratio: float
+        sample ratio of the cells to be plotted, default is 0.1
+    xylabel: bool
+        whether to show xy labels, default is True
+    color_palette: list
+        color palette to use, default is sns.color_palette(cc.glasbey, n_colors=50).as_hex()
     """
 
 
@@ -350,14 +434,30 @@ def plot_trajectory_harmonic_lines_3d(adata: AnnData,
     """
     Parameters
     ---------
-    mat_coord_Hspace:
-    cluster_list: cluster_list for each trajectory
-    ax: matplotlib axes
-    show_legend: if show legend
-    legend_loc: legend location
-    bbox_to_anchor: for position of the legend
-    markerscale: legend linewidth scale to larger or smaller
-    color_palette: color palette for show cluster_list
+    adata: AnnData
+        an Annodata object
+    full_traj_matrix: str
+        key of the full trajectory matrix in adata.uns, default is 'full_traj_matrix'
+    clusters: str
+        key of the clusters in adata.uns, default is 'trajs_clusters'
+    evector_name: str
+        key of the eigen vector in adata.uns, default is None
+    retain_clusters: list
+        clusters to be retained, default is [] to use all
+    figsize: tuple
+        figure size, default is (800,800)
+    dims: list
+        dimensions to plot, default is [0,1,2]
+    show_legend: bool
+        whether to show legend, default is True
+    sample_ratio: float
+        sample ratio of the cells to be plotted, default is 0.1
+    color_palette: list
+        color palette to use, default is sns.color_palette(cc.glasbey, n_colors=50).as_hex()
+    fig_path: str
+        path to save the figure, default is None
+    return_fig: bool
+        whether to return the figure, default is False
     """
 
     if "graph_basis" in adata.uns.keys() and not evector_name:
@@ -401,14 +501,34 @@ def plot_trajectory_harmonic_lines(adata: AnnData,
     """
     Parameters
     ---------
-    mat_coord_Hspace:
-    cluster_list: cluster_list for each trajectory
-    ax: matplotlib axes
-    show_legend: if show legend
-    legend_loc: legend location
-    bbox_to_anchor: for position of the legend
-    markerscale: legend linewidth scale to larger or smaller
-    color_palette: color palette for show cluster_list
+    adata: AnnData
+        an Annodata object
+    full_traj_matrix: str
+        key of the full trajectory matrix in adata.uns, default is 'full_traj_matrix'
+    clusters: str
+        key of the clusters in adata.uns, default is 'trajs_clusters'
+    evector_name: str
+        key of the eigen vector in adata.uns, default is None
+    retain_clusters: list
+        clusters to be retained, default is [] to use all
+    dims: list
+        dimensions to plot, default is [0,1]
+    show_legend: bool
+        whether to show legend, default is True
+    legend_loc: str
+        legend location, default is "center left"
+    bbox_to_anchor: tuple
+        legend bbox_to_anchor, default is (1, 0.5)
+    markerscale: float
+        legend markerscale, default is 4
+    ax: matplotlib axis
+        axis to plot on, default is None
+    sample_ratio: float
+        sample ratio of the cells to be plotted, default is 0.1
+    xylabel: bool
+        whether to show xy label, default is True
+    color_palette: list
+        color palette to use, default is sns.color_palette(cc.glasbey, n_colors=50).as_hex()
     """
     if "graph_basis" in adata.uns.keys() and not evector_name:
         evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
@@ -453,17 +573,32 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
     """
     Parameters
     ---------
-    mat_coor_flatten_trajectory:
-    cluster_list: cluster_list for each trajectory
-    label: if show label
-    labelsize: labelsize
-    labelstyle: options: color,text, box. same color as nodes if use `color`, black if use `text`, white color with box if use `box`
-    show_legend: if show legend
-    legend_loc: legend location
-    bbox_to_anchor: for position of the legend
-    markerscale: legend marker scale to larger or smaller
-    color_palette: color palette for show cluster_list
-    **args: args for scatter
+    adata: AnnData
+        an Annodata object
+    full_traj_matrix_flatten: str
+        key of the full trajectory matrix in adata.uns, default is 'full_traj_matrix_flatten'
+    clusters: str
+        key of the clusters in adata.uns, default is 'trajs_clusters'
+    evector_name: str
+        key of the eigen vector in adata.uns, default is None
+    retain_clusters: list
+        clusters to be retained, default is [] to use all
+    dims: list
+        dimensions to plot, default is [0,1,2]
+    node_size: float
+        node size, default is 2
+    show_legend: bool
+        whether to show legend, default is False
+    figsize: tuple
+        figure size, default is (800,800)
+    sample_ratio: float
+        sample ratio of the cells to be plotted, default is 0.1
+    color_palette: list
+        color palette to use, default is sns.color_palette(cc.glasbey, n_colors=50).as_hex()
+    fig_path: str
+        figure path to save, default is None
+    return_fig: bool
+        whether to return the figure, default is False
     """
     if "graph_basis" in adata.uns.keys() and not evector_name:
         evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
@@ -511,17 +646,40 @@ def plot_trajectory_harmonic_points(adata: AnnData,
     """
     Parameters
     ---------
-    mat_coor_flatten_trajectory:
-    cluster_list: cluster_list for each trajectory
-    label: if show label
-    labelsize: labelsize
-    labelstyle: options: color,text, box. same color as nodes if use `color`, black if use `text`, white color with box if use `box`
-    show_legend: if show legend
-    legend_loc: legend location
-    bbox_to_anchor: for position of the legend
-    markerscale: legend marker scale to larger or smaller
-    color_palette: color palette for show cluster_list
-    **args: args for scatter
+    adata: AnnData
+        an Annodata object
+    full_traj_matrix_flatten: str
+        key of the full trajectory matrix in adata.uns, default is 'full_traj_matrix_flatten'
+    clusters: str
+        key of the clusters in adata.uns, default is 'trajs_clusters'
+    evector_name: str
+        key of the eigen vector in adata.uns, default is None
+    retain_clusters: list
+        clusters to be retained, default is [] to use all
+    dims: list
+        dimensions to plot, default is [0,1]
+    label: bool
+        whether to show label, default is True
+    labelsize: float
+        label size, default is 10
+    labelstyle: str
+        label style, default is 'text'
+    node_size: float
+        node size, default is 2
+    show_legend: bool
+        whether to show legend, default is False
+    legend_loc: str
+        legend location, default is 'center left'
+    bbox_to_anchor: tuple
+        bbox_to_anchor, default is (1, 0.5)
+    markerscale: float
+        marker scale, default is 4
+    ax: matplotlib axis
+        axis to plot, default is None
+    sample_ratio: float
+        sample ratio of the cells to be plotted, default is 0.1
+    color_palette: list
+        color palette to use, default is sns.color_palette(cc.glasbey, n_colors=50).as_hex()
     """
     if "graph_basis" in adata.uns.keys() and not evector_name:
         evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
@@ -563,6 +721,30 @@ def plot_fate_tree_embedding(adata: AnnData,
                              ax=None,
                              **args,
                              ):
+    """
+    Parameters
+    ---------
+    adata: AnnData
+        an Annodata object
+    graph_name: str
+        key of the graph in adata.uns, default is None
+    layout_name: str
+        key of the layout in adata.obsm, default is None
+    fate_tree: str
+        key of the fate tree in adata.uns, default is 'fate_tree'
+    bg_node_size: float
+        background node size, default is 1
+    bg_node_color: str
+        background node color, default is 'grey'
+    node_size: float
+        node size, default is 30
+    alpha: float
+        alpha, default is 0.8
+    label_attr: str
+        label attribute, default is None
+    with_labels: bool
+        whether to show labels, default is False
+    """
     if "graph_basis" in adata.uns and not graph_name:
         graph_name = adata.uns["graph_basis"]
 
@@ -600,6 +782,32 @@ def plot_stream_tree_embedding(adata: AnnData,
                              ax=None,
                              **args,
                              ):
+    """
+    Parameters
+    ---------
+    adata: AnnData
+        an Annodata object
+    graph_name: str
+        key of the graph in adata.uns, default is None
+    layout_name: str
+        key of the layout in adata.obsm, default is None
+    stream_tree: str
+        key of the stream tree in adata.uns, default is 'stream_tree'
+    bg_node_size: float
+        background node size, default is 1
+    bg_node_color: str
+        background node color, default is 'grey'
+    node_size: float
+        node size, default is 30
+    alpha: float
+        alpha, default is 0.8
+    label_attr: str
+        label attribute, default is None
+    with_labels: bool
+        whether to show labels, default is True
+    ax: matplotlib axis
+        axis to plot, default is None
+    """
 
     if "graph_basis" in adata.uns and not graph_name:
         graph_name = adata.uns["graph_basis"]
@@ -637,7 +845,19 @@ def plot_fate_tree(adata: AnnData,
                    ):
     """
     re-calcuate layout of a tree and plot
-    layout_prog: may ‘dot’, ‘twopi’, ‘fdp’, ‘sfdp’, ‘circo’
+
+    Parameters
+    ---------
+    adata: AnnData
+        an Annodata object
+    fate_tree: str
+        key of the fate tree in adata.uns, default is 'fate_tree'
+    layout_prog: str
+        layout algorithm, can be: dot, twopi, fdp, sfdp, circo
+    with_labels: bool
+        whether to show labels, default is True
+    ax: matplotlib axis
+        axis to plot, default is None
     """
     ax = plt.gca() if ax is None else ax
     pos =nx.nx_pydot.graphviz_layout(adata.uns[fate_tree].to_undirected(), prog=layout_prog)
@@ -658,7 +878,37 @@ def plot_density_grid(adata: AnnData,
                       return_fig = False,
                       **args
                       ):
+    """
+    plot density grid of clusters
 
+
+    Parameters
+    ---------
+    adata: AnnData
+        an Annodata object
+    graph_name: str
+        key of the graph in adata.uns, default is None
+    layout_name: str
+        key of the layout in adata.obsm, default is None
+    cluster_name: str
+        key of the cluster in adata.obs, default is 'trajs_clusters'
+    trajs_name: str
+        key of the trajs in adata.uns, default is 'knn_trajs'
+    retain_clusters: list
+        list of clusters to plot, default is [] to use all
+    sample_n: int
+        number of cells to sample, default is 10000
+    figsize: tuple
+        figure size, default is (20,16)
+    title_prefix: str
+        prefix of the title, default is 'cluster_'
+    bg_alpha: float
+        background alpha, default is 0.5
+    node_size: float
+        node size, default is 2
+    return_fig: bool
+        whether to return the figure, default is False
+    """
 
     if "graph_basis" in adata.uns and not graph_name:
         graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
@@ -704,6 +954,30 @@ def plot_trajs_embedding(adata,
                          ax = None,
                          **args
                          ):
+    """
+    Parameters
+    ---------
+    adata: AnnData
+        an Annodata object
+    embedding: str
+        key of the embedding in adata.uns, indicate edges embedding, default is 'trajs_dm'
+    clusters: str
+        key of the clusters in adata.uns, default is 'trajs_clusters'
+    node_size: float
+        node size, default is 1
+    label: bool
+        whether to show labels, default is True
+    labelsize: float
+        label size, default is 15
+    labelstyle: str
+        label style, default is 'text'
+    show_legend: bool
+        whether to show legend, default is True
+    markerscale: float
+        marker scale, default is 10
+    ax: matplotlib axis
+        axis to plot, default is None
+    """
     ax = plt.gca() if ax is None else ax
     if embedding not in adata.uns.keys():
         raise ValueError("embedding not in adata.uns.keys()")
@@ -735,10 +1009,17 @@ def plot_eigen_line(adata: AnnData,
     parameters
     --------
     adata: AnnData
-    graph_basis: graph basis for the eigen value
-    evalue_name: eigen values of stored in adata.uns get from graph_basis if None
-    n_eig: number of eigen values to plot
-    step_size: ticks for the plotting
+        an Annodata object
+    evalue_name: str
+        eigen values of stored in adata.uns get from graph_basis if None
+    n_eig: int
+        number of eigen values to plot
+    step_size: int
+        ticks for the plotting
+    show_legend: bool
+        whether to show legend, default is True
+    ax: matplotlib axis
+        axis to plot, default is None
     """
     if "graph_basis" in adata.uns and not evalue_name:
         evalue_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_value"
@@ -774,7 +1055,38 @@ def plot_traj(adata: AnnData,
               color_palette = sns.color_palette('tab10'),
               **args
               ):
+    """
+    plot the trajectory on the graph
 
+    Parameters
+    ---------
+    adata: AnnData
+        an Annodata object
+    graph_name: str
+        key of the graph in adata.uns, default is None
+    layout_name: str
+        key of the layout in adata.obsm, default is None
+    holes: List[List[int]]
+        holes in the graph, default is None
+    trajectory: Union[List[int], np.ndarray]
+        trajectory to plot, default is None
+    colorid: List[int]
+        color id for each node, default is None
+    hole_centers: List[int]
+        hole centers, default is None
+    ax: matplotlib axis
+        axis to plot, default is None
+    node_size: float
+        node size, default is 5
+    edge_width: float
+        edge width, default is 1
+    plot_node: bool
+        whether to plot nodes, default is True
+    alpha_nodes: float
+        alpha for nodes, default is 0.3
+    color_palette: List[str]
+        color palette, default is sns.color_palette('tab10')
+    """
     if "graph_basis" in adata.uns and not graph_name:
         graph_name = adata.uns["graph_basis"] + "_triangulation"
 
@@ -819,13 +1131,35 @@ def nxdraw_harmonic(adata: AnnData,
     plot holes from eigen decomposition of L1
 
     Parameters
-    ----
-    evector_name: eigen vector of L1
-    title: title of the plot
-    vector_dim: int, the dimension of the eigen vector to plot
-    node_size: int, the size of the node
-    with_potential: use potential to flip the evector or not
-    ax: matplotlib axis, the axis to plot
+    -------
+    adata: AnnData
+        an Annodata object
+    graph_name: str
+        key of the graph in adata.uns, default is None
+    evector_name: str
+        eigen vector of L1
+    title: str
+        title of the plot
+    dims: list
+        the dimension of the eigen vector to plot
+    node_size: int
+        the size of the node
+    show_center: bool
+        whether to show the center of the hole
+    with_potential: str
+        use potential to flip the evector or not
+    edge_cell_types: list
+        cell types to plot
+    show_legend: bool
+        whether to show legend
+    markerscale: float
+        scale of the marker
+    ax: matplotlib axis
+        the axis to plot
+    color_palette: list
+        color palette to  use default is sns.color_palette(cc.glasbey, n_colors=50).as_hex()
+    seed: int
+        random seed
     """
     ## pie show the cell types, would be really slow
     ## randomly select an end to specify the celltype.
@@ -908,24 +1242,45 @@ def nxdraw_holes(adata: AnnData,
 
     Parameters
     ----
-    graph_name: graph_name of the starts ends connected graph
-    layout_name: layout name show the graph
-    evector_name: eigen vector of L1
-    title: title of the plot
-    edge_value: list, the value of edges, if not None, use edge_value to plot the edge
-    vector_dim: int, the dimension of the eigen vector to plot
-    font_size: int, the size of the font
-    node_size: int, the size of the node
-    width: int, the width of the edge
-    edge_cmap: matplotlib colormap, the colormap of the edge
-    with_labels: bool, show the label of the node if True
-    with_potential: None or length of 2 list, use potential u to calculate the direction of an edge,
+    adata: AnnData
+        an Annodata object
+    graph_name: str
+        graph_name of the starts ends connected graph
+    layout_name: str
+        layout name show the graph
+    evector_name: str
+        eigen vector of L1
+    title: str
+        title of the plot
+    edge_value: list
+        the value of edges, if not None, use edge_value to plot the edge
+    vector_dim: int
+        the dimension of the eigen vector to plot
+    font_size: int
+        the size of the font
+    node_size: int
+        the size of the node
+    width: int
+        the width of the edge
+    edge_cmap: matplotlib colormap
+        the colormap of the edge
+    with_labels: bool
+        show the label of the node if True
+    with_potential: None or length of 2 list,
+        use potential u to calculate the direction of an edge,
                     eigen values * -1 if uend - ustart > 0 else eigen values * 1
-    flip: bool, flip the direction of an edge
-    is_arrow:bool, show directed graph if True else undirected
-    is_norm: bool, normalize the eigen value to [0,1]
-    is_abs: bool, take absolute value of eigen value
-    ax: matplotlib axis, the axis to plot
+    flip: bool
+        flip the direction of an edge
+    is_arrow:bool
+        show directed graph if True else undirected
+    is_norm: bool
+        normalize the eigen value to [0,1]
+    is_abs: bool
+        take absolute value of eigen value
+    ax: matplotlib axis
+        the axis to plot
+    colorbar: bool
+        show colorbar or not
     """
 
     ax = ax or plt.gca()
@@ -996,6 +1351,26 @@ def nxdraw_score(adata: AnnData,
                  cmap = plt.cm.get_cmap('viridis'),
                  **args
     ):
+    """
+    Parameters
+    ----------
+    adata: AnnData
+        an Annodata object
+    graph_name: str
+        graph_name of the starts ends connected graph
+    layout_name: str
+        layout name show the graph
+    color: str
+        the color of the node
+    colorbar: bool
+        show colorbar or not
+    directed: bool
+        show directed graph or not
+    font_size: float
+        the size of the font
+    cmap: matplotlib colormap
+        the colormap of the node
+    """
 
     if "graph_basis" in adata.uns and not graph_name:
         graph_name = adata.uns["graph_basis"]
@@ -1043,6 +1418,44 @@ def nxdraw_group(adata: AnnData,
                  legend_col=1,
                  ax = None,
                  **args):
+    """
+    Parameters
+    ----------
+    adata: AnnData
+        an Annodata object
+    graph_name: str
+        graph_name of the starts ends connected graph
+    layout_name: str
+        layout name show the graph
+    group_name: str
+        the group name of the node
+    show_edges: bool
+        show edges or not
+    show_legend: bool
+        show legend or not
+    color_palette: list
+        the color palette of the group, default is sns.color_palette(cc.glasbey, n_colors=50).as_hex()
+    legend_loc: str
+        the location of the legend
+    bbox_to_anchor: tuple
+        the bbox_to_anchor of the legend
+    markerscale: float
+        the scale of the marker
+    label: bool
+        show label or not
+    labelsize: float
+        the size of the label
+    labelstyle: str
+        the style of the label
+    directed: bool
+        show directed graph or not
+    edge_color: str
+        the color of the edge
+    legend_col: int
+        the number of the legend column
+    ax: matplotlib.axes
+        the axes of the plot
+    """
     if "graph_basis" in adata.uns and not graph_name:
         graph_name = adata.uns["graph_basis"]
 
@@ -1079,6 +1492,24 @@ def plot_triangle_density(adata: AnnData,
                           cmap = plt.get_cmap("jet"),
                           colorbar = True,
                           **args):
+    """
+    Parameters
+    ----------
+    adata: AnnData
+        an Annodata object
+    graph_name: str
+        graph_name of the starts ends connected graph
+    layout_name: str
+        layout name show the graph
+    node_size: int
+        the size of the node
+    ax: matplotlib.axes
+        the axes of the plot
+    cmap: matplotlib colormap
+        the colormap of the node
+    colorbar: bool
+        show colorbar or not
+    """
 
     if "graph_basis" in adata.uns and not graph_name:
         graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
@@ -1106,6 +1537,34 @@ def plot_pie_fate_tree(adata: AnnData,
 
                        ax = None,
                        ):
+    """
+    Parameters
+    ----------
+    adata: AnnData
+        an Annodata object
+    graph_name: str
+        graph_name of the starts ends connected graph
+    layout_name: str
+        layout name show the graph
+    fate_tree: str
+        the fate tree name
+    piesize: float
+        the size of the pie
+    group: str
+        the group name of the node
+    show_nodes: bool
+        show nodes or not
+    show_legend: bool
+        show legend or not
+    legend_column: int
+        the number of the legend column
+    color_palette: list
+        the color palette of the group, default is sns.color_palette(cc.glasbey, n_colors=50).as_hex()
+    bg_alpha: float
+        the alpha of the background
+    ax: matplotlib.axes
+        the axes of the plot
+    """
     #https://www.appsloveworld.com/coding/python3x/146/creating-piechart-as-nodes-in-networkx
 
     ax = ax or plt.gca()
@@ -1191,16 +1650,33 @@ def G_nxdraw_group(g,
     Parameters
     ---------
     g: networkx graph
+        graph to plot
     layouts: layouts dict or array
-    groups: groups list
-    show_edges: if show edges
-    color_palette: color palette for show groups
-    legend_loc: legend location
-    bbox_to_anchor: for position of the legend
-    markerscale: legend marker scale to larger or smaller
-    label: if show label
-    labelsize: labelsize
-    labelstyle: options: color,text, box. same color as nodes if use `color`, black if use `text`, white color with box if use `box`
+        layouts to plot
+    groups: list
+        edges clusters
+    show_edges: bool
+        if show edges
+    color_palette: list
+        color palette for show groups
+    legend_loc: str
+        legend location
+    bbox_to_anchor: tuple
+        for position of the legend
+    markerscale: float
+        legend marker scale to larger or smaller
+    label: bool
+        if show label
+    labelsize: int
+        labelsize
+    labelstyle: str
+        options: color,text, box. same color as nodes if use `color`, black if use `text`, white color with box if use `box`
+    directed: bool
+        if the graph is directed
+    legend_col: int
+        the number of the legend column
+    ax: matplotlib.axes
+        the axes of the plot
     """
     ax = ax or plt.gca()
     mapping = dict(zip(sorted(groups),itertools.count()))
@@ -1270,6 +1746,34 @@ def G_plot_traj(graph: nx.Graph,
                 **args,
                 ) -> None:
 
+    """
+    Parameters
+    ----------
+    graph: nx.Graph
+        graph to plot
+    node_positions: str
+        layout array
+    holes: List[List[int]]
+        holes in the graph, default is None
+    trajectory: Union[List[int], np.ndarray]
+        trajectory to plot, default is None
+    colorid: List[int]
+        color id for each node, default is None
+    hole_centers: List[int]
+        hole centers, default is None
+    ax: matplotlib axis
+        axis to plot, default is None
+    node_size: float
+        node size, default is 5
+    edge_width: float
+        edge width, default is 1
+    plot_node: bool
+        whether to plot nodes, default is True
+    alpha_nodes: float
+        alpha for nodes, default is 0.3
+    color_palette: List[str]
+        color palette, default is sns.color_palette('tab10')
+    """
     ax = ax or plt.gca()
     try:
         if holes is not None:
@@ -1343,11 +1847,16 @@ def G_plot_triangle_density(g:nx.Graph,
     """
     Parameters
     ---------
-    g: networkx graph
+    g: nx.Graph
+        networkx graph
     layouts: layouts dict or array
+        layout of the graph
+    ax: matplotlib axis
+        axis to plot, default is None
     cmap: matplotlib.colors.LinearSegmentedColormap
-    colorbar: if show colorbar
-    **args: parameters of networkx.draw
+        colormap, default is plt.get_cmap("jet")
+    colorbar: bool
+        if show colorbar
     """
     ax = ax or plt.gca()
     values = nx.triangles(g.to_undirected())
@@ -1381,20 +1890,36 @@ def plot_embedding(cluster_list = [],
     """
     Parameters
     ---------
-    cluster_list: cluster labels for each point
-    layouts: embeddings, shape should be nx2
-    retain_clusters: which clusters to plot
-    node_size: node size
-    label: if add labels
-    labelsize: size of labels
-    labelstyle: options: color,text, box. same color as nodes if use `color`, black if use `text`, white color with box if use `box`
-    ax: matplotlib ax
-    show_legend: if show_legend
-    legend_loc: legend location
-    bbox_to_anchor: tune of legend position
-    markerscale: legend markerscale
-    facecolor: plt background
-    **args: parameters of ax.scatter
+    cluster_list: list
+        cluster labels for each point
+    embedding: np.ndarray
+        embeddings, shape should be nx2
+    color_palette: list
+        color palette, default is sns.color_palette(cc.glasbey, n_colors=50).as_hex()
+    retain_clusters: list
+        which clusters to plot
+    node_size: int
+        node size
+    label: bool
+        if add labels
+    labelsize: int
+        size of labels
+    labelstyle: str
+        options: color,text, box. same color as nodes if use `color`, black if use `text`, white color with box if use `box`
+    ax: matplotlib axis
+        matplotlib ax
+    show_legend: bool
+        if show_legend
+    legend_loc: str
+        legend location
+    bbox_to_anchor: tuple
+        tune of legend position
+    markerscale: int
+        legend markerscale
+    facecolor: str
+        plt background
+    **args:
+        parameters of ax.scatter
     """
     if len(retain_clusters) == 0:
         retain_clusters = set(cluster_list)
@@ -1463,14 +1988,30 @@ def G_plot_density_grid(G,
     """
     Parameters
     ---------
-    G: networkx graph
-    layouts: layouts dict or array
-    cluster_list: cluster label list
-    retain_clusters: only show clusters in retain_clusters
-    sample_n: sample the for the kde estimate to save time
-    figsize: figure size tuple
-    title_prefix: prefix for each subplot
-    node_size: density node size
+    G: nx.Graph
+        networkx graph
+    layouts:
+        layouts dict or array
+    cluster_list: list
+        cluster label list
+    retain_clusters: list
+        only show clusters in retain_clusters
+    sample_n: int
+        sample the for the kde estimate to save time
+    figsize: tuple
+        figure size tuple
+    title_prefix: str
+        prefix for each subplot
+    sharex: bool
+        if share x axis
+    sharey: bool
+        if share y axis
+    bg_alpha: float
+        background alpha
+    node_size: int
+        density node size
+    colorbar: bool
+        if show colorbar
     """
     if len(retain_clusters) == 0:
         retain_clusters = set(cluster_list)
@@ -1551,13 +2092,23 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
     Parameters
     ---------
     mat_coord_Hspace:
-    cluster_list: cluster_list for each trajectory
-    ax: matplotlib axes
-    show_legend: if show legend
-    legend_loc: legend location
-    bbox_to_anchor: for position of the legend
-    markerscale: legend linewidth scale to larger or smaller
-    color_palette: color palette for show cluster_list
+        matrix of coordinates in the Hspace
+    cluster_list:
+        cluster_list for each trajectory
+    retain_clusters:
+        only show clusters in retain_clusters
+    dims:
+        dimensions to plot
+    figsize:
+        figure size
+    show_legend:
+        if show legend
+    color_palette:
+        color palette for show cluster_list
+    fig_path:
+        figure path
+    return_fig:
+        if return fig
     """
     import plotly.graph_objects as go
 
@@ -1671,13 +2222,27 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
     Parameters
     ---------
     mat_coord_Hspace:
-    cluster_list: cluster_list for each trajectory
-    ax: matplotlib axes
-    show_legend: if show legend
-    legend_loc: legend location
-    bbox_to_anchor: for position of the legend
-    markerscale: legend linewidth scale to larger or smaller
-    color_palette: color palette for show cluster_list
+        hspace coordinates for each trajectory
+    cluster_list:
+        cluster_list for each trajectory
+    ax:
+        matplotlib axes
+    show_legend:
+        if show legend
+    legend_loc:
+        legend location
+    bbox_to_anchor:
+        for position of the legend
+    markerscale:
+        legend linewidth scale to larger or smaller
+    ax:
+        matplotlib axes
+    sample_ratio:
+        sample ratio for plotting
+    xylabel:
+        if show xy label
+    color_palette:
+        color palette for show cluster_list
     """
     assert(all(np.array(dims) < mat_coord_Hspace[0].shape[0])) ## dims is in the range of the dimension of the data
     assert(len(dims) ==2)
@@ -1742,10 +2307,15 @@ def M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
     Parameters
     ---------
     mat_coor_flatten_trajectory:
-    cluster_list: cluster_list for each trajectory
-    show_legend: if show legend
-    color_palette: color palette for show cluster_list
-    **args: args for scatter
+        flatten trajectory matrix
+    cluster_list:
+        cluster_list for each trajectory
+    show_legend:
+        if show legend
+    color_palette:
+        color palette for show cluster_list
+    **args:
+        args for scatter
     """
     import plotly.graph_objects as go
 
@@ -1843,16 +2413,27 @@ def M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
     Parameters
     ---------
     mat_coor_flatten_trajectory:
-    cluster_list: cluster_list for each trajectory
-    label: if show label
-    labelsize: labelsize
-    labelstyle: options: color,text, box. same color as nodes if use `color`, black if use `text`, white color with box if use `box`
-    show_legend: if show legend
-    legend_loc: legend location
-    bbox_to_anchor: for position of the legend
-    markerscale: legend marker scale to larger or smaller
-    color_palette: color palette for show cluster_list
-    **args: args for scatter
+        flatten trajectory matrix
+    cluster_list:
+        cluster_list for each trajectory
+    label:
+        if show label
+    labelsize:
+        labelsize
+    labelstyle:
+        options: color,text, box. same color as nodes if use `color`, black if use `text`, white color with box if use `box`
+    show_legend:
+        if show legend
+    legend_loc:
+        legend location
+    bbox_to_anchor:
+        for position of the legend
+    markerscale:
+        legend marker scale to larger or smaller
+    color_palette:
+        color palette for show cluster_list
+    **args:
+        args for scatter
     """
 
     if len(retain_clusters) == 0:
@@ -1921,11 +2502,16 @@ def L_plot_eigen_line(values, n_eig=10, step_size=1, show_legend=True, ax=None, 
     """
     Parameters
     ---------
-    values: eigenvalues list
-    n_eig: number of eigen values to plot
-    step_size: x-ticks step size
-    ax: matplotlib ax
-    **args: args for ax.plot
+    values:
+        eigenvalues list
+    n_eig:
+        number of eigen values to plot
+    step_size:
+        x-ticks step size
+    ax:
+        matplotlib ax
+    **args:
+        args for ax.plot
     """
     ax = ax or plt.gca()
     n_eig = min(n_eig, len(values))

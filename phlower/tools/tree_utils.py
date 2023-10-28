@@ -5,6 +5,14 @@ import pandas as pd
 import networkx as nx
 from ..util import networkx_node_to_df
 
+def remove_duplicated_index(elements):
+    """
+    return unique index
+    """
+    index_dic = pd.DataFrame(elements).groupby([0]).indices
+    return [v[0] for k,v in index_dic.items()]
+#endf remove_duplicated_index
+
 def flatten_tuple(nested_tuple):
     # check if tuple is empty
     if not(bool(nested_tuple)):
@@ -20,6 +28,41 @@ def flatten_tuple(nested_tuple):
     return nested_tuple[:1] + flatten_tuple(nested_tuple[1:])
 
 
+def TF_to_genes(TFs, ones=False):
+    """
+    convert TFs to genes for JASPAR database
+    if ones is True, return dict of tuples
+    if ones is False return dict of strings
+
+    some strange format a(var.2) or a::b::c
+
+    Parameters
+    ----------
+    TFs : list
+        Transcription factors in list
+    ones : bool, optional
+        If True, return dict of tuples, by default False, else return dict of strings.
+    """
+    import re
+    d = {}
+    if ones:
+        for TF in TFs:
+            gene = re.sub("\\(.*?\\)", "", TF) ## a(var.2) -> a
+            gene1 = re.sub("(.*)::(.*)", "\\1", gene) ## a::b::c -> a::b
+            gene2 = re.sub("(.*)::(.*)", "\\2", gene1) if "::" in gene1 else "" ## a::b -> b
+            gene3 = re.sub("(.*)::(.*)", "\\2", gene) if "::" in gene else "" ## a::b::c -> c
+            gene1 = gene1 if "::" not in gene1 else re.sub("(.*)::(.*)", "\\1", gene1)## gene1 a::b--> a
+            gene1 = re.sub("(.*)-(.*)", "\\1", gene1) ## a-b -> a
+            d[TF] = tuple(i for i in [gene1, gene2, gene3] if i)
+    else:
+        for TF in TFs:
+            gene = re.sub("\\(.*?\\)", "", TF) ## a(var.2) -> a
+            gene = re.sub("(.*)::(.*)", "\\1", gene) ## a::b::c -> a::b
+            gene = re.sub("(.*)::(.*)", "\\1", gene) ## a::b -> a
+            gene = re.sub("(.*)-(.*)", "\\1", gene) ## a-b -> a
+            d[TF] = gene
+    return d
+#endf TF_to_genes
 
 def _edgefreq_to_nodefreq(edge_freq, d_edge2node):
     """

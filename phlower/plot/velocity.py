@@ -42,6 +42,52 @@ def fate_velocity_plot_cumsum(
 
     **kwargs
 ):
+    """
+    Plot fate velocity on a fate tree.
+
+    Parameters
+    ----------
+    adata: anndata.AnnData
+        Annotated data matrix.
+    fate_tree: str
+        The name of the fate tree in adata.uns.
+    layout_name: str
+        The name of the layout in adata.uns.
+    group_name: str
+        The name of the group in adata.uns.
+    graph_name: str
+        The name of the graph in adata.uns.
+    figtype: str
+        The type of the figure. "grid" for grid plot, "stream" for stream plot, "point" for point plot.
+    grid_density: int
+        The density of the grid.
+    streamdensity: float
+        The density of the stream.
+    n_neighbors: int
+        The number of neighbors for the nearest neighbor graph.
+    embedd_label: bool
+        Whether to show the label of the embedding.
+    embedd_label_style: str
+        The style of the label of the embedding. "text" for text label, "arrow" for arrow label.
+    embedd_label_font: int
+        The font size of the label of the embedding.
+    show_legend: bool
+        Whether to show the legend.
+    show_cumsum: bool
+        Whether to show the cumulative sum of the fate probability.
+    radius: float
+        The radius of the grid.
+    ax: matplotlib.axes.Axes
+        The axes of the plot.
+    node_alpha: float
+        The transparency of the nodes.
+    maxlinewidth: float
+        The maximum width of the lines.
+    lines_sample_ratio: float
+        The ratio of the lines to be sampled.
+    alpha: float
+        The transparency of the lines.
+    """
 
     if group_name not in adata.obs:
         raise Exception("group name not found")
@@ -105,6 +151,48 @@ def fate_velocity_plot(
     **kwargs
 ):
 
+    """
+    Plot fate velocity on a fate tree.
+
+    Parameters
+    ----------
+    adata: anndata.AnnData
+        Annotated data matrix.
+    fate_tree: str
+        The name of the fate tree in adata.uns.
+    layout_name: str
+        The name of the layout in adata.uns.
+    group_name: str
+        The name of the group in adata.uns.
+    graph_name: str
+        The name of the graph in adata.uns.
+    figtype: str
+        The type of the figure. "grid" for grid plot, "stream" for stream plot, "point" for point plot.
+    grid_density: int
+        The density of the grid.
+    streamdensity: float
+        The density of the stream.
+    n_neighbors: int
+        The number of neighbors for the nearest neighbor graph.
+    embedd_label: bool
+        Whether to show the label of the embedding.
+    embedd_label_style: str
+        The style of the label of the embedding. "text" for text label, "arrow" for arrow label.
+    embedd_label_font: int
+        The font size of the label of the embedding.
+    show_legend: bool
+        Whether to show the legend.
+    radius: float
+        The radius of the grid.
+    ax: matplotlib.axes.Axes
+        The axes of the plot.
+    node_alpha: float
+        The transparency of the nodes.
+    maxlinewidth: float
+        The maximum width of the lines.
+    alpha: float
+        The transparency of the lines.
+    """
     if group_name not in adata.obs:
         raise Exception("group name not found")
 
