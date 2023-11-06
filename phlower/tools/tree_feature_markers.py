@@ -53,6 +53,7 @@ def time_slot_sets(node_list):
     node_list = list(node_list)
     appendix = [int(node.split("_")[1]) for node in node_list]
     idxs = np.argsort(appendix)
+    #print("idxs: ", idxs)
     curr_idx = idxs[0]
     ret_list = []
     for idx in idxs:
@@ -106,6 +107,82 @@ def add_merge_node(fate_tree, new_tree, father, nodes, name, f_original):
         #merge X_pac
     return new_tree
 #endf add_merge_node
+
+
+def helping_submerged_tree(adata, fate_tree='fate_tree', start_node='0_0', outname='fate_main_tree', iscopy=False):
+    """
+    from tree:
+                             |---------------
+          |------------------|
+          |                  |------
+          |              |------------
+    ------|--------------|
+          |              |------------
+          |       |------------------
+          |-------|
+                  |-------------
+
+    to tree:
+          |------------------|---------------
+          |
+          |
+    ------|--------------|------------
+          |
+          |
+          |-------|------------------
+
+    Parameters
+    ----------
+    adata: AnnData
+        adata object where fate_tree in adata.uns
+    fate_tree: str
+        key of fate_tree in adata.uns
+    start_node: str
+        the node to find the branching point to get all daughter branches at same level
+    outname: str
+        key of the new fate_tree in adata.uns
+    iscopy: bool
+        if True, return a copy of adata, otherwise, inplace
+    """
+
+    adata = adata.copy() if iscopy else adata
+    fate_tree = adata.uns[fate_tree]
+
+    father = find_branch_end(fate_tree, start_node) #0_0
+    daughter_nodes = find_samelevel_daugthers(fate_tree, father) #1_1, 3_1, 4_1
+    merge_branch_dict = {}# key:val = last_node:its_merged nodes
+    for d_node in daughter_nodes:
+        bnodes = list(nx.dfs_tree(fate_tree, d_node)) #1_1, 1_2, ...
+        bfather = bnodes[0] ##1_1
+
+        bpoint = find_branch_start(fate_tree, bfather) ## 1_8
+        bs_idx = np.where(np.array(bnodes) == bpoint)[0][0] ## 1_8 index
+        ##1_8: [{5_9,8_9},{5_11},{5_14, 8_14}]
+        merge_branch_dict[bnodes[bs_idx]] = time_slot_sets(bnodes[bs_idx+1:])
+
+    ## 1.new_tree to remove nodes need to be merges
+    new_tree = fate_tree.copy()
+    for k, v in merge_branch_dict.items():
+        rm_list = [j for i in v for j in i]
+        for n in rm_list:
+            new_tree.remove_node(n)
+    ## 2. add new nodes with same prefix as father 1_8
+    for k, v in merge_branch_dict.items():
+        father = k
+        prefix = k.split("_")[0]
+        ## for a time slot like 9, merge 5_9 and 8_9 into 1_9
+        for aset in v:
+            appendix = list(aset)[0].split('_')[1]
+            new_node_name = f'{prefix}_{appendix}'
+            if fate_tree.has_node(father):
+                add_merge_node(fate_tree, new_tree, father, aset, new_node_name, fate_tree.nodes[father]['original']) ## connect to last existing node
+            else:
+                add_merge_node(fate_tree, new_tree, father, aset, new_node_name, new_tree.nodes[father]['original'])  ## connect to the new node
+            father = new_node_name
+    adata.uns[outname] = new_tree
+    return adata if iscopy else None
+#endf helping_submerged_tree
+
 
 
 def helping_merged_tree(adata, fate_tree='fate_tree', start_node='0_0', outname='fate_main_tree', iscopy=False):
@@ -211,6 +288,25 @@ def find_a_branch_all_predecessors(fate_tree:nx.DiGraph=None,
             break
     return ret_list[::-1]
 #endf find_a_branch_all_predecessors
+
+def find_branch_start(tree:nx.DiGraph=None,
+                    current_node:str=None):
+    """
+    find the leaf from current
+
+    Parameters
+    ----------
+    tree: networkx.DiGraph
+        fate tree
+    current_node: str
+        the node to find the begining
+    """
+    node_list = list(nx.dfs_tree(tree, current_node))
+    prefix = node_list[0].split("_")[0] + "_"
+    node_list = [node for node in node_list if node.startswith(prefix)]
+    return node_list[0]
+#endf find_branch_start
+
 
 def find_branch_end(tree:nx.DiGraph=None,
                     current_node:str=None):
@@ -763,8 +859,8 @@ def tree_2branch_markers(adata: AnnData,
         #convert original to node_name
         branch_1_d = tree_original_dict(adata.uns[fate_tree], branch_1)
         branch_2_d = tree_original_dict(adata.uns[fate_tree], branch_2)
-        print(branch_1_d)
-        print(branch_2_d)
+        #print(branch_1_d)
+        #print(branch_2_d)
         if len(branch_1_d) <1 or len(branch_2_d) <1:
             raise Exception(f"branch_1 or branch_2 is not in the tree")
 
@@ -772,9 +868,11 @@ def tree_2branch_markers(adata: AnnData,
         branch_2 = find_branch_end(adata.uns[fate_tree], list(branch_2_d.keys())[0])
 
 
-    print(branch_1, branch_2)
+    #print(branch_1, branch_2)
     nodes1 = find_a_branch_all_predecessors(adata.uns[fate_tree], branch_1)
     nodes2 = find_a_branch_all_predecessors(adata.uns[fate_tree], branch_2)
+    print("nodes1: ", nodes1)
+    print("nodes2: ", nodes2)
 
     branching_node1 = find_last_branching(adata.uns[fate_tree], branch_1)
     branching_node2 = find_last_branching(adata.uns[fate_tree], branch_2)
@@ -928,7 +1026,52 @@ def TF_gene_correlation(adata: AnnData,
     return corr_ordered
 #endf TF_gene_correlation
 
+
 def branch_TF_gene_correlation(tf_df:pd.DataFrame,
+                               gene_df:pd.DataFrame):
+    """
+    calculate the correlation between TF and genes using pseudo time matrix
+    return list of tuples recording the correlations ordered by correlation descendingly.
+
+    Parameters
+    ----------
+    tf_df: pd.DataFrame
+        the TF expression matrix, index is TF name, columns are bins
+    gene_df: pd.DataFrame
+        the gene expression matrix, index is gene name, columns are bins
+    """
+    from collections import Counter, defaultdict
+    from scipy.stats import pearsonr
+
+
+    TFs = tf_df.index.tolist()
+    d_tf2gene = TF_to_genes(TFs, False)
+
+    shared = list((k, v) for k, v in d_tf2gene.items() if v in gene_df.index)
+    shared_tfs = np.array([i[0] for i in shared])
+    shared_genes = np.array([i[1] for i in shared])
+
+    tf_df = tf_df.loc[shared_tfs]
+    gene_df = gene_df.loc[pd.unique(shared_genes)]
+
+    d_corr = defaultdict(float)
+    for idx, sym in enumerate(shared_tfs):
+        TF = tf_df.loc[sym, :].values
+        gene = d_tf2gene[sym]
+        expression = gene_df.loc[gene, :].values
+        corr = pearsonr(expression, TF)[0]
+        if np.isnan(corr):
+            continue
+        d_corr[sym] = pearsonr(expression, TF)[0]
+    corr_ordered = sorted(d_corr.items(), key=lambda x:x[1], reverse=True)
+    #corr_ordered = [(k, v, d_tf2gene[k]) for k, v in corr_ordered]
+    return corr_ordered
+#endf branch_TF_gene_correlation
+
+
+
+
+def branch_TF_gene_correlation_v0(tf_df:pd.DataFrame,
                                gene_df:pd.DataFrame):
     """
     calculate the correlation between TF and genes using pseudo time matrix
@@ -959,7 +1102,7 @@ def branch_TF_gene_correlation(tf_df:pd.DataFrame,
         d_corr[sym] = pearsonr(expression, TF)[0]
     corr_ordered = sorted(d_corr.items(), key=lambda x:x[1], reverse=True)
     return corr_ordered
-#endf branch_TF_gene_correlation
+#endf branch_TF_gene_correlation_v0
 
 
 def tree_branches_smooth_window(adata: AnnData,

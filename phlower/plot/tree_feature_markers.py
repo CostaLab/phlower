@@ -106,14 +106,20 @@ def volcano(df: pd.DataFrame,
 
 
     df.index = df[gene_column]
-    ax.scatter(x=df[log2fc_column],y=df[pval_column].apply(lambda x:nplog10_(x)),s=1,label="Not significant", color=not_sig_color)
+    y = df[pval_column].apply(lambda x:nplog10_(x))
+    # avoid infinite value
+    y[y == np.inf] = y[y != np.inf].max()
+    ax.scatter(x=df[log2fc_column],y=y,s=1,label="Not significant", color=not_sig_color)
 
     # highlight down- or up- regulated genes
     down = df[(df[log2fc_column]<=log2fc_threshold_neg)&(df[pval_column]<=pval_threshold)]
     up = df[(df[log2fc_column]>=log2fc_threshold_posi)&(df[pval_column]<=pval_threshold)]
-
-    ax.scatter(x=down[log2fc_column],y=down[pval_column].apply(lambda x:nplog10_(x)),s=3,label="Down-regulated",color=down_color)
-    ax.scatter(x=up[log2fc_column],y=up[pval_column].apply(lambda x:nplog10_(x)),s=3,label="Up-regulated",color=up_color)
+    y =down[pval_column].apply(lambda x:nplog10_(x))
+    y[y == np.inf] = y[y != np.inf].max()
+    ax.scatter(x=down[log2fc_column],y=y,s=3,label="Down-regulated",color=down_color)
+    y = up[pval_column].apply(lambda x:nplog10_(x))
+    y[y == np.inf] = y[y != np.inf].max()
+    ax.scatter(x=up[log2fc_column],y=y,s=3,label="Up-regulated",color=up_color)
 
     texts = []
     if genes_to_highlight is not None:
