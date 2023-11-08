@@ -23,6 +23,17 @@ from .scikit_posthocs import posthoc_conover
 ##TODO: if duplicated nodes is an issue, we can calculate center of each vertex, if set the node to the nearest vertex.
 ##TODO: increase the size of stream_sc size based on the score.
 
+def tqdm_show(iterable, show=True, threshold=10, **kargs):
+    """
+    if show use a threshold
+    """
+    from tqdm import tqdm
+    if len(list(iterable)) < threshold:
+        return iterable
+    elif show:
+        return tqdm(iterable)
+    return tqdm(iterable)
+#endf tqdm_show
 
 def tree_label_dict(adata,
                     tree = "stream_tree",
@@ -289,7 +300,7 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
                               width=800,height=500)
             fig.show(renderer="notebook")
     else:
-        for i, ann in enumerate(color):
+        for i, ann in enumerate(tqdm_show(color, desc='stream sc plotting')):
             fig = plt.figure(figsize=(fig_size[0],fig_size[1]))
             ax_i = fig.add_subplot(1,1,1)
             if(is_string_dtype(df_plot[ann])):
@@ -539,7 +550,7 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
                                    log_scale=log_scale,factor_zoomin=factor_zoomin)
         dict_plot['numeric'] = [verts,extent,ann_order,dict_ann_df,dict_im_array]
 
-    for i, ann in enumerate(color):
+    for i, ann in enumerate(tqdm_show(color, desc='stream plotting')):
         if(is_string_dtype(dict_ann[ann])):
             if(not ((ann+'_color' in adata.uns_keys()) and (set(adata.uns[ann+'_color'].keys()) >= set(np.unique(dict_ann[ann]))))):
                 ### a hacky way to generate colors from seaborn

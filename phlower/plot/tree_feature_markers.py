@@ -56,7 +56,9 @@ def volcano(df: pd.DataFrame,
             not_sig_color='grey',
             is_adjust_text=False,
             ax=None,
+            swap_axes=False,
             text_size=8,
+            **kwargs
             ):
     """
     Parameters
@@ -109,17 +111,26 @@ def volcano(df: pd.DataFrame,
     y = df[pval_column].apply(lambda x:nplog10_(x))
     # avoid infinite value
     y[y == np.inf] = y[y != np.inf].max()
-    ax.scatter(x=df[log2fc_column],y=y,s=1,label="Not significant", color=not_sig_color)
+    if swap_axes:
+        ax.scatter(y=df[log2fc_column],x=y,s=1,label="Not significant", color=not_sig_color, **kwargs)
+    else:
+        ax.scatter(x=df[log2fc_column],y=y,s=1,label="Not significant", color=not_sig_color, **kwargs)
 
     # highlight down- or up- regulated genes
     down = df[(df[log2fc_column]<=log2fc_threshold_neg)&(df[pval_column]<=pval_threshold)]
     up = df[(df[log2fc_column]>=log2fc_threshold_posi)&(df[pval_column]<=pval_threshold)]
     y =down[pval_column].apply(lambda x:nplog10_(x))
     y[y == np.inf] = y[y != np.inf].max()
-    ax.scatter(x=down[log2fc_column],y=y,s=3,label="Down-regulated",color=down_color)
+    if swap_axes:
+        ax.scatter(y=down[log2fc_column],x=y,s=3,label="Down-regulated",color=down_color, **kwargs)
+    else:
+        ax.scatter(x=down[log2fc_column],y=y,s=3,label="Down-regulated",color=down_color, **kwargs)
     y = up[pval_column].apply(lambda x:nplog10_(x))
     y[y == np.inf] = y[y != np.inf].max()
-    ax.scatter(x=up[log2fc_column],y=y,s=3,label="Up-regulated",color=up_color)
+    if swap_axes:
+        ax.scatter(y=up[log2fc_column],x=y,s=3,label="Up-regulated",color=up_color, **kwargs)
+    else:
+        ax.scatter(x=up[log2fc_column],y=y,s=3,label="Up-regulated",color=up_color, **kwargs)
 
     texts = []
     if genes_to_highlight is not None:
@@ -127,29 +138,52 @@ def volcano(df: pd.DataFrame,
         texts = [plt.text(df.loc[gene,log2fc_column], nplog10_(df.loc[gene,pval_column]), '%s' %gene) for gene in genes_to_highlight if gene in df.index]
         for gene in genes_to_highlight:
             if gene in df.index:
-                ax.scatter(x=df.loc[gene,log2fc_column],
-                           y=nplog10_(df.loc[gene,pval_column]),
-                           s=10,
-                           label=gene,
-                           size=text_size,
-                           color='black')
+                if swap_axes:
+                    ax.scatter(y=df.loc[gene,log2fc_column],
+                               x=nplog10_(df.loc[gene,pval_column]),
+                               s=10,
+                               label=gene,
+                               size=text_size,
+                               color='black', **kwargs)
+
+                else:
+                    ax.scatter(x=df.loc[gene,log2fc_column],
+                               y=nplog10_(df.loc[gene,pval_column]),
+                               s=10,
+                               label=gene,
+                               size=text_size,
+                               color='black', **kwargs)
             else:
                 print(f'Gene {gene} not found in the dataframe.')
     else:
         for i,r in up.iterrows():
-           texts.append(ax.text(x=r[log2fc_column],y=nplog10_(r[pval_column]),s=i, size=text_size))
+            if swap_axes:
+                texts.append(ax.text(y=r[log2fc_column],x=nplog10_(r[pval_column]),s=i, size=text_size))
+            else:
+                texts.append(ax.text(x=r[log2fc_column],y=nplog10_(r[pval_column]),s=i, size=text_size))
         for i,r in down.iterrows():
-           texts.append(ax.text(x=r[log2fc_column],y=nplog10_(r[pval_column]),s=i, size=text_size))
+            if swap_axes:
+               texts.append(ax.text(y=r[log2fc_column],x=nplog10_(r[pval_column]),s=i, size=text_size))
+            else:
+               texts.append(ax.text(x=r[log2fc_column],y=nplog10_(r[pval_column]),s=i, size=text_size))
 
 
     if is_adjust_text and len(texts)>0:
         adjust_text(texts, arrowprops=dict(arrowstyle="-", color='k', lw=0.5))
 
 
-    ax.set_xlabel(f"{log2fc_column}")
-    ax.set_ylabel(f"-log10 {pval_column}")
-    ax.axvline(log2fc_threshold_neg,color="grey",linestyle="--")
-    ax.axvline(log2fc_threshold_posi,color="grey",linestyle="--")
-    ax.axhline(nplog10_(pval_threshold),color="grey",linestyle="--")
+    if swap_axes:
+        ax.set_ylabel(f"{log2fc_column}")
+        ax.set_xlabel(f"-log10 {pval_column}")
+        ax.axhline(log2fc_threshold_neg,color="grey",linestyle="--")
+        ax.axhline(log2fc_threshold_posi,color="grey",linestyle="--")
+        ax.axvline(nplog10_(pval_threshold),color="grey",linestyle="--")
+    else:
+        ax.set_xlabel(f"{log2fc_column}")
+        ax.set_ylabel(f"-log10 {pval_column}")
+        ax.axvline(log2fc_threshold_neg,color="grey",linestyle="--")
+        ax.axvline(log2fc_threshold_posi,color="grey",linestyle="--")
+        ax.axhline(nplog10_(pval_threshold),color="grey",linestyle="--")
+
     if show_legend:
         ax.legend()
