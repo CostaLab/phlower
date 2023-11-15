@@ -16,7 +16,7 @@ setup(
                       'igraph',
                       "scikit-learn",
                       "scipy",
-                      "pandas",
+                      "pandas>=1.5.3",
                       "plotly",
                       "tqdm",
                       "leidenalg",
@@ -26,6 +26,7 @@ setup(
                       'scikit-sparse', #deb:libsuitesparse-dev, conda:suitesparse
                       'scanpy',
                       #'pygraphviz',
+                      'magic-impute',
                       'anndata',
                       ],
     classifiers=[

@@ -1104,7 +1104,6 @@ def branch_TF_gene_correlation_v0(tf_df:pd.DataFrame,
     return corr_ordered
 #endf branch_TF_gene_correlation_v0
 
-
 def tree_branches_smooth_window(adata: AnnData,
                                 start_branching_node: str="",
                                 end_branching_node: str="",
@@ -1179,6 +1178,132 @@ def tree_branches_smooth_window(adata: AnnData,
 
     return smooth_df
 #endf tree_branches_smooth_window
+
+
+def tree_branches_expression_bins(adata: AnnData,
+                                 start_branching_node: str="",
+                                 end_branching_node: str="",
+                                 tree_attr:str="original",
+                                 fate_tree: str= 'fate_tree',
+                                 lognorm = True,
+                                 scale = False,
+                                 ):
+
+    """
+         |--O-----------O-----a
+         |
+         |
+     >>>>|ab
+         |
+         |>>O>>>>>>>>>>>>>>>>>>>>O>>>>b
+
+    start_branching_node is ab
+    end_branching_node is b
+    the function would traverse all nodes(bins) from ab to b (path:>>>>)
+    average the expression of the each nodes by cells presented in this node.
+
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object with gene expression or TF binding data
+    start_branching_node: str
+        the name of the start branching node, if "", use the lastest branching node
+    end_branching_node: str
+        the name of the end branching node
+    fate_tree: str
+        the name of the fate tree
+    """
+
+    if tree_attr == "node_name":
+        pass
+    elif tree_attr == "original":
+        #convert original to node_name
+        end_branching_node_d = tree_original_dict(adata.uns[fate_tree], end_branching_node)
+        end_branching_node = find_branch_end(adata.uns[fate_tree], list(end_branching_node_d.keys())[0])
+    if not start_branching_node:
+        start_branching_node = find_last_branching(adata.uns[fate_tree], end_branching_node)
+
+    if start_branching_node not in adata.uns[fate_tree].nodes:
+        raise ValueError(f"start_branching_node {start_branching_node} is not in the fate tree")
+    if end_branching_node not in adata.uns[fate_tree].nodes:
+        raise ValueError(f"end_branching_node {end_branching_node} is not in the fate tree")
+
+    bins = find_a_branch_all_predecessors(adata.uns[fate_tree], start_branching_node) + \
+                    find_a_branch_all_predecessors(adata.uns[fate_tree], end_branching_node)
+
+    #for now only use normlized data, ArchR uses counts
+
+    d_edge2node = _edge_two_ends(adata)
+    list_bin_expression = []
+    for idx, bin_ in enumerate(bins):
+        e_nodes = adata.uns[fate_tree].nodes[bin_]['ecount']
+        d_nodes_nodes1 = _edgefreq_to_nodefreq(edge_freq=e_nodes, d_edge2node=d_edge2node)
+        X_nodes1 = adata.X[list(d_nodes_nodes1.keys()),:].toarray()
+        X_nodes1 = X_nodes1 * np.array(list(d_nodes_nodes1.values()))[:, np.newaxis]
+        ## can change strategy in here. now is mean
+        list_bin_expression.append(X_nodes1.mean(axis=0))
+    mat = np.stack(list_bin_expression, axis=1) ## genes x bins
+    mat = pd.DataFrame(mat, index=adata.var_names, columns=bins)
+    if lognorm:
+        ann = AnnData(mat.T)
+        sc.pp.normalize_total(ann, target_sum=1e4)
+        sc.pp.log1p(ann)
+        if scale:
+            sc.pp.scale(ann, max_value=10)
+        mat = pd.DataFrame(ann.X.T, index=adata.var_names, columns=bins)
+    return mat
+#endf tree_branches_expression_bins
+
+
+def tree_branches_cells(adata: AnnData,
+                        start_branching_node: str="",
+                        end_branching_node: str="",
+                        tree_attr:str="original",
+                        fate_tree: str= 'fate_tree',
+                        bin_max_ratio = 0.01
+                        ):
+    """
+    goal: collection cells from a branch to, can with real time or pseudo time
+    1. since a cell can show up multiple times, need to dedup.
+    2. some cells show up too few times can use a cutoff to remove low frequency cells
+    3. for plot LOWESS model to get smooth with stdev
+    FOR NOW just implement only for real time, for this, the task is to select cells
+    """
+    if tree_attr == "node_name":
+        pass
+    elif tree_attr == "original":
+        #convert original to node_name
+        end_branching_node_d = tree_original_dict(adata.uns[fate_tree], end_branching_node)
+        end_branching_node = find_branch_end(adata.uns[fate_tree], list(end_branching_node_d.keys())[0])
+    if not start_branching_node:
+        start_branching_node = find_last_branching(adata.uns[fate_tree], end_branching_node)
+
+    if start_branching_node not in adata.uns[fate_tree].nodes:
+        raise ValueError(f"start_branching_node {start_branching_node} is not in the fate tree")
+    if end_branching_node not in adata.uns[fate_tree].nodes:
+        raise ValueError(f"end_branching_node {end_branching_node} is not in the fate tree")
+
+    bins = find_a_branch_all_predecessors(adata.uns[fate_tree], start_branching_node) + \
+                    find_a_branch_all_predecessors(adata.uns[fate_tree], end_branching_node)
+
+    #for now only use normlized data, ArchR uses counts
+
+    d_edge2node = _edge_two_ends(adata)
+    list_bin_expression = []
+    s =  set() # contain cells need to check
+    for idx, bin_ in enumerate(bins[::-1]):
+        e_nodes = adata.uns[fate_tree].nodes[bin_]['ecount']
+        d_nodes_nodes1 = _edgefreq_to_nodefreq(edge_freq=e_nodes, d_edge2node=d_edge2node)
+        quant = 1- min(1,   (bin_max_ratio * adata.n_obs)/len(d_nodes_nodes1)) ### each bin can contain no more than 1/100 of total cells
+        if quant == 0 and len(d_nodes_nodes1) > 10:
+            quant = 0.2
+        minv = np.quantile(list(d_nodes_nodes1.values()), q=quant)
+        d_nodes_nodes1 = {k:v for k,v in d_nodes_nodes1.items() if v >= minv and k not in s}
+        s = s | d_nodes_nodes1.keys() ## this would remove from large bins to small bins,
+        #list_bin_expression.append(d_nodes_nodes1)## this would remove from large bins to small bins,
+
+    return s
+
 
 
 def branch_heatmap_matrix(tf_df:pd.DataFrame,

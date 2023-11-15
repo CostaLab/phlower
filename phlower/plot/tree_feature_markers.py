@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from typing import Union, List
+from anndata import AnnData
 
 def plot_rank_gene_group(adata,
                          name='markers_1_21_vs_0_17.2_21',
@@ -187,3 +188,247 @@ def volcano(df: pd.DataFrame,
 
     if show_legend:
         ax.legend()
+
+
+def marker_line_plot(adata: AnnData,
+                     features,
+                     obs_time_key,
+                     is_magic_impute=False,
+                     smooth_method='lowess',
+                     smooth_K=100,
+                     verbose=True,
+                     is_fill_conf=False,
+                     is_scatter = False,
+                     color = ['red'],
+                     is_legend = True,
+                     is_allinone = False,
+                     seed=2022,
+                     **kwargs):
+    """
+    Plot the expression of a marker gene along time, or pseudo time.
+    """
+    import scipy
+    from statsmodels.nonparametric.smoothers_lowess import lowess as  sm_lowess
+    np.random.seed(seed)
+    def smooth(x, y, xgrid):
+        samples = np.random.choice(len(x), 50, replace=True)
+        #print(samples)
+        y_s = y[samples]
+        x_s = x[samples]
+        y_sm = sm_lowess(y_s,x_s, frac=1./5., it=5, return_sorted = False)
+        # regularly sample it onto the grid
+        y_grid = scipy.interpolate.interp1d(x_s, y_sm, fill_value='extrapolate')(xgrid)
+        return y_grid
+
+    if color is None:
+        color = ['red']
+
+
+    features = [features] if isinstance(features, str) else features
+    for feature in features:
+        if feature not in adata.var_names:
+            print("Feature %s not found in the adata.var_names"%feature)
+
+    features = [feature for feature in features if feature in adata.var_names]
+
+    if len(features) == 0:
+        raise ValueError("No feature found in the adata.var_names")
+
+    #X_ = None
+    if is_magic_impute:
+        import magic
+        magic_operator = magic.MAGIC()
+
+        idxs = [np.where(adata.var_names == feature)[0][0] for feature in features]
+        X = adata.X[:, idxs]
+        X =pd.DataFrame(X.toarray() if not isinstance(X, np.ndarray) else X, index=adata.obs_names, columns=features)
+        X_ = magic_operator.fit_transform(X, genes=features)
+    else:
+        idxs = [np.where(adata.var_names == feature)[0][0] for feature in features]
+        X_ =pd.DataFrame(adata.X[:,idxs].toarray() if not isinstance(adata.X, np.ndarray) else adata.X[:, idxs], index=adata.obs_names, columns=features)
+
+    if not obs_time_key in adata.obs.columns:
+        raise ValueError(f"obs_time_key {obs_time_key} is not in adata.obs.columns")
+
+    if is_allinone:
+        if len(color) < len(features):
+            import colorcet as cc
+            import seaborn as sns
+            color = sns.color_palette(cc.glasbey, n_colors=len(features)).as_hex()
+        fig, ax = plt.subplots(1,1 )
+        x = np.array(adata.obs[obs_time_key].values)
+        for idx, feature in enumerate(features):
+            y = np.array(X_.loc[:, feature])
+            x_ = sorted(set(x))
+            y_ = [np.mean(y[x==k]) for k in x_]
+            ax.plot(x_, y_, marker='.', linestyle='-', markersize=10, color=color[idx],  label=feature, zorder=5, **kwargs)
+        if len(set(x)) < 10:
+            ax.set_xticks(sorted(set(x)))
+        if is_legend:
+            ax.legend()
+
+    else:
+        x = np.array(adata.obs[obs_time_key].values)
+        for idx, feature in enumerate(features):
+            fig, ax = plt.subplots(1,1 )
+            y = np.array(X_.loc[:, feature])
+            x_ = sorted(set(x))
+            y_ = [np.mean(y[x==k]) for k in x_]
+            ax.plot(x_, y_, marker='.', linestyle='-', markersize=10, color=color[0],  label=feature, zorder=5, **kwargs)
+            ax.set_title(feature)
+            if is_scatter:
+                ax.plot(x, y, 'k.', zorder=1)
+            if len(set(x)) < 10:
+                ax.set_xticks(sorted(set(x)))
+            if is_legend:
+                ax.legend()
+#endf marker_line_plot
+
+
+
+
+
+def marker_spline_plot(adata: AnnData,
+                     features,
+                     obs_time_key,
+                     is_magic_impute=False,
+                     smooth_method='lowess',
+                     smooth_K=100,
+                     verbose=True,
+                     is_fill_conf=False,
+                     is_scatter = False,
+                     color = ['red'],
+                     is_legend = True,
+                     is_allinone = False,
+                     seed=2022,
+                     **kwargs):
+    """
+    Plot the expression of a marker gene along time, or pseudo time.
+    """
+    import scipy
+    from statsmodels.nonparametric.smoothers_lowess import lowess as  sm_lowess
+    np.random.seed(seed)
+    def smooth(x, y, xgrid):
+        samples = np.random.choice(len(x), 50, replace=True)
+        #print(samples)
+        y_s = y[samples]
+        x_s = x[samples]
+        y_sm = sm_lowess(y_s,x_s, frac=1./5., it=5, return_sorted = False)
+        # regularly sample it onto the grid
+        y_grid = scipy.interpolate.interp1d(x_s, y_sm, fill_value='extrapolate')(xgrid)
+        return y_grid
+
+    if color is None:
+        color = ['red']
+
+
+    features = [features] if isinstance(features, str) else features
+    for feature in features:
+        if feature not in adata.var_names:
+            print("Feature %s not found in the adata.var_names"%feature)
+
+    features = [feature for feature in features if feature in adata.var_names]
+
+    if len(features) == 0:
+        raise ValueError("No feature found in the adata.var_names")
+
+    #X_ = None
+    if is_magic_impute:
+        import magic
+        magic_operator = magic.MAGIC()
+        idxs = [np.where(adata.var_names == feature)[0][0] for feature in features]
+        X = adata.X[:, idxs]
+        X =pd.DataFrame(X.toarray() if not isinstance(X, np.ndarray) else X, index=adata.obs_names, columns=features)
+        X_ = magic_operator.fit_transform(X, genes=features)
+    else:
+        idxs = [np.where(adata.var_names == feature)[0][0] for feature in features]
+        X_ =pd.DataFrame(adata.X[:,idxs].toarray() if not isinstance(adata.X, np.ndarray) else adata.X[:, idxs], index=adata.obs_names, columns=features)
+
+    if not obs_time_key in adata.obs.columns:
+        raise ValueError(f"obs_time_key {obs_time_key} is not in adata.obs.columns")
+
+    if is_allinone:
+        if len(color) < len(features):
+            import colorcet as cc
+            import seaborn as sns
+            color = sns.color_palette(cc.glasbey, n_colors=len(features)).as_hex()
+        fig, ax = plt.subplots(1,1 )
+        x = np.array(adata.obs[obs_time_key].values)
+        for idx, feature in enumerate(features):
+            y = np.array(X_.loc[:, feature])
+            xgrid = np.linspace(x.min(),x.max())
+            smooths = np.stack([smooth(x, y, xgrid) for k in range(smooth_K)]).T
+            mean = np.nanmean(smooths, axis=1)
+            stderr = scipy.stats.sem(smooths, axis=1)
+            stderr = np.nanstd(smooths, axis=1, ddof=0)
+            if is_fill_conf:
+                ax.fill_between(xgrid, mean-1.96*stderr, mean+1.96*stderr, alpha=0.25, zorder=1)
+            ax.plot(xgrid, mean, color=color[idx], label=feature, zorder=5,**kwargs)
+            #ax.set_title(feature)
+            #if is_scatter:
+            #    ax.plot(x, y, 'k.')
+        if len(set(x)) < 10:
+            ax.set_xticks(sorted(set(x)))
+        if is_legend:
+            ax.legend()
+
+    else:
+
+        x = np.array(adata.obs[obs_time_key].values)
+        for idx, feature in enumerate(features):
+            fig, ax = plt.subplots(1,1 )
+            y = np.array(X_.loc[:, feature])
+            xgrid = np.linspace(x.min(),x.max())
+            smooths = np.stack([smooth(x, y, xgrid) for k in range(smooth_K)]).T
+            mean = np.nanmean(smooths, axis=1)
+            stderr = scipy.stats.sem(smooths, axis=1)
+            stderr = np.nanstd(smooths, axis=1, ddof=0)
+
+            if is_fill_conf:
+                ax.fill_between(xgrid, mean-1.96*stderr, mean+1.96*stderr, alpha=0.25, zorder=0)
+            ax.plot(xgrid, mean, color=color[0], label=feature, zorder=5, **kwargs)
+            #plt.plot(xgrid, smooths, color='tomato', alpha=0.25)
+            ax.set_title(feature)
+            if is_scatter:
+                ax.plot(x, y, 'k.', zorder=1)
+            if len(set(x)) < 10:
+                ax.set_xticks(sorted(set(x)))
+            if is_legend:
+                ax.legend()
+#endf marker_sline_plot
+
+
+def marker_line_pesudo(mtx,
+                        features,
+                        smooth_method = 'lowess',
+                        is_legend = True,
+                        is_allinone=False,
+                        color=["red"]):
+
+    from statsmodels.nonparametric.smoothers_lowess import lowess as  sm_lowess
+    x = [int(i.split('_')[1]) for i in mtx.columns]
+    if is_allinone:
+        if len(color) < len(features):
+            import colorcet as cc
+            import seaborn as sns
+            color = sns.color_palette(cc.glasbey, n_colors=len(features)).as_hex()
+        _, ax = plt.subplots(1,1)
+        for idx, feature in enumerate(features):
+            y=[ i for i in list(mtx.loc[feature, :])]
+            sm_x, sm_y = sm_lowess(y, x,  frac=1./5., it=5, return_sorted = True).T
+            ax.plot(sm_x, sm_y, color=color[idx], label=feature, zorder=5)
+            #ax.plot(x, y, 'k.')
+        if is_legend:
+            ax.legend()
+
+    else:
+        for feature in features:
+            _, ax = plt.subplots(1,1)
+            y=[ i for i in list(mtx.loc[feature, :])]
+            sm_x, sm_y = sm_lowess(y, x,  frac=1./5., it=5, return_sorted = True).T
+            ax.plot(sm_x, sm_y, color='red', label=feature, zorder=5)
+            ax.plot(x, y, 'k.', zorder=0)
+            ax.set_title(feature)
+            if is_legend:
+                ax.legend()
+#endf marker_line_pesudo
