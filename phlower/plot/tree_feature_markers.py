@@ -194,14 +194,12 @@ def marker_line_plot(adata: AnnData,
                      features,
                      obs_time_key,
                      is_magic_impute=False,
-                     smooth_method='lowess',
-                     smooth_K=100,
                      verbose=True,
-                     is_fill_conf=False,
                      is_scatter = False,
                      color = ['red'],
                      is_legend = True,
                      is_allinone = False,
+                     ax = None, ## only allinone
                      seed=2022,
                      **kwargs):
     """
@@ -225,9 +223,9 @@ def marker_line_plot(adata: AnnData,
 
 
     features = [features] if isinstance(features, str) else features
-    for feature in features:
-        if feature not in adata.var_names:
-            print("Feature %s not found in the adata.var_names"%feature)
+    #for feature in features:
+    #    if feature not in adata.var_names:
+    #        print("Feature %s not found in the adata.var_names"%feature)
 
     features = [feature for feature in features if feature in adata.var_names]
 
@@ -255,7 +253,8 @@ def marker_line_plot(adata: AnnData,
             import colorcet as cc
             import seaborn as sns
             color = sns.color_palette(cc.glasbey, n_colors=len(features)).as_hex()
-        fig, ax = plt.subplots(1,1 )
+        if ax is None:
+            _, ax = plt.subplots(1,1)
         x = np.array(adata.obs[obs_time_key].values)
         for idx, feature in enumerate(features):
             y = np.array(X_.loc[:, feature])
@@ -270,7 +269,7 @@ def marker_line_plot(adata: AnnData,
     else:
         x = np.array(adata.obs[obs_time_key].values)
         for idx, feature in enumerate(features):
-            fig, ax = plt.subplots(1,1 )
+            _, ax = plt.subplots(1,1 )
             y = np.array(X_.loc[:, feature])
             x_ = sorted(set(x))
             y_ = [np.mean(y[x==k]) for k in x_]
@@ -300,6 +299,7 @@ def marker_spline_plot(adata: AnnData,
                      color = ['red'],
                      is_legend = True,
                      is_allinone = False,
+                     ax = None, ## only allinone
                      seed=2022,
                      **kwargs):
     """
@@ -352,7 +352,8 @@ def marker_spline_plot(adata: AnnData,
             import colorcet as cc
             import seaborn as sns
             color = sns.color_palette(cc.glasbey, n_colors=len(features)).as_hex()
-        fig, ax = plt.subplots(1,1 )
+        if ax is None:
+            _, ax = plt.subplots(1,1 )
         x = np.array(adata.obs[obs_time_key].values)
         for idx, feature in enumerate(features):
             y = np.array(X_.loc[:, feature])
@@ -376,7 +377,7 @@ def marker_spline_plot(adata: AnnData,
 
         x = np.array(adata.obs[obs_time_key].values)
         for idx, feature in enumerate(features):
-            fig, ax = plt.subplots(1,1 )
+            _, ax = plt.subplots(1,1 )
             y = np.array(X_.loc[:, feature])
             xgrid = np.linspace(x.min(),x.max())
             smooths = np.stack([smooth(x, y, xgrid) for k in range(smooth_K)]).T
