@@ -116,7 +116,7 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
                    text_attr = 'original',
                    save_fig=False,fig_path=None,fig_format='pdf',
                    return_fig = False,
-                   s = 30,
+                   s = 30, ## size or range
                    plotly=False,
                    cmap_continous = 'viridis',
                    ):
@@ -303,7 +303,7 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
         for i, ann in enumerate(tqdm_show(color, desc='stream sc plotting')):
             fig = plt.figure(figsize=(fig_size[0],fig_size[1]))
             ax_i = fig.add_subplot(1,1,1)
-            if(is_string_dtype(df_plot[ann])):
+            if(is_string_dtype(df_plot[ann])): ## plot groups
                 sns_palette = sns.color_palette(cc.glasbey, n_colors=len(set(df_plot_shuf[ann]))).as_hex()
                 if ann+'_color' not in adata.uns:
                     adata.uns[ann+'_color'] = {y:sns_palette[idx]  for idx, y in enumerate(set(df_plot_shuf[ann]))}
@@ -329,19 +329,40 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
 
                 ### remove legend title
                 # ax_i.get_legend().texts[0].set_text("")
-            else:
+            else: ## plot variables
                 vmin_i = df_plot[ann].min() if vmin is None else vmin
                 vmax_i = df_plot[ann].max() if vmax is None else vmax
                 cell_order = np.argsort(df_plot_shuf['pseudotime'], kind="stable") ## order cells, not working
-                if cmap_continous not in mpl.colormaps:
-                    cmap_continous = "viridis"
-                    print("warning: wrong cmap, use default viridis!")
+                if isinstance(cmap_continous, str):
+                    if  cmap_continous not in mpl.colormaps:
+                        cmap_continous = "viridis"
+                        print("warning: wrong cmap, use default viridis!")
+                        cmap_obj = plt.get_cmap(cmap_continous)
+                    else:
+                        cmap_obj = plt.get_cmap(cmap_continous)
+                elif isinstance(cmap_continous, mpl.colors.ListedColormap):
+                    cmap_obj = cmap_continous
+                else:
+                    cmap_obj = plt.get_cmap("viridis")
+                    print("warning: wrong cmap name or mpl.colors.ListedColormap, use default viridis!")
 
-                sc_i = ax_i.scatter(list(df_plot_shuf['pseudotime']), list(df_plot_shuf['dist']), s=s,
-                                    c=list(df_plot_shuf[ann]),vmin=vmin_i,vmax=vmax_i,alpha=alpha, cmap = plt.get_cmap(cmap_continous) )
-                cbar = plt.colorbar(sc_i,ax=ax_i, pad=0.01, fraction=0.05, aspect=40)
-                cbar.solids.set_edgecolor("face")
-                cbar.ax.locator_params(nbins=5)
+
+
+
+                if (isinstance(s, list) or isinstance(s, tuple)) and len(s)==2: ## variated size of point size range e.g. (2, 50)
+                    s_min = s[0]
+                    s_max = s[1]
+                    df_plot_shuf['weight'] = s_max*((df_plot_shuf[ann] - min(df_plot_shuf[ann]))/(max(df_plot_shuf[ann]) - min(df_plot_shuf[ann])))
+                    df_plot_shuf['weight'] = [i if i > s_min else s_min for i in df_plot_shuf['weight']]
+                    sc_i = ax_i.scatter(list(df_plot_shuf['pseudotime']), list(df_plot_shuf['dist']), s=list(df_plot_shuf['weight']),
+                                        c=list(df_plot_shuf[ann]),vmin=vmin_i,vmax=vmax_i,alpha=alpha, cmap = cmap_obj )
+                elif isinstance(s, int) or isinstance(s, float): ## fix point size
+                    sc_i = ax_i.scatter(list(df_plot_shuf['pseudotime']), list(df_plot_shuf['dist']), s=s,
+                                        c=list(df_plot_shuf[ann]),vmin=vmin_i,vmax=vmax_i,alpha=alpha, cmap = cmap_obj )
+                if show_legend:
+                    cbar = plt.colorbar(sc_i,ax=ax_i, pad=0.01, fraction=0.05, aspect=40)
+                    cbar.solids.set_edgecolor("face")
+                    cbar.ax.locator_params(nbins=5)
             if(show_graph):
                 for edge_i in stream_edges.keys():
                     branch_i_pos = stream_edges[edge_i]
@@ -608,18 +629,29 @@ def plot_stream(adata,root='root',color = None,preference=None,dist_scale=0.9,
             for ann_i in ann_order:
                 vmin_i = dict_ann_df[ann].loc[ann_i,:].min() if vmin is None else vmin
                 vmax_i = dict_ann_df[ann].loc[ann_i,:].max() if vmax is None else vmax
-                if cmap_continous not in mpl.colormaps:
-                    cmap_continous = "viridis"
-                    print("warning: wrong cmap, use default viridis!")
+                if isinstance(cmap_continous, str):
+                    if  cmap_continous not in mpl.colormaps:
+                        cmap_continous = "viridis"
+                        print("warning: wrong cmap, use default viridis!")
+                        cmap_obj = plt.get_cmap(cmap_continous)
+                    else:
+                        cmap_obj = plt.get_cmap(cmap_continous)
+                elif isinstance(cmap_continous, mpl.colors.ListedColormap):
+                    cmap_obj = cmap_continous
+                else:
+                    cmap_obj = plt.get_cmap("viridis")
+                    print("warning: wrong cmap name or mpl.colors.ListedColormap, use default viridis!")
 
                 im = ax.imshow(dict_im_array[ann][ann_i],interpolation='bicubic',
-                               extent=[xmin,xmax,ymin,ymax],vmin=vmin_i,vmax=vmax_i,aspect='auto', cmap=plt.get_cmap(cmap_continous))
+                               extent=[xmin,xmax,ymin,ymax],vmin=vmin_i,vmax=vmax_i,aspect='auto', cmap=cmap_obj)
                 verts_cell = verts[ann_i]
                 clip_path = Polygon(verts_cell, facecolor='none', edgecolor='none', closed=True)
                 ax.add_patch(clip_path)
                 im.set_clip_path(clip_path)
-                cbar = plt.colorbar(im, ax=ax, pad=0.04, fraction=0.02, aspect=fig_colorbar_aspect)
-                cbar.ax.locator_params(nbins=5)
+
+                if show_legend:
+                    cbar = plt.colorbar(im, ax=ax, pad=0.04, fraction=0.02, aspect=fig_colorbar_aspect)
+                    cbar.ax.locator_params(nbins=5)
         ax.set_xlim(xmin,xmax)
         ax.set_ylim(ymin,ymax)
         ax.set_xlabel("pseudotime",labelpad=2)

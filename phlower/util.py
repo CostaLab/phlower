@@ -462,3 +462,28 @@ def module_check_install(module_name):
         print("Installing %s" % module_name)
         os.system (f"pip install {module_name}")
 
+
+
+def express_prop(adata, gene, obs_col='time_int'):
+    from collections import Counter
+    d = Counter(adata.obs[obs_col])
+
+    is_expressed = [int(i) for i in adata[:, gene].X.toarray().ravel() > 0]
+    df = pd.DataFrame({"is_expressed":is_expressed, "days": adata.obs[obs_col]})
+    mdf = df.groupby('days').sum()
+    mdf
+    mdf['total'] = [d[k] for k in mdf.index]
+    mdf['expressed_prop'] = [round(a/b,2) for a,b in zip(mdf['is_expressed'], mdf['total'])]
+
+    return mdf
+
+def custom_cmap(color_range=['grey', 'red'], name='mycmap'):
+    """
+    custome gradient colormap using colorir
+    """
+    import colorir as cir
+    import matplotlib as mpl
+    color_range = [i if i.startswith('#') else mpl.colors.cnames[i] for i in color_range  ]
+    grad = cir.PolarGrad(color_range)#.to_cmap()
+    cmap_ = grad.to_cmap(name, 256)
+    return cmap_
