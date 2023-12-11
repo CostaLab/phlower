@@ -305,6 +305,13 @@ def harmonic_trajs_ranks(adata: AnnData,
                          verbose=True,
                          seed = 2022,
                          ):
+    """
+    calculate all harmonic trajectory groups end cluster(highest pseudotime score)
+    check top n nodes belongs to which end cluster
+    get a dict: {group: (end_cluster, topN_nodes)}
+    return a dict including more than 1 trajectory groups end with the same cluster.
+    {cluster: [g1,g2,g3,g4]}
+    """
     from collections import Counter, defaultdict
     from scipy.stats import gaussian_kde
 
@@ -438,7 +445,7 @@ def select_trajectory_clusters(adata,
     rm_cluster_ratio: float
         smaller the ratio of the cluster number would be removed, 0.005(50 for 10,000) by default
     manual_rm_clusters: list
-        the clusters to remove manually, [] by default
+        the clusters to remove manually, [-1] by default
     iscopy: bool
         whether to return a copy of adata or not, False by default
     """

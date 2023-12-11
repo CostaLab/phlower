@@ -228,6 +228,10 @@ def tree_label_dict(adata,
                     to_ = 'original',
                     branch_label = False,
                     ):
+    """
+    stream_tree: from_&to_ candidate: node_name, original, label
+    fate_tree: from_&to_ candidate: node_name, original
+    """
     htree = adata.uns[tree]
     if from_  != "node_name":
         d1= nx.get_node_attributes(adata.uns[tree], from_)
@@ -278,3 +282,33 @@ def tree_original_dict(tree, leaf_name):
                 d[k] = v
     return d
 #endf tree_original_dict
+
+
+
+def end_branch_dict(adata, branch_id_alias='branch_id_alias', fate_tree='stream_tree', from_='label', to_='original'):
+    """
+    for adata.obs.branch_id_alias, return a dict {branch_id_alias: original_name}
+    like:
+      {('S15', 'S14'): 'Stromal-4',
+       ('S10', 'S7'): 'PT/LOH',
+       ('S11', 'S8'): 'Stromal-1',
+       ('S13', 'S12'): 'Stromal-2',
+       ('S9', 'S7'): 'PODO',
+       ('S5', 'S2'): 'Neuron-3',
+       ('S16', 'S14'): 'Stromal-3',
+       ('S6', 'S3'): 'root',
+       ('S1', 'S0'): 'Neuron-1',
+       ('S4', 'S2'): 'Neuron-2'}
+    """
+    from collections import Counter
+    keys=Counter(adata.obs[branch_id_alias])# alias key ('S7', 'S3')
+    dic_ = tree_label_dict(adata, fate_tree, from_=from_, to_=to_)# "S15": 'Stromal-4'
+    dic_ret = {}
+    for k,v in dic_.items():
+        if len(v) == 0:
+            continue
+        for key_tuple in keys:
+            if k in key_tuple:
+                dic_ret[key_tuple] = v
+    return dic_ret
+

@@ -10,7 +10,7 @@ setup(
     license='BSD 2-clause',
     install_requires=['numpy',
                       'matplotlib',
-                      'seaborn',
+                      'seaborn>=0.12.2',
                       'networkx>=2.4',
                       'pydot',
                       'igraph',

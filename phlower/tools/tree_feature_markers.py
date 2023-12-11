@@ -1260,7 +1260,7 @@ def tree_branches_cells(adata: AnnData,
                         end_branching_node: str="",
                         tree_attr:str="original",
                         fate_tree: str= 'fate_tree',
-                        bin_max_ratio = 0.01
+                        bin_max_ratio = 0.01  ### each bin can contain no more than 1/100 of total cells
                         ):
     """
     goal: collection cells from a branch to, can with real time or pseudo time
@@ -1268,6 +1268,24 @@ def tree_branches_cells(adata: AnnData,
     2. some cells show up too few times can use a cutoff to remove low frequency cells
     3. for plot LOWESS model to get smooth with stdev
     FOR NOW just implement only for real time, for this, the task is to select cells
+
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object with gene expression or TF binding data
+    start_branching_node: str
+        the name of the start branching node, if "", use the lastest branching node
+    end_branching_node: str
+        the name of the end branching node
+    fate_tree: str
+        the name of the fate tree
+    bin_max_ratio: float
+        each bin can contain no more than ratio of total cells
+
+    Returns
+    -------
+    s: set
+        a set of cells
     """
     if tree_attr == "node_name":
         pass
@@ -1295,7 +1313,7 @@ def tree_branches_cells(adata: AnnData,
         e_nodes = adata.uns[fate_tree].nodes[bin_]['ecount']
         d_nodes_nodes1 = _edgefreq_to_nodefreq(edge_freq=e_nodes, d_edge2node=d_edge2node)
         quant = 1- min(1,   (bin_max_ratio * adata.n_obs)/len(d_nodes_nodes1)) ### each bin can contain no more than 1/100 of total cells
-        if quant == 0 and len(d_nodes_nodes1) > 10:
+        if quant == 0 and len(d_nodes_nodes1) > 10: ## keep all if no more than 10 cells
             quant = 0.2
         minv = np.quantile(list(d_nodes_nodes1.values()), q=quant)
         d_nodes_nodes1 = {k:v for k,v in d_nodes_nodes1.items() if v >= minv and k not in s}
@@ -1303,6 +1321,7 @@ def tree_branches_cells(adata: AnnData,
         #list_bin_expression.append(d_nodes_nodes1)## this would remove from large bins to small bins,
 
     return s
+#endf tree_branches_cells
 
 
 

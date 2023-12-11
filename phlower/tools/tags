@@ -1,0 +1,478 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+A	triangulation.py	/^        A = re.sub("_g$", "_A", "{graph_name}")$/;"	v
+AgglomerativeClustering	clustering.py	/^    from sklearn.cluster import AgglomerativeClustering$/;"	i
+AgglomerativeClustering	clustering.py	/^from sklearn.cluster import KMeans, AgglomerativeClustering$/;"	i
+AnnData	adata_util.py	/^from anndata import AnnData$/;"	i
+AnnData	featuretraj.py	/^from anndata import AnnData$/;"	i
+AnnData	harmonic_pseudo_tree.py	/^from anndata import AnnData$/;"	i
+AnnData	hodgedecomp.py	/^from anndata import AnnData$/;"	i
+AnnData	trajectory.py	/^from anndata import AnnData$/;"	i
+AnnData	tree_feature_markers.py	/^from anndata import AnnData$/;"	i
+AnnData	tree_utils.py	/^from anndata import AnnData$/;"	i
+AnnData	triangulation.py	/^from anndata import AnnData$/;"	i
+Callable	tree_utils.py	/^from typing import Union, Optional, Sequence, Tuple, Mapping, Iterable, Callable$/;"	i
+Counter	featuretraj.py	/^from collections import Counter, defaultdict$/;"	i
+Counter	harmonic_pseudo_tree.py	/^from collections import Counter, defaultdict$/;"	i
+Counter	trajectory.py	/^    from collections import Counter$/;"	i
+Counter	trajectory.py	/^    from collections import Counter, defaultdict$/;"	i
+Counter	trajectory.py	/^from collections import Counter, defaultdict$/;"	i
+Counter	tree_feature_markers.py	/^    from collections import Counter$/;"	i
+Counter	tree_feature_markers.py	/^    from collections import Counter, defaultdict$/;"	i
+Counter	tree_utils.py	/^    from collections import Counter$/;"	i
+DBSCAN	clustering.py	/^from sklearn.cluster import DBSCAN$/;"	i
+Delaunay	triangulation.py	/^from scipy.spatial import Delaunay,distance$/;"	i
+Dict	tree_feature_markers.py	/^from typing import Union, List, Tuple, Dict, Set$/;"	i
+ForceAtlas2	dimensionreduction.py	/^    from fa2 import ForceAtlas2$/;"	i
+G_features_edges	featuretraj.py	/^def G_features_edges(G: nx.DiGraph,$/;"	f
+G_full_trajectory_matrix	trajectory.py	/^def G_full_trajectory_matrix(graph: nx.Graph, mat_traj, elist, elist_dict, edge_w=None) -> List[csr_matrix]:$/;"	f
+G_random_climb	trajectory.py	/^def G_random_climb(g:nx.Graph, attr:str='u', roots_ratio:float=0.1, n:int=10000, seeds:int=2022) -> list:$/;"	f
+G_random_climb_knn	trajectory.py	/^def G_random_climb_knn(g:nx.Graph, knn_edges, attr:str='u', roots_ratio:float=0.1, n:int=10000, seeds:int=2022) -> list:$/;"	f
+G_shortest_path_edge	trajectory.py	/^def G_shortest_path_edge(g, an_edge):$/;"	f
+GaussianMixture	clustering.py	/^    from sklearn.mixture import GaussianMixture$/;"	i
+Isomap	dimensionreduction.py	/^from sklearn.manifold import MDS, TSNE, Isomap$/;"	i
+Iterable	graphconstr.py	/^from typing import Iterable, List, Tuple, TypeVar, Union$/;"	i
+Iterable	tree_utils.py	/^from typing import Union, Optional, Sequence, Tuple, Mapping, Iterable, Callable$/;"	i
+KDTree	harmonic_pseudo_tree.py	/^from sklearn.neighbors import KDTree$/;"	i
+KMeans	clustering.py	/^from sklearn.cluster import KMeans, AgglomerativeClustering$/;"	i
+KernelPCA	dimensionreduction.py	/^    from sklearn.decomposition import KernelPCA$/;"	i
+KernelPCA	dimensionreduction.py	/^from sklearn.decomposition import KernelPCA$/;"	i
+L1Norm_decomp	hodgedecomp.py	/^def L1Norm_decomp(adata: AnnData,$/;"	f
+L_distribute_traj	trajectory.py	/^def L_distribute_traj(trajs, groups):$/;"	f
+L_flatten_trajectory_matrix	trajectory.py	/^def L_flatten_trajectory_matrix(M_full) -> np.ndarray:$/;"	f
+L_flatten_trajectory_matrix_norm	trajectory.py	/^def L_flatten_trajectory_matrix_norm(M_full) -> np.ndarray:$/;"	f
+L_majority_proportion	trajectory.py	/^def L_majority_proportion(lst, min_prop=0.8):$/;"	f
+L_trajectory_class	trajectory.py	/^def L_trajectory_class(traj:list, groups, last_n=10, min_prop=0.8, all_n=3):$/;"	f
+LinearDiscriminantAnalysis	dimensionreduction.py	/^from sklearn.discriminant_analysis import LinearDiscriminantAnalysis$/;"	i
+List	featuretraj.py	/^from typing import List$/;"	i
+List	graphconstr.py	/^from typing import Iterable, List, Tuple, TypeVar, Union$/;"	i
+List	trajectory.py	/^from typing import List$/;"	i
+List	tree_feature_markers.py	/^from typing import Union, List, Tuple, Dict, Set$/;"	i
+MDS	dimensionreduction.py	/^from sklearn.manifold import MDS, TSNE, Isomap$/;"	i
+M_create_matrix_coordinates_trajectory_Hspace	featuretraj.py	/^from .trajectory import M_create_matrix_coordinates_trajectory_Hspace$/;"	i
+M_create_matrix_coordinates_trajectory_Hspace	harmonic_pseudo_tree.py	/^from .trajectory import M_create_matrix_coordinates_trajectory_Hspace$/;"	i
+M_create_matrix_coordinates_trajectory_Hspace	trajectory.py	/^def M_create_matrix_coordinates_trajectory_Hspace(H, M_full):$/;"	f
+M_create_matrix_coordinates_trajectory_Hspace_dm	trajectory.py	/^def M_create_matrix_coordinates_trajectory_Hspace_dm(mat_coord_Hspace, reductioin='pca'):$/;"	f
+Mapping	tree_utils.py	/^from typing import Union, Optional, Sequence, Tuple, Mapping, Iterable, Callable$/;"	i
+Optional	tree_utils.py	/^from typing import Union, Optional, Sequence, Tuple, Mapping, Iterable, Callable$/;"	i
+PCA	dimensionreduction.py	/^from sklearn.decomposition import PCA, TruncatedSVD$/;"	i
+PCA	graphconstr.py	/^from sklearn.decomposition import PCA$/;"	i
+Parallel	featuretraj.py	/^        from joblib import Parallel, delayed$/;"	i
+Pool	featuretraj.py	/^        from pathos.multiprocessing import ProcessingPool as Pool$/;"	i
+Sequence	tree_utils.py	/^from typing import Union, Optional, Sequence, Tuple, Mapping, Iterable, Callable$/;"	i
+Set	tree_feature_markers.py	/^from typing import Union, List, Tuple, Dict, Set$/;"	i
+SpectralClustering	clustering.py	/^    from sklearn.cluster import SpectralClustering$/;"	i
+StandardScaler	clustering.py	/^from sklearn.preprocessing import StandardScaler$/;"	i
+StandardScaler	dimensionreduction.py	/^from sklearn.preprocessing import StandardScaler$/;"	i
+StandardScaler	graphconstr.py	/^from sklearn.preprocessing import StandardScaler$/;"	i
+StandardScaler	tree_feature_markers.py	/^from sklearn.preprocessing import StandardScaler$/;"	i
+TF_gene_correlation	tree_feature_markers.py	/^def TF_gene_correlation(adata: AnnData,$/;"	f
+TF_to_genes	tree_utils.py	/^def TF_to_genes(TFs, ones=False):$/;"	f
+TSNE	dimensionreduction.py	/^from sklearn.manifold import MDS, TSNE, Isomap$/;"	i
+TruncatedSVD	dimensionreduction.py	/^from sklearn.decomposition import PCA, TruncatedSVD$/;"	i
+Tuple	graphconstr.py	/^from typing import Iterable, List, Tuple, TypeVar, Union$/;"	i
+Tuple	tree_feature_markers.py	/^from typing import Union, List, Tuple, Dict, Set$/;"	i
+Tuple	tree_utils.py	/^from typing import Union, Optional, Sequence, Tuple, Mapping, Iterable, Callable$/;"	i
+TypeVar	graphconstr.py	/^from typing import Iterable, List, Tuple, TypeVar, Union$/;"	i
+Union	featuretraj.py	/^from typing import Union$/;"	i
+Union	graphconstr.py	/^from typing import Iterable, List, Tuple, TypeVar, Union$/;"	i
+Union	hodgedecomp.py	/^from typing import Union$/;"	i
+Union	trajectory.py	/^from typing import Union$/;"	i
+Union	tree_feature_markers.py	/^from typing import Union, List, Tuple, Dict, Set$/;"	i
+Union	tree_utils.py	/^from typing import Union, Optional, Sequence, Tuple, Mapping, Iterable, Callable$/;"	i
+V	graphconstr.py	/^V = TypeVar('V')$/;"	v
+W	triangulation.py	/^        W = re.sub("_g$", "_W", "{graph_name}")$/;"	v
+X_noise	triangulation.py	/^        X_noise=np.random.normal(m1, noise_sigma_ratio*rg1, size=position.shape[0])$/;"	v
+Y_noise	triangulation.py	/^        Y_noise=np.random.normal(m2, noise_sigma_ratio*rg2, size=position.shape[0])$/;"	v
+_avg_cut_bins	harmonic_pseudo_tree.py	/^    def _avg_cut_bins(dfmin, dfmax, maxx, minn, min_bin_number=5):$/;"	f	function:time_sync_bins
+_divide_nodes_to_branches	tree_feature_markers.py	/^def _divide_nodes_to_branches(tree:nx.DiGraph=None,$/;"	f
+_edge_mid_attribute	harmonic_pseudo_tree.py	/^def _edge_mid_attribute(adata: AnnData,$/;"	f
+_edge_mid_points	harmonic_pseudo_tree.py	/^def _edge_mid_points(adata: AnnData,$/;"	f
+_edge_two_ends	harmonic_pseudo_tree.py	/^from .tree_utils import _edge_two_ends$/;"	i
+_edge_two_ends	tree_feature_markers.py	/^from .tree_utils import (_edge_two_ends,$/;"	i
+_edge_two_ends	tree_utils.py	/^def _edge_two_ends(adata: AnnData,$/;"	f
+_edgefreq_to_nodefreq	tree_feature_markers.py	/^def _edgefreq_to_nodefreq(edge_freq:List[tuple]=None,$/;"	f
+_edgefreq_to_nodefreq	tree_utils.py	/^def _edgefreq_to_nodefreq(edge_freq, d_edge2node):$/;"	f
+_get_igraph_from_adjacency	clustering.py	/^def _get_igraph_from_adjacency(adjacency, directed=None):$/;"	f
+_max_min_attribute	harmonic_pseudo_tree.py	/^    def _max_min_attribute(ddf, attr='edge_mid_u'):$/;"	f	function:time_sync_bins
+_pairwise_branching_dict	harmonic_pseudo_tree.py	/^def _pairwise_branching_dict(ddf, bin_attr='ubin', edge_attr='edge_idx', bottom_up=True):$/;"	f
+adata	triangulation.py	/^        adata = adata.copy()$/;"	v
+add_branching	harmonic_pseudo_tree.py	/^def add_branching(tm, val, htree, htree_roots):$/;"	f
+add_merge_node	tree_feature_markers.py	/^def add_merge_node(fate_tree, new_tree, father, nodes, name, f_original):$/;"	f
+add_node_info	harmonic_pseudo_tree.py	/^def add_node_info(fate_tree, ddf, root, pos_name='X_pca_ddhodge_g'):$/;"	f
+add_node_pca	harmonic_pseudo_tree.py	/^def add_node_pca(adata, root='root', fate_tree_name="fate_tree", graph_name = None,  pca_name='X_pca', iscopy=False):$/;"	f
+add_origin_to_stream	harmonic_pseudo_tree.py	/^def add_origin_to_stream(adata, fate_tree='fate_tree', stream_tree="stream_tree", iscopy=False):$/;"	f
+add_pca_to_stream	harmonic_pseudo_tree.py	/^def add_pca_to_stream(adata, fate_tree='fate_tree', stream_tree="stream_tree", attr="X_pca_ddhodge_g", iscopy=False):$/;"	f
+add_pos_to_graph	harmonic_pseudo_tree.py	/^from ..external.stream_extra import (add_pos_to_graph,$/;"	i
+adjedges	featuretraj.py	/^from .graphconstr import adjedges, edges_on_path$/;"	i
+adjedges	graphconstr.py	/^def adjedges(A:Union[csc_matrix, csr_matrix, np.ndarray], W, k=4):$/;"	f
+adjedges	trajectory.py	/^from .graphconstr import adjedges, edges_on_path$/;"	i
+adjedges	triangulation.py	/^from .graphconstr import adjedges$/;"	i
+affinity	diffusionmap.py	/^def affinity(R, k=7, sigma=None, log=False, normalize=False):$/;"	f
+affinity	dimensionreduction.py	/^from .diffusionmap import affinity$/;"	i
+affinity	graphconstr.py	/^from .diffusionmap import diffusionMaps, affinity, logsumexp$/;"	i
+agglomerativeclustering	clustering.py	/^def agglomerativeclustering(embedding, distance='euclidean', n_clusters=2, affinity='euclidean', memory=None, connectivity=None, compute_full_tree='auto', linkage='ward', distance_threshold=None):$/;"	f
+as_altmat	graphconstr.py	/^def as_altmat(g:nx.DiGraph, weight_attr:str="weight") -> np.ndarray:$/;"	f
+assign_eweight	incidence.py	/^def assign_eweight(G, A):$/;"	f
+assign_graph_node_attr_to_adata	trajectory.py	/^from .tree_utils import assign_graph_node_attr_to_adata$/;"	i
+assign_graph_node_attr_to_adata	tree_utils.py	/^def assign_graph_node_attr_to_adata(adata, graph_name='X_pca_ddhodge_g', from_attr='pos', to_attr='pos', iscopy=False):$/;"	f
+auc	aucc.py	/^from sklearn.metrics import auc, precision_recall_curve, roc_curve, silhouette_score$/;"	i
+batch_kmeans_evaluate	aucc.py	/^def batch_kmeans_evaluate(mat_coor_flatten_trajectories, krange=range(2,20), verbose=True):$/;"	f
+branch_TF_gene_correlation	tree_feature_markers.py	/^def branch_TF_gene_correlation(tf_df:pd.DataFrame,$/;"	f
+branch_TF_gene_correlation_v0	tree_feature_markers.py	/^def branch_TF_gene_correlation_v0(tf_df:pd.DataFrame,$/;"	f
+branch_heatmap_matrix	tree_feature_markers.py	/^def branch_heatmap_matrix(tf_df:pd.DataFrame,$/;"	f
+bsplit	harmonic_pseudo_tree.py	/^from ..util import bsplit, pairwise, term_frequency_cosine, find_cut_point, find_cut_point_bu$/;"	i
+chain	featuretraj.py	/^from itertools import chain$/;"	i
+chain	graphconstr.py	/^from itertools import chain$/;"	i
+chain	trajectory.py	/^from itertools import chain$/;"	i
+change_stream_labels	tree_utils.py	/^def change_stream_labels(adata, tree='stream_tree', attr='original', from_to_dict={}, iscopy=False):$/;"	f
+circumcircle_radius	triangulation.py	/^def circumcircle_radius(a, b, c):$/;"	f
+cluster_auc	aucc.py	/^def cluster_auc(clusters, d_list):$/;"	f
+cluster_aupr	aucc.py	/^def cluster_aupr(clusters, d_list):$/;"	f
+cluster_silh	aucc.py	/^def cluster_silh(clusters, d_list):$/;"	f
+connect_starts_ends_with_Delaunay	triangulation.py	/^def connect_starts_ends_with_Delaunay(g,$/;"	f
+connected_components	harmonic_pseudo_tree.py	/^from networkx.algorithms.components.connected import connected_components$/;"	i
+construct_circle_delaunay	triangulation.py	/^def construct_circle_delaunay(adata:AnnData,$/;"	f
+construct_delaunay	triangulation.py	/^def construct_delaunay(adata:AnnData,$/;"	f
+construct_trucated_delaunay	triangulation.py	/^def construct_trucated_delaunay(adata:AnnData,$/;"	f
+construct_trucated_delaunay_knn	triangulation.py	/^def construct_trucated_delaunay_knn(adata:AnnData,$/;"	f
+copy	graphconstr.py	/^import copy$/;"	i
+copy	harmonic_pseudo_tree.py	/^import copy$/;"	i
+copy	triangulation.py	/^import copy$/;"	i
+create_branching_tree	harmonic_pseudo_tree.py	/^def create_branching_tree(pairwise_bdict, keys=None):$/;"	f
+create_bstream_tree	harmonic_pseudo_tree.py	/^def create_bstream_tree(adata: AnnData,$/;"	f
+create_detail_tree	harmonic_pseudo_tree.py	/^def create_detail_tree(adata, htree, root, ddf,$/;"	f
+create_edge_triangle_incidence_matrix	incidence.py	/^def create_edge_triangle_incidence_matrix(elist, tlist):$/;"	f
+create_l1	incidence.py	/^def create_l1(B1, B2):$/;"	f
+create_node_edge_incidence_matrix	incidence.py	/^def create_node_edge_incidence_matrix(elist):$/;"	f
+create_normalized_l1	incidence.py	/^def create_normalized_l1(B1, B2, mode="sym"):$/;"	f
+create_weighted_edge_triangle_incidence_matrix	incidence.py	/^def create_weighted_edge_triangle_incidence_matrix(G, elist, tlist, weight_attr="weight"):$/;"	f
+create_weighted_node_edge_incidence_matrix	incidence.py	/^def create_weighted_node_edge_incidence_matrix(G, attr='weight'):$/;"	f
+csc_matrix	graphconstr.py	/^from scipy.sparse import csc_matrix, csr_matrix$/;"	i
+csc_matrix	hodgedecomp.py	/^from scipy.sparse import csc_matrix, csr_matrix$/;"	i
+csc_matrix	incidence.py	/^from scipy.sparse import csc_matrix, linalg, csr_matrix$/;"	i
+csr_matrix	dimensionreduction.py	/^from scipy.sparse import issparse, find,csr_matrix$/;"	i
+csr_matrix	featuretraj.py	/^from scipy.sparse import csr_matrix$/;"	i
+csr_matrix	graphconstr.py	/^from scipy.sparse import csc_matrix, csr_matrix$/;"	i
+csr_matrix	hodgedecomp.py	/^from scipy.sparse import csc_matrix, csr_matrix$/;"	i
+csr_matrix	incidence.py	/^from scipy.sparse import csc_matrix, linalg, csr_matrix$/;"	i
+csr_matrix	trajectory.py	/^from scipy.sparse import csr_matrix$/;"	i
+csr_matrix	triangulation.py	/^from scipy.sparse import linalg, csr_matrix$/;"	i
+cudf	dimensionreduction.py	/^        import cudf$/;"	i
+cugraph	dimensionreduction.py	/^        import cugraph$/;"	i
+curl	graphconstr.py	/^from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl, div_adj$/;"	i
+curl	hodgedecomp.py	/^def curl(g, weight_attr="weight"):$/;"	f
+curlop	graphconstr.py	/^from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl, div_adj$/;"	i
+curlop	hodgedecomp.py	/^def curlop(g):$/;"	f
+datetime	diffusionmap.py	/^from datetime import datetime$/;"	i
+datetime	dimensionreduction.py	/^from datetime import datetime$/;"	i
+datetime	graphconstr.py	/^from datetime import datetime$/;"	i
+datetime	harmonic_pseudo_tree.py	/^from datetime import datetime$/;"	i
+datetime	trajectory.py	/^from datetime import datetime$/;"	i
+dbscan	clustering.py	/^def dbscan(embedding, distance='euclidean',  eps=0.5,min_samples=5,metric_params=None, algorithm='auto', leaf_size=30, p=None, n_jobs=None):$/;"	f
+dbscan	featuretraj.py	/^from .clustering import dbscan, leiden, louvain$/;"	i
+dbscan	trajectory.py	/^from .clustering import dbscan, leiden, louvain$/;"	i
+defaultdict	featuretraj.py	/^from collections import Counter, defaultdict$/;"	i
+defaultdict	harmonic_pseudo_tree.py	/^from collections import Counter, defaultdict$/;"	i
+defaultdict	trajectory.py	/^    from collections import Counter, defaultdict$/;"	i
+defaultdict	trajectory.py	/^from collections import Counter, defaultdict$/;"	i
+defaultdict	tree_feature_markers.py	/^    from collections import Counter, defaultdict$/;"	i
+defaultdict	tree_feature_markers.py	/^    from collections import defaultdict$/;"	i
+defaultdict	tree_utils.py	/^    from collections import defaultdict$/;"	i
+delayed	featuretraj.py	/^        from joblib import Parallel, delayed$/;"	i
+detect_short_trajectory_groups	trajectory.py	/^def detect_short_trajectory_groups(adata, trajectories='knn_trajs', cluster_name="h_trajs_clusters", min_len=10, verbose=False):$/;"	f
+df_attr_counter	harmonic_pseudo_tree.py	/^def df_attr_counter(ddf, keys, attr='edge_idx', bin_attr='ubin', which_bin=10):$/;"	f
+dic_avg_attribute	harmonic_pseudo_tree.py	/^def dic_avg_attribute(df, attr='edge_mid_pos', bin_idx='edge_bins'):$/;"	f
+diffusionGraph	graphconstr.py	/^def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False, lstsq_method="lstsq"):$/;"	f
+diffusionGraphDM	graphconstr.py	/^def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False, lstsq_method="lstsq"):$/;"	f
+diffusionMaps	diffusionmap.py	/^def  diffusionMaps(R,k=7,sigma=None, verbose=False, eig_k=100):$/;"	f
+diffusionMaps	graphconstr.py	/^from .diffusionmap import diffusionMaps, affinity, logsumexp$/;"	i
+distance	aucc.py	/^from scipy.spatial import distance$/;"	i
+distance	harmonic_pseudo_tree.py	/^from scipy.spatial import distance$/;"	i
+distance	triangulation.py	/^from scipy.spatial import Delaunay,distance$/;"	i
+distance_matrix	dimensionreduction.py	/^from scipy.spatial import distance_matrix$/;"	i
+distance_matrix	graphconstr.py	/^from scipy.spatial import distance_matrix$/;"	i
+distance_tri	triangulation.py	/^def distance_tri(e_df, distance, *tri):$/;"	f
+div	graphconstr.py	/^from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl, div_adj$/;"	i
+div	hodgedecomp.py	/^def div(g:nx.DiGraph, weight_attr='weight'):$/;"	f
+div_adj	graphconstr.py	/^from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl, div_adj$/;"	i
+div_adj	hodgedecomp.py	/^def div_adj(adj_matrix: Union[np.ndarray, csr_matrix, csr_matrix], tol:float=1e-7) -> csr_matrix:$/;"	f
+divop	graphconstr.py	/^from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl, div_adj$/;"	i
+divop	hodgedecomp.py	/^def divop(g:nx.DiGraph) :$/;"	f
+edges_on_path	featuretraj.py	/^from .graphconstr import adjedges, edges_on_path$/;"	i
+edges_on_path	graphconstr.py	/^def edges_on_path(path: List[V]) -> Iterable[Tuple[V, V]]:$/;"	f
+edges_on_path	trajectory.py	/^from .graphconstr import adjedges, edges_on_path$/;"	i
+edges_tri	triangulation.py	/^def edges_tri(e_df, *tri):$/;"	f
+eigs	dimensionreduction.py	/^from scipy.sparse.linalg import eigs$/;"	i
+end_branch_dict	tree_utils.py	/^def end_branch_dict(adata, branch_id_alias='branch_id_alias', fate_tree='stream_tree', from_='label', to_='original'):$/;"	f
+fate_tree_full_dataframe	tree_utils.py	/^def fate_tree_full_dataframe(adata, tree='fate_tree', graph_name=None):$/;"	f
+feature_correlation_cluster	featuretraj.py	/^def feature_correlation_cluster(adata: AnnData,$/;"	f
+feature_cumsum_direction	featuretraj.py	/^def feature_cumsum_direction(adata: AnnData,$/;"	f
+feature_harmonic_multiply	featuretraj.py	/^def feature_harmonic_multiply(adata: AnnData,$/;"	f
+feature_mat_coor_flatten_trajectory	featuretraj.py	/^def feature_mat_coor_flatten_trajectory(adata: AnnData,$/;"	f
+feature_mat_coor_flatten_trajectory_direction	featuretraj.py	/^def feature_mat_coor_flatten_trajectory_direction(adata: AnnData,$/;"	f
+feature_statistic_cluster	featuretraj.py	/^def feature_statistic_cluster(adata: AnnData,$/;"	f
+feature_statistic_cluster2	featuretraj.py	/^def feature_statistic_cluster2(adata: AnnData,$/;"	f
+feature_statistic_cluster3	featuretraj.py	/^def feature_statistic_cluster3(adata: AnnData,$/;"	f
+find	dimensionreduction.py	/^from scipy.sparse import issparse, find,csr_matrix$/;"	i
+find_a_branch_all_predecessors	tree_feature_markers.py	/^def find_a_branch_all_predecessors(fate_tree:nx.DiGraph=None,$/;"	f
+find_branch_end	tree_feature_markers.py	/^def find_branch_end(tree:nx.DiGraph=None,$/;"	f
+find_branch_start	tree_feature_markers.py	/^def find_branch_start(tree:nx.DiGraph=None,$/;"	f
+find_cut_point	harmonic_pseudo_tree.py	/^from ..util import bsplit, pairwise, term_frequency_cosine, find_cut_point, find_cut_point_bu$/;"	i
+find_cut_point_bu	harmonic_pseudo_tree.py	/^from ..util import bsplit, pairwise, term_frequency_cosine, find_cut_point, find_cut_point_bu$/;"	i
+find_knee	featuretraj.py	/^from ..util import pairwise, find_knee, tuple_increase, pearsonr_2D$/;"	i
+find_knee	hodgedecomp.py	/^from ..util import find_knee, test_cholesky$/;"	i
+find_knee	trajectory.py	/^from ..util import pairwise, find_knee, tuple_increase, is_node_attr_existing$/;"	i
+find_last_branching	tree_feature_markers.py	/^def find_last_branching(tree:nx.DiGraph=None,$/;"	f
+find_samelevel_daugthers	tree_feature_markers.py	/^def find_samelevel_daugthers(fate_tree:nx.DiGraph=None, start_node:str=None):$/;"	f
+find_tri_combinations	triangulation.py	/^def find_tri_combinations(G):$/;"	f
+flatten_tuple	tree_utils.py	/^def flatten_tuple(nested_tuple):$/;"	f
+full_trajectory_matrix	trajectory.py	/^def full_trajectory_matrix(adata: AnnData,$/;"	f
+functools	tree_feature_markers.py	/^    import functools$/;"	i
+functools	tree_utils.py	/^    import functools$/;"	i
+gaussian_kde	harmonic_pseudo_tree.py	/^from scipy.stats import gaussian_kde$/;"	i
+gaussian_kde	trajectory.py	/^    from scipy.stats import gaussian_kde$/;"	i
+gaussianmixture	clustering.py	/^def gaussianmixture(embedding, n_components=1, covariance_type='full', tol=0.001, reg_covar=1e-06, max_iter=100, n_init=1, init_params='kmeans', weights_init=None, means_init=None, precisions_init=None, random_state=None, warm_start=False, verbose=0, verbose_interval=10):$/;"	f
+get_all_attr_names	tree_utils.py	/^def get_all_attr_names(tree):$/;"	f
+get_featuresidx	featuretraj.py	/^def get_featuresidx(adata: AnnData,$/;"	f
+get_leaves_index	harmonic_pseudo_tree.py	/^def get_leaves_index(fate_tree):$/;"	f
+get_markers_df	tree_utils.py	/^def get_markers_df(adata, name):$/;"	f
+get_maximum_nodes	tree_utils.py	/^def get_maximum_nodes(adata, tree='fate_tree', name='4_67'):$/;"	f
+get_minimum_nodes	tree_utils.py	/^def get_minimum_nodes(adata, tree='fate_tree', name='4_67'):$/;"	f
+get_nodes_celltype_counts	harmonic_pseudo_tree.py	/^def get_nodes_celltype_counts(adata,$/;"	f
+get_quantiles	tree_feature_markers.py	/^from ..util import get_quantiles$/;"	i
+get_rank_genes_group	tree_utils.py	/^def get_rank_genes_group(adata, name):$/;"	f
+get_root_bins	harmonic_pseudo_tree.py	/^def get_root_bins(ddf, node_name, start, end):$/;"	f
+get_tree_leaves_attr	tree_utils.py	/^def get_tree_leaves_attr(tree: nx.DiGraph, attr: str = 'original'):$/;"	f
+grad	graphconstr.py	/^from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl, div_adj$/;"	i
+grad	hodgedecomp.py	/^def grad(g:nx.DiGraph, tol=1e-7, weight_attr='weight', lstsq_method='lstsq'):$/;"	f
+gradop	graphconstr.py	/^from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl, div_adj$/;"	i
+gradop	hodgedecomp.py	/^def gradop(g:nx.DiGraph): ## construct B1.T matrix, node to edge matrix$/;"	f
+graph_altmat	graphconstr.py	/^def graph_altmat(A:Union[csc_matrix, csr_matrix, np.ndarray], tol:float=1e-7) -> nx.DiGraph:$/;"	f
+graph_layout	viz.py	/^def graph_layout(adata, graph_name=None, layout='neato', out_name=None, iscopy=False):$/;"	f
+graph_name	triangulation.py	/^        graph_name = adata.uns["graph_basis"]$/;"	v
+gscale	graphconstr.py	/^def gscale(X:np.ndarray) -> np.ndarray:$/;"	f
+harmonic_projection_matrix_with_w	incidence.py	/^def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, check_symmetric:bool=True) -> dict:$/;"	f
+harmonic_stream_tree	harmonic_pseudo_tree.py	/^def harmonic_stream_tree(adata: AnnData,$/;"	f
+harmonic_trajs_bins	harmonic_pseudo_tree.py	/^def harmonic_trajs_bins(adata: AnnData,$/;"	f
+harmonic_trajs_ranks	trajectory.py	/^def harmonic_trajs_ranks(adata: AnnData,$/;"	f
+has_islands	graphconstr.py	/^from ..util import test_cholesky, has_islands$/;"	i
+helping_merged_tree	tree_feature_markers.py	/^def helping_merged_tree(adata, fate_tree='fate_tree', start_node='0_0', outname='fate_main_tree', iscopy=False):$/;"	f
+helping_submerged_tree	tree_feature_markers.py	/^def helping_submerged_tree(adata, fate_tree='fate_tree', start_node='0_0', outname='fate_main_tree', iscopy=False):$/;"	f
+ig	clustering.py	/^import igraph as ig$/;"	i
+igraph	graphconstr.py	/^import igraph$/;"	i
+incremental_avg	harmonic_pseudo_tree.py	/^def incremental_avg(ordered_list, reach_value=3, start_idx=0):$/;"	f
+is_in_2sets	triangulation.py	/^from ..util import tuple_increase, top_n_from, is_in_2sets, is_node_attr_existing$/;"	i
+is_node_attr_existing	trajectory.py	/^from ..util import pairwise, find_knee, tuple_increase, is_node_attr_existing$/;"	i
+is_node_attr_existing	triangulation.py	/^from ..util import tuple_increase, top_n_from, is_in_2sets, is_node_attr_existing$/;"	i
+issparse	dimensionreduction.py	/^from scipy.sparse import issparse, find,csr_matrix$/;"	i
+itertools	harmonic_pseudo_tree.py	/^import itertools$/;"	i
+itertools	triangulation.py	/^    import itertools$/;"	i
+keep_edges	triangulation.py	/^        keep_edges = [i for i in tri_edges if i in knn_edges]$/;"	v
+keep_edges	triangulation.py	/^    keep_edges = [i for i in tri_edges if i in knn_edges]$/;"	v
+kmeans	aucc.py	/^def kmeans(lst, n=2):$/;"	f
+knee_eigen	harmonic_pseudo_tree.py	/^from .hodgedecomp import knee_eigen$/;"	i
+knee_eigen	hodgedecomp.py	/^def knee_eigen(adata: AnnData,$/;"	f
+knee_eigen	trajectory.py	/^from .hodgedecomp import knee_eigen$/;"	i
+knee_points	trajectory.py	/^def knee_points(mat_coord_Hspace, trajs):$/;"	f
+knn	graphconstr.py	/^def knn(x,k=2):$/;"	f
+knn_edges	triangulation.py	/^        knn_edges = adjedges(adata.uns[A], adata.uns[W], knn_edges_k)$/;"	v
+knn_edges	triangulation.py	/^        knn_edges = set([tuple_increase(i,j) for (i,j) in knn_edges])$/;"	v
+knn_edges	triangulation.py	/^    knn_edges = adjedges(adata.uns[A], adata.uns[W], knn_edges_k)$/;"	v
+knn_edges	triangulation.py	/^    knn_edges = set([tuple_increase(i,j) for (i,j) in knn_edges])$/;"	v
+la	clustering.py	/^    import leidenalg as la$/;"	i
+laplacian0	graphconstr.py	/^from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl, div_adj$/;"	i
+laplacian0	hodgedecomp.py	/^def laplacian0(g:nx.DiGraph) -> csc_matrix:$/;"	f
+laplacian1	hodgedecomp.py	/^def laplacian1(g:nx.DiGraph) -> csc_matrix:$/;"	f
+layout_name	triangulation.py	/^        layout_name = adata.uns["graph_basis"]$/;"	v
+leiden	clustering.py	/^def leiden(embedding=None, distance_matrix=None, distance='euclidean', precompute=False, n_iterations=-1, resolution=1.0,  seed_state=2022, **partition_kwargs):$/;"	f
+leiden	featuretraj.py	/^from .clustering import dbscan, leiden, louvain$/;"	i
+leiden	trajectory.py	/^from .clustering import dbscan, leiden, louvain$/;"	i
+lexsort_rows	graphconstr.py	/^from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl, div_adj$/;"	i
+lexsort_rows	hodgedecomp.py	/^def lexsort_rows(array: np.ndarray) -> np.ndarray:$/;"	f
+lexsort_rows	incidence.py	/^from ..util import lexsort_rows$/;"	i
+linalg	diffusionmap.py	/^from scipy.sparse import linalg$/;"	i
+linalg	incidence.py	/^from scipy.sparse import csc_matrix, linalg, csr_matrix$/;"	i
+linalg	triangulation.py	/^from scipy.sparse import linalg, csr_matrix$/;"	i
+linear_tree	harmonic_pseudo_tree.py	/^def linear_tree(pairwise_bdict, keys):$/;"	f
+logsumexp	diffusionmap.py	/^def logsumexp(x):$/;"	f
+logsumexp	graphconstr.py	/^from .diffusionmap import diffusionMaps, affinity, logsumexp$/;"	i
+louvain	clustering.py	/^def louvain(embedding, distance_matrix=None, distance='euclidean', precompute=False, resolution=1.0,  seed_state=2022, **partition_kwargs):$/;"	f
+louvain	featuretraj.py	/^from .clustering import dbscan, leiden, louvain$/;"	i
+louvain	trajectory.py	/^from .clustering import dbscan, leiden, louvain$/;"	i
+lstsq	hodgedecomp.py	/^from numpy.linalg import qr,solve,lstsq$/;"	i
+lv	clustering.py	/^    import louvain as lv$/;"	i
+m1	triangulation.py	/^        m1 = np.mean(position[:, 0])$/;"	v
+m2	triangulation.py	/^        m2 = np.mean(position[:, 1])$/;"	v
+magic	adata_util.py	/^    import magic$/;"	i
+magic_adata	adata_util.py	/^def magic_adata(adata:AnnData, random_state=2022, iscopy=False, verbose=True, **kwargs):$/;"	f
+manual_root	harmonic_pseudo_tree.py	/^def manual_root(adata, graph_name, layout_name, fate_tree, root, node_attribute='u',top_n=10, pos_name='X_pca_ddhodge_g'):$/;"	f
+math	harmonic_pseudo_tree.py	/^import math$/;"	i
+math	triangulation.py	/^    import math$/;"	i
+matplotlib	viz.py	/^import matplotlib.pyplot as plt$/;"	i
+max_node_series_type	harmonic_pseudo_tree.py	/^def max_node_series_type(counter, leaves_index):$/;"	f
+mean_tri_coor	triangulation.py	/^def mean_tri_coor(coor, *tri):$/;"	f
+merge_common_list	harmonic_pseudo_tree.py	/^def merge_common_list(lst):$/;"	f
+merge_trajectory_clusters	trajectory.py	/^def merge_trajectory_clusters(adata: AnnData,$/;"	f
+meta_cells_adata	clustering.py	/^def meta_cells_adata($/;"	f
+networkx_node_to_df	tree_utils.py	/^from ..util import networkx_node_to_df$/;"	i
+noise_sigma_ratio	triangulation.py	/^        noise_sigma_ratio=0.01$/;"	v
+norm_distance	harmonic_pseudo_tree.py	/^def norm_distance(list1, list2, random_seed=2022, sample_num=100):$/;"	f
+np	adata_util.py	/^import numpy as np$/;"	i
+np	aucc.py	/^import numpy as np$/;"	i
+np	clustering.py	/^import numpy as np$/;"	i
+np	diffusionmap.py	/^import numpy as np$/;"	i
+np	dimensionreduction.py	/^import numpy as np$/;"	i
+np	featuretraj.py	/^import numpy as np$/;"	i
+np	graphconstr.py	/^import numpy as np$/;"	i
+np	harmonic_pseudo_tree.py	/^import numpy as np$/;"	i
+np	hodgedecomp.py	/^import numpy as np$/;"	i
+np	incidence.py	/^import numpy as np$/;"	i
+np	trajectory.py	/^import numpy as np$/;"	i
+np	tree_feature_markers.py	/^import numpy as np$/;"	i
+np	tree_utils.py	/^import numpy as np$/;"	i
+np	triangulation.py	/^import numpy as np$/;"	i
+np	viz.py	/^import numpy as np$/;"	i
+nx	featuretraj.py	/^import networkx as nx$/;"	i
+nx	graphconstr.py	/^import networkx as nx$/;"	i
+nx	harmonic_pseudo_tree.py	/^import networkx as nx$/;"	i
+nx	hodgedecomp.py	/^import networkx as nx$/;"	i
+nx	incidence.py	/^import networkx as nx$/;"	i
+nx	trajectory.py	/^import networkx as nx$/;"	i
+nx	tree_feature_markers.py	/^import networkx as nx$/;"	i
+nx	tree_utils.py	/^    import networkx as nx$/;"	i
+nx	tree_utils.py	/^import networkx as nx$/;"	i
+nx	triangulation.py	/^import networkx as nx$/;"	i
+nx	viz.py	/^import networkx as nx$/;"	i
+os	tree_feature_markers.py	/^import os$/;"	i
+pairwise	featuretraj.py	/^from ..util import pairwise, find_knee, tuple_increase, pearsonr_2D$/;"	i
+pairwise	harmonic_pseudo_tree.py	/^from ..util import bsplit, pairwise, term_frequency_cosine, find_cut_point, find_cut_point_bu$/;"	i
+pairwise	trajectory.py	/^from ..util import pairwise, find_knee, tuple_increase, is_node_attr_existing$/;"	i
+pairwise_distances	clustering.py	/^from sklearn.metrics import pairwise_distances$/;"	i
+pairwise_hbranching_dict	harmonic_pseudo_tree.py	/^def pairwise_hbranching_dict(ddf,$/;"	f
+pd	adata_util.py	/^import pandas as pd$/;"	i
+pd	diffusionmap.py	/^import pandas as pd$/;"	i
+pd	dimensionreduction.py	/^import pandas as pd$/;"	i
+pd	graphconstr.py	/^import pandas as pd$/;"	i
+pd	harmonic_pseudo_tree.py	/^import pandas as pd$/;"	i
+pd	hodgedecomp.py	/^import pandas as pd$/;"	i
+pd	tree_feature_markers.py	/^import pandas as pd$/;"	i
+pd	tree_utils.py	/^import pandas as pd$/;"	i
+pearsonr	tree_feature_markers.py	/^    from scipy.stats import pearsonr$/;"	i
+pearsonr_2D	featuretraj.py	/^from ..util import pairwise, find_knee, tuple_increase, pearsonr_2D$/;"	i
+plt	viz.py	/^import matplotlib.pyplot as plt$/;"	i
+position	triangulation.py	/^        position = np.array([position[x] for x in range(max(position.keys()) + 1)])$/;"	v
+position	triangulation.py	/^    position = adata.obsm[layout_name]$/;"	v
+potential	graphconstr.py	/^from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl, div_adj$/;"	i
+potential	hodgedecomp.py	/^def potential(g:nx.DiGraph, tol=1e-7, weight_attr='weight', method='lstsq'):$/;"	f
+precision_recall_curve	aucc.py	/^from sklearn.metrics import auc, precision_recall_curve, roc_curve, silhouette_score$/;"	i
+print_stream_labels	tree_utils.py	/^def print_stream_labels(adata, tree='stream_tree', attr='original'):$/;"	f
+qr	hodgedecomp.py	/^from numpy.linalg import qr,solve,lstsq$/;"	i
+random	featuretraj.py	/^import random$/;"	i
+random	trajectory.py	/^import random$/;"	i
+random	triangulation.py	/^import random$/;"	i
+random_climb_knn	trajectory.py	/^def random_climb_knn(adata,$/;"	f
+randomalt	graphconstr.py	/^def randomalt(n:int, p:list=[0.9,0.05,0.05]) -> np.ndarray:$/;"	f
+randomdata	graphconstr.py	/^def randomdata(m:int, n:int, p:list=[0.9,0.05,0.05]) -> np.ndarray:$/;"	f
+re	harmonic_pseudo_tree.py	/^import re$/;"	i
+re	trajectory.py	/^import re$/;"	i
+re	tree_feature_markers.py	/^import re$/;"	i
+re	tree_utils.py	/^    import re$/;"	i
+reduce	tree_feature_markers.py	/^    from functools import reduce$/;"	i
+relabel_tree	harmonic_pseudo_tree.py	/^def relabel_tree(fate_tree, root):$/;"	f
+remove_duplicated_index	tree_utils.py	/^def remove_duplicated_index(elements):$/;"	f
+remove_trajectory_clusters	trajectory.py	/^def remove_trajectory_clusters(adata,$/;"	f
+reset_edges	triangulation.py	/^def reset_edges(g:nx.Graph, edges, keep_old=False) -> nx.Graph:$/;"	f
+rg1	triangulation.py	/^        rg1 = np.max(position[:, 0]) - np.min(position[:, 0])$/;"	v
+rg2	triangulation.py	/^        rg2 = np.max(position[:, 1]) - np.min(position[:, 1])$/;"	v
+roc_curve	aucc.py	/^from sklearn.metrics import auc, precision_recall_curve, roc_curve, silhouette_score$/;"	i
+run_fdl	dimensionreduction.py	/^def run_fdl(mtx,$/;"	f
+run_isomap	dimensionreduction.py	/^def run_isomap(mtx, n_components=2, n_neighbors=5, *args, **kwargs):$/;"	f
+run_kernelpca	dimensionreduction.py	/^def run_kernelpca(mtx, n_components=2, kernel='linear', random_state=2022, *args, **kwargs):$/;"	f
+run_lda	dimensionreduction.py	/^def run_lda(mtx, y, n_components=2, random_state=2022, *args, **kwargs):$/;"	f
+run_mds	dimensionreduction.py	/^def run_mds(mtx, n_components=2, random_state=2022, *args, **kwargs):$/;"	f
+run_palantir_diffusion_maps	dimensionreduction.py	/^def run_palantir_diffusion_maps(data_df, n_components=10, knn=30, alpha=0, seed=None):$/;"	f
+run_palantir_fdl	dimensionreduction.py	/^def run_palantir_fdl(mtx,$/;"	f
+run_pca	dimensionreduction.py	/^def run_pca(mtx, n_components=2, random_state=2022):$/;"	f
+run_pca	featuretraj.py	/^from .dimensionreduction import run_umap, run_pca$/;"	i
+run_pca	graphconstr.py	/^from .dimensionreduction import run_pca$/;"	i
+run_pca	trajectory.py	/^from .dimensionreduction import run_umap, run_pca$/;"	i
+run_tsne	dimensionreduction.py	/^def run_tsne(mtx, n_components=2, random_state=2022, *args, **kwargs):$/;"	f
+run_umap	dimensionreduction.py	/^def run_umap(mtx, random_state=2022):$/;"	f
+run_umap	featuretraj.py	/^from .dimensionreduction import run_umap, run_pca$/;"	i
+run_umap	trajectory.py	/^from .dimensionreduction import run_umap, run_pca$/;"	i
+sc	dimensionreduction.py	/^import scanpy as sc$/;"	i
+sc	tree_feature_markers.py	/^import scanpy as sc$/;"	i
+scipy	diffusionmap.py	/^import scipy$/;"	i
+scipy	dimensionreduction.py	/^import scipy$/;"	i
+scipy	graphconstr.py	/^import scipy$/;"	i
+scipy	hodgedecomp.py	/^import scipy$/;"	i
+scipy	incidence.py	/^import scipy$/;"	i
+scipy	trajectory.py	/^import scipy$/;"	i
+scipy	tree_feature_markers.py	/^import scipy$/;"	i
+select_trajectory_clusters	trajectory.py	/^def select_trajectory_clusters(adata,$/;"	f
+silhouette_score	aucc.py	/^from sklearn.metrics import auc, precision_recall_curve, roc_curve, silhouette_score$/;"	i
+skcluster	aucc.py	/^import sklearn.cluster as skcluster$/;"	i
+sklearn	aucc.py	/^import sklearn.cluster as skcluster$/;"	i
+sklearn	graphconstr.py	/^import sklearn$/;"	i
+sklearn	harmonic_pseudo_tree.py	/^import sklearn$/;"	i
+solve	hodgedecomp.py	/^from numpy.linalg import qr,solve,lstsq$/;"	i
+sparse	clustering.py	/^from scipy import sparse$/;"	i
+spectralclustering	clustering.py	/^def spectralclustering(embedding, distance_matrix=None, distance='euclidean', precompute=False, n_clusters=8, eigen_solver=None, n_components=None, random_state=None, n_init=10, gamma=1.0, affinity='rbf', n_neighbors=10, eigen_tol=0.0, assign_labels='kmeans', degree=3, coef0=1, kernel_params=None, n_jobs=None):$/;"	f
+spsolve	graphconstr.py	/^from scipy.sparse.linalg import spsolve$/;"	i
+subset_adata_obs	adata_util.py	/^def subset_adata_obs(adata:AnnData, obs_key:str, obs_subset:list, iscopy=False, verbose=True):$/;"	f
+task_statistics	featuretraj.py	/^def task_statistics(feature, evec, traj_score, l_trajs_clusters, clusters, st):$/;"	f
+term_frequency_cosine	harmonic_pseudo_tree.py	/^from ..util import bsplit, pairwise, term_frequency_cosine, find_cut_point, find_cut_point_bu$/;"	i
+test_cholesky	graphconstr.py	/^from ..util import test_cholesky, has_islands$/;"	i
+test_cholesky	hodgedecomp.py	/^from ..util import find_knee, test_cholesky$/;"	i
+ti	triangulation.py	/^        ti = tuple_increase$/;"	v
+ti	triangulation.py	/^    ti = tuple_increase$/;"	v
+time	hodgedecomp.py	/^import time$/;"	i
+time_slot_sets	tree_feature_markers.py	/^def time_slot_sets(node_list):$/;"	f
+time_sync_bins	harmonic_pseudo_tree.py	/^def time_sync_bins(ddf, attr='edge_mid_u', min_bin_number=5):$/;"	f
+tmpG	triangulation.py	/^        tmpG = reset_edges(adata.uns[graph_name], keep_edges, keep_old=False)$/;"	v
+tmpG	triangulation.py	/^        tmpG = reset_edges(adata.uns[graph_name], tri_edges, keep_old=False)$/;"	v
+tmpG	triangulation.py	/^    tmpG = reset_edges(adata.uns[graph_name], tri_edges, keep_old=False)$/;"	v
+to_edges	harmonic_pseudo_tree.py	/^    def to_edges(lst):$/;"	f	function:merge_common_list
+to_graph	harmonic_pseudo_tree.py	/^    def to_graph(lst):$/;"	f	function:merge_common_list
+top_k	diffusionmap.py	/^    def top_k(lst, k=1):$/;"	f	function:affinity
+top_n_from	triangulation.py	/^from ..util import tuple_increase, top_n_from, is_in_2sets, is_node_attr_existing$/;"	i
+tqdm	harmonic_pseudo_tree.py	/^from tqdm import tqdm$/;"	i
+trajs_clustering	trajectory.py	/^def trajs_clustering(adata, embedding = 'trajs_harmonic_dm', clustering_method: str = "dbscan", iscopy=False, oname_basis='', **args,):$/;"	f
+trajs_dm	trajectory.py	/^def trajs_dm(adata,$/;"	f
+trajs_matrix	trajectory.py	/^def trajs_matrix(adata: AnnData,$/;"	f
+trange	featuretraj.py	/^from tqdm import trange$/;"	i
+trange	harmonic_pseudo_tree.py	/^from tqdm import trange$/;"	i
+trange	trajectory.py	/^from tqdm import trange$/;"	i
+tree_2branch_markers	tree_feature_markers.py	/^def tree_2branch_markers(adata: AnnData,$/;"	f
+tree_branches_cells	tree_feature_markers.py	/^def tree_branches_cells(adata: AnnData,$/;"	f
+tree_branches_expression_bins	tree_feature_markers.py	/^def tree_branches_expression_bins(adata: AnnData,$/;"	f
+tree_branches_markers	tree_feature_markers.py	/^def tree_branches_markers(adata: AnnData,$/;"	f
+tree_branches_smooth_window	tree_feature_markers.py	/^def tree_branches_smooth_window(adata: AnnData,$/;"	f
+tree_label_dict	tree_utils.py	/^def tree_label_dict(adata,$/;"	f
+tree_markers_dump_table	tree_feature_markers.py	/^def tree_markers_dump_table(adata: AnnData,$/;"	f
+tree_mbranch_markers	tree_feature_markers.py	/^def tree_mbranch_markers(adata: AnnData,$/;"	f
+tree_nodes_markers	tree_feature_markers.py	/^def tree_nodes_markers(adata: AnnData,$/;"	f
+tree_original_dict	tree_utils.py	/^def tree_original_dict(tree, leaf_name):$/;"	f
+tri	triangulation.py	/^        tri = Delaunay(position)$/;"	v
+tri	triangulation.py	/^    tri = Delaunay(position)$/;"	v
+tri_edges	triangulation.py	/^        tri_edges = list(set([item for sublist in tri_edges for item in sublist])) # flatten$/;"	v
+tri_edges	triangulation.py	/^        tri_edges =[[ti(a,b),ti(a,c),ti(b,c)] for a,b,c in tri.simplices]$/;"	v
+tri_edges	triangulation.py	/^    tri_edges = list(set([item for sublist in tri_edges for item in sublist])) # flatten$/;"	v
+tri_edges	triangulation.py	/^    tri_edges =[[ti(a,b),ti(a,c),ti(b,c)] for a,b,c in tri.simplices]$/;"	v
+triangle_list	graphconstr.py	/^from .hodgedecomp import lexsort_rows,triangle_list,gradop,divop,curlop,laplacian0,potential,grad,div,curl, div_adj$/;"	i
+triangle_list	hodgedecomp.py	/^def triangle_list(G: nx.Graph) -> np.ndarray:$/;"	f
+trim_derailed_nodes	harmonic_pseudo_tree.py	/^def trim_derailed_nodes(adata,$/;"	f
+truncate_graph	triangulation.py	/^def truncate_graph(G, layouts , trunc_quantile=0.75, trunc_times=3):$/;"	f
+truncated_delaunay	triangulation.py	/^def truncated_delaunay(nodes, position, trunc_quantile=0.75, trunc_times=3):$/;"	f
+tuple_increase	featuretraj.py	/^from ..util import pairwise, find_knee, tuple_increase, pearsonr_2D$/;"	i
+tuple_increase	trajectory.py	/^from ..util import pairwise, find_knee, tuple_increase, is_node_attr_existing$/;"	i
+tuple_increase	triangulation.py	/^from ..util import tuple_increase, top_n_from, is_in_2sets, is_node_attr_existing$/;"	i
+u_bins_df	harmonic_pseudo_tree.py	/^def u_bins_df(df, attr='edge_mid_u', min_bin_number=5, avg_cut=None):$/;"	f
+umap	dimensionreduction.py	/^import umap.umap_ as umap$/;"	i
+unique_trajectory_clusters	trajectory.py	/^def unique_trajectory_clusters(adata: AnnData,$/;"	f
+warnings	hodgedecomp.py	/^import warnings$/;"	i
