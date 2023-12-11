@@ -58,6 +58,7 @@ def volcano(df: pd.DataFrame,
             is_adjust_text=False,
             ax=None,
             swap_axes=False,
+            text_up_down="all", ## all, up, down
             text_size=8,
             **kwargs
             ):
@@ -157,17 +158,18 @@ def volcano(df: pd.DataFrame,
             else:
                 print(f'Gene {gene} not found in the dataframe.')
     else:
-        for i,r in up.iterrows():
-            if swap_axes:
-                texts.append(ax.text(y=r[log2fc_column],x=nplog10_(r[pval_column]),s=i, size=text_size))
-            else:
-                texts.append(ax.text(x=r[log2fc_column],y=nplog10_(r[pval_column]),s=i, size=text_size))
-        for i,r in down.iterrows():
-            if swap_axes:
-               texts.append(ax.text(y=r[log2fc_column],x=nplog10_(r[pval_column]),s=i, size=text_size))
-            else:
-               texts.append(ax.text(x=r[log2fc_column],y=nplog10_(r[pval_column]),s=i, size=text_size))
-
+        if text_up_down in ('all', "up"):
+            for i,r in up.iterrows():
+                if swap_axes:
+                    texts.append(ax.text(y=r[log2fc_column],x=nplog10_(r[pval_column]),s=i, size=text_size))
+                else:
+                    texts.append(ax.text(x=r[log2fc_column],y=nplog10_(r[pval_column]),s=i, size=text_size))
+        elif text_up_down in ("all", "down"):
+            for i,r in down.iterrows():
+                if swap_axes:
+                   texts.append(ax.text(y=r[log2fc_column],x=nplog10_(r[pval_column]),s=i, size=text_size))
+                else:
+                   texts.append(ax.text(x=r[log2fc_column],y=nplog10_(r[pval_column]),s=i, size=text_size))
 
     if is_adjust_text and len(texts)>0:
         adjust_text(texts, arrowprops=dict(arrowstyle="-", color='k', lw=0.5))
@@ -200,14 +202,37 @@ def marker_line_plot(adata: AnnData,
                      is_legend = True,
                      is_allinone = False,
                      ax = None, ## only allinone
-                     seed=2022,
                      **kwargs):
     """
-    Plot the expression of a marker gene along time, or pseudo time.
+    Plot the expression of a marker gene along time.
+
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object
+    features: list
+        List of marker genes
+    obs_time_key: str
+        Key of the time information in adata.obs
+    is_magic_impute: bool
+        Whether to impute the data using MAGIC
+    verbose: bool
+        Whether to print the progress
+    is_scatter: bool
+        Whether to use scatter plot
+    color: list
+        List of colors for each marker gene
+    is_legend: bool
+        Whether to show legend
+    is_allinone: bool
+        Whether to plot all genes in one figure
+    ax: matplotlib.axes.Axes
+        Axes object for only all in one
+    kwargs:
+        Additional arguments for line plotting
     """
     import scipy
     from statsmodels.nonparametric.smoothers_lowess import lowess as  sm_lowess
-    np.random.seed(seed)
     def smooth(x, y, xgrid):
         samples = np.random.choice(len(x), 50, replace=True)
         #print(samples)
@@ -304,6 +329,37 @@ def marker_spline_plot(adata: AnnData,
                      **kwargs):
     """
     Plot the expression of a marker gene along time, or pseudo time.
+
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object
+    features: list
+        List of marker genes
+    obs_time_key: str
+        Key of the time information in adata.obs
+    is_magic_impute: bool
+        Whether to impute the data using MAGIC
+    smooth_method: str
+        Method for smoothing the data, default: lowess
+    smooth_K: int
+        Number of points for smoothing
+    verbose: bool
+        Whether to print the progress
+    is_fill_conf: bool
+        Whether to fill the confidence interval
+    is_scatter: bool
+        Whether to use scatter plot
+    color: list
+        List of colors for each marker gene
+    is_legend: bool
+        Whether to show legend
+    is_allinone: bool
+        Whether to plot all genes in one figure
+    ax: matplotlib.axes.Axes
+        Axes object for only all in one
+    kwargs:
+        Additional arguments for line plotting
     """
     import scipy
     from statsmodels.nonparametric.smoothers_lowess import lowess as  sm_lowess
