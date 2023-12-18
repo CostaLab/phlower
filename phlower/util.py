@@ -1,7 +1,6 @@
 import math
 import scipy
 import numpy as np
-import numpy.matlib
 import itertools
 import pandas as pd
 from collections import OrderedDict, Counter
@@ -174,6 +173,7 @@ def find_knee(x,y, plot=False):
 
     """
     #deprecated, use distance to begin end segment, working not well
+    import numpy.matlib
     allcoord = np.vstack((x, y)).T
     npoints = len(x)
     firstpoint = allcoord[0]

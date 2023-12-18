@@ -29,6 +29,18 @@ def fib2neuro(
     adata.var_names_make_unique()
     return adata
 
+def dla10(
+        url = 'https://costalab.ukaachen.de/open_data/PHLOWER/DLA_10_TreeData.mat',
+        fname = 'DLA_10_TreeData.mat',
+        folder = 'data',
+        verbose = True,
+        ):
+    fpath = _data_download(url, fname, folder=folder, verbose=verbose)
+    from scipy.io import loadmat
+    mat = loadmat(fpath)
+    return mat
+#endf dla10
+
 
 def human_hematopoisis(
         url = '',

@@ -5,6 +5,7 @@ import re
 import random
 import networkx as nx
 import numpy as np
+import pandas as pd
 import scipy
 from datetime import datetime
 from tqdm import trange
@@ -13,7 +14,7 @@ from typing import List
 from collections import Counter, defaultdict
 from itertools import chain
 from scipy.sparse import csr_matrix
-from typing import Union
+from typing import Union, List, Tuple
 
 from .graphconstr import adjedges, edges_on_path
 from .dimensionreduction import run_umap, run_pca
@@ -364,6 +365,26 @@ def harmonic_trajs_ranks(adata: AnnData,
     return {k:v for k,v in d_c.items() if len(v) > 1}
 #endf
 
+def undifferentiate_clusters(adata, trajs_clusters='trajs_clusters', harmonic_dm='trajs_harmonic_dm', std_threshold=2):
+    from collections import Counter, defaultdict
+    dm = adata.uns[harmonic_dm]
+    cluster_set = np.unique(adata.uns[trajs_clusters])
+
+    dic = defaultdict(float)
+    for cluster in cluster_set:
+        idx = np.where(adata.uns[trajs_clusters]  == cluster)[0]
+        mtx = dm[idx, ]
+        center = mtx.mean(axis=0, keepdims=True)
+        d = scipy.spatial.distance.cdist(mtx, center)
+        dic[cluster] = np.std(d)
+
+    minn = min(dic.values())
+    print(minn)
+    dic = {k:(v/minn) for k,v in dic.items()}
+    return {k for k,v in dic.items() if v > std_threshold}
+
+
+
 def merge_trajectory_clusters(adata: AnnData,
                               group_name:str = 'group',
                               trajs_name = 'knn_trajs',
@@ -394,6 +415,18 @@ def merge_trajectory_clusters(adata: AnnData,
     return adata if iscopy else None
 #endf merge_trajectory_clusters
 
+def trajactory_cluster_skewness(adata, trajs_name='knn_trajs', trajs_clusters = 'trajs_clusters', skewness=1, verbose=True):
+    clusters = np.unique(adata.uns[trajs_clusters])
+    s = set()
+    for cluster in clusters:
+        idx = np.where(adata.uns[trajs_clusters]  == cluster)[0]
+        l = [len(adata.uns['knn_trajs'][i]) for i in idx]
+        sk = scipy.stats.skew(l)
+        if np.abs(sk) > skewness:
+            if verbose:
+                print(f"group {cluster}: skew abs({np.round(sk, 3)}) > {skewness}")
+            s.add(cluster)
+    return s
 
 def unique_trajectory_clusters(adata: AnnData,
                               group_name:str = 'group',
@@ -433,6 +466,8 @@ def select_trajectory_clusters(adata,
                                trajs_name='knn_trajs',
                                rm_cluster_ratio=0.005,
                                manual_rm_clusters=[-1],
+                               check_skewness = True,
+                               skewness_threshold = 1,
                                iscopy=False,
                                verbose=True):
     """
@@ -460,9 +495,13 @@ def select_trajectory_clusters(adata,
     rm_clusters = [k for k, v in d_count.items() if v < threshold]
     ## 3. remove the clusters
     rm_clusters = rm_clusters + manual_rm_clusters
+
+    if check_skewness:
+        rm_clusters = rm_clusters + list(trajactory_cluster_skewness(adata, trajs_name, trajs_clusters, skewness_threshold, verbose=verbose))
+
     if verbose:
         print(f"clusters to remove({len(rm_clusters)})")
-        print("\t".join([f"{str(i)}: {d_count.get(i, -1)}" for i in rm_clusters]))
+        print("\t".join([f"{str(i)}: {d_count.get(i, -1)}" for i in pd.unique(rm_clusters)]))
     remove_trajectory_clusters(adata, rm_clusters, trajs_clusters, trajs_name, iscopy=False, verbose=verbose)
 
     return adata if iscopy else None
@@ -513,7 +552,6 @@ def remove_trajectory_clusters(adata,
 
     return adata if iscopy else None
 #endf remove_trajectory_clusters
-
 
 
 def G_random_climb(g:nx.Graph, attr:str='u', roots_ratio:float=0.1, n:int=10000, seeds:int=2022) -> list:
@@ -741,4 +779,9 @@ def detect_short_trajectory_groups(adata, trajectories='knn_trajs', cluster_name
     return ret_list
 
 
-
+def cumsum_Hspace(mat_coord_Hspace, dims:List):
+    """
+    cumsum with spaces in dims
+    """
+    return [np.array([np.cumsum(m[j, :]) for j in dims]).T for m in  mat_coord_Hspace]
+#cumsums
