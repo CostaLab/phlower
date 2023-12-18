@@ -1,210 +1,10 @@
 import numpy as np
 import pandas as pd
 import networkx as nx
-from tqdm import tqdm
 from anndata import AnnData
 from datetime import datetime
-from collections import defaultdict
-from sklearn.neighbors import NearestNeighbors
 from typing import Union, Optional, Tuple, Sequence, Dict, Any
 
-from ..util import find_knee
-from .tree_utils import _edge_two_ends
-from .trajectory import cumsum_Hspace, M_create_matrix_coordinates_trajectory_Hspace
-
-
-def tree_project_to_cells(adata,
-                          tree_attr: str = 'original',
-                          fate_tree: str = 'fate_tree',
-                          ):
-    """
-    trajectory is from edges, and one edge can be visited for many times.
-    We use calculate which branch that a cell belongs to.
-    With knowing the cell location, we can calculate how far a cell away from its two milestones.
-    Eventually, we use cumumlative coordinate info to do the benchmarking for dynverse.
-
-    Note that these factor would affect the benchmarking outcome
-        1. how to calculate a cell belongs a branch
-        2. how to calculate a cell distance to the milestones
-    please think of the best way to do the calculation
-
-    Idea how to calculate which branches are belong:
-        1. can use bin information, or make use of the full branch information
-        2. can calculate the tf and idf, use which to calculate the belongings.
-        3. need consider the end branch cells usually has less cell frequncy, need consider to enhance the signal
-
-    Idea how to calculate the milestone distance:
-        1. can I use the milstone last several bins of in and out branches to average coordinate as milestone center
-        2. how about the end point, the end point might be really far or is outliers
-        3. do I need to check if the tree creating if delete the end several points, would it impact the calculation
-
-
-    Parameters
-    -------------
-    adata: AnnData
-        anndata.AnnData object
-    """
-    pass
-#endf
-
-def edge_cumsum_median(adata,
-                       full_traj_matrix:str="full_traj_matrix",
-                       clusters:str = "trajs_clusters",
-                       evector_name:str = None,
-                       verbose=True,
-                      ):
-    """
-    for all edges in the cumsum space, we calculate the median of the edge cumsum coordinate
-    """
-    if "graph_basis" in adata.uns.keys() and not evector_name:
-        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
-    if 'eigen_value_knee' in adata.uns.keys():
-        knee = adata.uns['eigen_value_knee']
-    else:
-        knee = find_knee(adata)
-    if verbose:
-        print(datetime.now(), "projecting trajs to harmonic...")
-    mat_coord_Hspace = M_create_matrix_coordinates_trajectory_Hspace(adata.uns[evector_name][:knee],
-                                                                                adata.uns[full_traj_matrix])
-    if verbose:
-        print(datetime.now(), "cumsum...")
-    cumsums =cumsum_Hspace(mat_coord_Hspace, range(knee))
-
-
-    if verbose:
-        print(datetime.now(), "edge cumsum dict...")
-
-    itrajs = range(len(cumsums))
-    edges_cumsum_dict = defaultdict(list)
-    for itraj in tqdm(itrajs):
-        traj_mtx = adata.uns[full_traj_matrix][itraj]
-        traj_edge_idx = [j for i in np.argmax(np.abs(traj_mtx.astype(int)), axis=0).tolist() for j in i]
-        for i, edge_idx in enumerate(traj_edge_idx):
-            edges_cumsum_dict[edge_idx].append(cumsums[itraj][i, ])
-    edge_median_dict = {k: np.median(v, axis=0) for k,v in edges_cumsum_dict.items()}
-    #edge_median_dict = {k: np.mean(v, axis=0) for k,v in edges_cumsum_dict.items()}
-    if verbose:
-        print(datetime.now(), "done...")
-    return edge_median_dict
-
-def node_cumsum_coor(adata, d_edge, d_e2n, approximate_k=5):
-    """
-    construct node to edges list dict to enumerate all edge connect to this node
-    """
-    d_n2e = defaultdict(list)
-    for k, vs in d_e2n.items():
-        for v in vs:
-            d_n2e[v].append(k)
-    ## get mean of a node by the edge cumsum coordinate
-    d_cumsum_nodes = {}
-    unvisited = []
-    for k,vs in d_n2e.items():
-        cumsum_arr = np.array([d_edge[v] for v in vs if v in d_edge])
-        if len(cumsum_arr) == 0:
-            unvisited.append(k)
-            continue
-        d_cumsum_nodes[k] = np.mean(cumsum_arr, axis=0)
-
-
-    if len(unvisited) > 0:
-        print(f"there are {len(unvisited)} nodes not visited in the tree")
-        print(f"will approximate the node cumsum coordinate by {approximate_k} nearest accessible neighbors")
-    ## assign the mean cumsum coordinate to the missing node.
-    X = adata.obsm['X_pca']
-    nbrs = NearestNeighbors(n_neighbors=len(unvisited)+approximate_k + 1, algorithm='ball_tree').fit(X)
-    distances, indices = nbrs.kneighbors(X)
-    s = set(unvisited)
-    for uv in unvisited:
-        ids = [i for i in indices[uv][1:] if i not in s][:approximate_k]
-        cumsum_arr = np.array([d_cumsum_nodes[v] for v in ids])
-        d_cumsum_nodes[uv] = np.mean(cumsum_arr, axis=0)
-
-    return d_cumsum_nodes
-
-def add_root_cumsum(adata, evector_name=None, fate_tree:str='fate_tree', iscopy=False):
-    """
-    TODO:
-        see if we can also set the root to be all zeros
-    root cumsum is the mean of the root node
-    """
-    import networkx as nx
-
-    adata = adata.copy() if iscopy else adata
-
-    if "graph_basis" in adata.uns.keys() and not evector_name:
-        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
-    if 'eigen_value_knee' in adata.uns.keys():
-        knee = adata.uns['eigen_value_knee']
-    else:
-        knee = phlower.tl.find_knee(adata)
-
-    n_edges = adata.uns[evector_name].shape[1]
-    n_edges
-
-
-    n_ecount = len(adata.uns[fate_tree].nodes['root']['ecount'] )
-    n_ecount
-
-    m = np.zeros(shape=(n_edges, n_ecount))
-    for i, (k,v) in enumerate(adata.uns[fate_tree].nodes['root']['ecount'][:knee]):
-        m[k, i] = 1
-    coord_Hspace = adata.uns[evector_name][:knee] @ m
-    attrs = {'root': {"cumsum": np.mean(coord_Hspace, axis=1)}}
-    #print(attrs)
-    nx.set_node_attributes(adata.uns[fate_tree], attrs)
-
-    return adata if iscopy else None
-
-def trans_tree_node_attr(adata, from_='fate_tree', to_='stream_tree', attr='cumsum', iscopy=False):
-    """
-    transfer node attribute from fate_tree to stream_tree
-    """
-    adata = adata.copy() if iscopy else adata
-    if attr not in adata.uns[from_].nodes['root']:
-        raise ValueError(f"attr {attr} is not an node attribute of tree {from_}")
-    attrs = nx.get_node_attributes(adata.uns[from_], attr)
-    to_attrs = {k:{'cumsum': attrs[k] } for k in adata.uns[to_].nodes()}
-    nx.set_node_attributes(adata.uns[to_], to_attrs)
-
-    return adata if iscopy else None
-
-
-def node_cumsum_mean(adata,
-                     graph_name = None,
-                     full_traj_matrix:str="full_traj_matrix",
-                     clusters:str = "trajs_clusters",
-                     evector_name:str = None,
-                     approximate_k:int = 5,
-                     iscopy=False,
-                     verbose=True,
-                     ):
-
-    """
-    get each node cumsum coordinate:
-        1. get each edge cumsum coordinate median
-        2. average cumsum of all edges that connect to a node
-        3. add the cumsum to cumsum_mean
-    """
-    adata = adata.copy() if iscopy else adata
-
-
-    if len(adata.uns['fate_tree'].nodes['root']['cumsum']) == 0:
-            add_root_cumsum(adata, evector_name=evector_name, fate_tree='fate_tree')
-    trans_tree_node_attr(adata, from_='fate_tree', to_='stream_tree',  attr='cumsum')
-
-
-    if "graph_basis" in adata.uns.keys() and not graph_name:
-        graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
-
-    d = edge_cumsum_median(adata, full_traj_matrix, clusters, evector_name, verbose)
-    d_e2n = _edge_two_ends(adata, graph_name=graph_name)
-    d_node_cumsum = node_cumsum_coor(adata, d, d_e2n, approximate_k=approximate_k)
-    assert(len(d_node_cumsum) == adata.n_obs)
-
-    ## sort by the node order of adata
-    cumsum_mean = np.array([j for i,j in sorted(d_node_cumsum.items(), key=lambda x: x[0], reverse=False)])
-    adata.obsm['cumsum_mean'] = cumsum_mean
-    return adata if iscopy else None
 
 def stream_tree_order_end_nodes(stree):
     """
@@ -213,6 +13,11 @@ def stream_tree_order_end_nodes(stree):
     	from	from_id	to	to_id	length	directed
         0	root	-1	0_28	0	1	True
         1	0_28	0	1_77	1	1
+
+    Parameters
+    ----------
+    stree: `nx.DiGraph`
+        the stream tree
     """
     #return [a,b if() for a,b in node_pair_list]
 
@@ -409,6 +214,13 @@ def get_milestone_percentage(adata, obsm_key='cumsum_percent'):
     	cell_id	milestone_id	percentage
            0	root	0.824578
            1	root	0.94362
+
+    Parameters
+    ----------
+    adata: AnnData
+        adata that contains the stream tree
+    obsm_key: str
+        key of the obsm that contains the percentage information
     """
     df = adata.obsm[obsm_key]
     df1 = df.loc[:, ('start_milestone', 'start_pct')]
