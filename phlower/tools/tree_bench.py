@@ -117,7 +117,7 @@ def pnt2line(pnt, start, end):
     nearest = nearest + start
     return (dist, nearest)
 
-def tree_milestone_belonging(adata, stream_tree='stream_tree', df_branches=None, iscopy=False, verbose=True):
+def tree_milestone_belonging(adata, stream_tree='stream_tree', df_branches=None, cumsum_name='cumsum_mean', iscopy=False, verbose=True):
     """
     calculate the belonging of each node, top two nearest milestone.
     each node calculate all milestone distances.
@@ -148,7 +148,7 @@ def tree_milestone_belonging(adata, stream_tree='stream_tree', df_branches=None,
     """
     #stream_tree = 'stream_tree'
     #df_branches = df
-    cumsum_mean = adata.obsm['cumsum_mean']
+    cumsum_mean = adata.obsm[cumsum_name]
     adata = adata.copy() if iscopy else adata
 
     ## create a dataframe to store cumsum_dist

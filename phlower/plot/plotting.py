@@ -1388,9 +1388,9 @@ def nxdraw_score(adata: AnnData,
     ##TODO assert digital
 
     if directed:
-        nx.draw_networkx(adata.uns[graph_name], adata.obsm[layout_name], node_color=u_color, cmap=cmap, font_size=font_size, **args)
+        nx.draw_networkx(adata.uns[graph_name], adata.obsm[layout_name], node_color=u_color, cmap=cmap, font_size=font_size, with_labels=False, **args)
     else:
-        nx.draw_networkx(adata.uns[graph_name].to_undirected(), adata.obsm[layout_name], cmap=cmap, node_color=u_color, font_size=font_size, **args)
+        nx.draw_networkx(adata.uns[graph_name].to_undirected(), adata.obsm[layout_name], cmap=cmap, node_color=u_color, font_size=font_size, with_labels=False, **args)
 
     if colorbar:
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin = min(u_color), vmax=max(u_color)))
@@ -1863,7 +1863,7 @@ def G_plot_triangle_density(g:nx.Graph,
     n_color = np.asarray([values[n] for n in g.nodes()])
     nx.draw(g, layouts, node_color=n_color, node_size=node_size, ax=ax, cmap=cmap, **args)
     if colorbar:
-        sm = plt.cm.ScalarMappable(cmap=plt.cm.jet, norm=plt.Normalize(vmin=min(n_color), vmax=max(n_color)))
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=min(n_color), vmax=max(n_color)))
         sm.set_array([])
         plt.colorbar(sm, ax=plt.gca())
 #endf plot_triangle_density

@@ -117,6 +117,7 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
                    save_fig=False,fig_path=None,fig_format='pdf',
                    return_fig = False,
                    s = 30, ## size or range
+                   order = True,
                    plotly=False,
                    cmap_continous = 'viridis',
                    ):
@@ -354,10 +355,43 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
                     s_max = s[1]
                     df_plot_shuf['weight'] = s_max*((df_plot_shuf[ann] - min(df_plot_shuf[ann]))/(max(df_plot_shuf[ann]) - min(df_plot_shuf[ann])))
                     df_plot_shuf['weight'] = [i if i > s_min else s_min for i in df_plot_shuf['weight']]
-                    sc_i = ax_i.scatter(list(df_plot_shuf['pseudotime']), list(df_plot_shuf['dist']), s=list(df_plot_shuf['weight']),
-                                        c=list(df_plot_shuf[ann]),vmin=vmin_i,vmax=vmax_i,alpha=alpha, cmap = cmap_obj )
+                    if order:
+                        ## use zorder to split the data get larger points over the smaller ones
+                        zorder_bins = 20
+                        df_plot_shuf['zorder'] = pd.cut(df_plot_shuf['weight'], bins=zorder_bins, labels=np.arange(1, zorder_bins+1))
+                        for a_cut in set(df_plot_shuf['zorder']):
+                            df_plot_shuf_i = df_plot_shuf[df_plot_shuf['zorder']==a_cut]
+                            if df_plot_shuf_i.empty:
+                                continue
+                            sc_i=ax_i.scatter(df_plot_shuf_i['pseudotime'], df_plot_shuf_i['dist'],
+                                              c=df_plot_shuf_i[ann],cmap=cmap_obj,
+                                              vmin=vmin_i,vmax=vmax_i,
+                                              alpha=alpha,linewidth=0,
+                                              s=df_plot_shuf_i['weight'],
+                                              zorder=int(a_cut),
+                                              )
+
+                    else:
+                        sc_i = ax_i.scatter(list(df_plot_shuf['pseudotime']), list(df_plot_shuf['dist']), s=list(df_plot_shuf['weight']),
+                                        c=list(df_plot_shuf[ann]),vmin=vmin_i,vmax=vmax_i,alpha=alpha, cmap = cmap_obj)#, zorder=[int(i*10) for i in df_plot_shuf['weight']])
                 elif isinstance(s, int) or isinstance(s, float): ## fix point size
-                    sc_i = ax_i.scatter(list(df_plot_shuf['pseudotime']), list(df_plot_shuf['dist']), s=s,
+                    if order:
+                        zorder_bins = 20
+                        df_plot_shuf['zorder'] = pd.cut(df_plot_shuf[ann], bins=zorder_bins, labels=np.arange(1, zorder_bins+1))
+                        for a_cut in set(df_plot_shuf['zorder']):
+                            df_plot_shuf_i = df_plot_shuf[df_plot_shuf['zorder']==a_cut]
+                            if df_plot_shuf_i.empty:
+                                continue
+                            sc_i=ax_i.scatter(df_plot_shuf_i['pseudotime'], df_plot_shuf_i['dist'],
+                                              c=df_plot_shuf_i[ann],cmap=cmap_obj,
+                                              vmin=vmin_i,vmax=vmax_i,
+                                              alpha=alpha,linewidth=0,
+                                              s=s,
+                                              zorder=int(a_cut),
+                                              )
+
+                    else:
+                        sc_i = ax_i.scatter(list(df_plot_shuf['pseudotime']), list(df_plot_shuf['dist']), s=s,
                                         c=list(df_plot_shuf[ann]),vmin=vmin_i,vmax=vmax_i,alpha=alpha, cmap = cmap_obj )
                 if show_legend:
                     cbar = plt.colorbar(sc_i,ax=ax_i, pad=0.01, fraction=0.05, aspect=40)

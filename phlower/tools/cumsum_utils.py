@@ -184,7 +184,7 @@ def trans_tree_node_attr(adata, from_='fate_tree', to_='stream_tree', attr='cums
     if attr not in adata.uns[from_].nodes['root']:
         raise ValueError(f"attr {attr} is not an node attribute of tree {from_}")
     attrs = nx.get_node_attributes(adata.uns[from_], attr)
-    to_attrs = {k:{'cumsum': attrs[k] } for k in adata.uns[to_].nodes()}
+    to_attrs = {k:{attr: attrs[k] } for k in adata.uns[to_].nodes()}
     nx.set_node_attributes(adata.uns[to_], to_attrs)
 
     return adata if iscopy else None
@@ -197,6 +197,7 @@ def node_cumsum_mean(adata,
                      clusters:str = "trajs_clusters",
                      evector_name:str = None,
                      approximate_k:int = 5,
+                     cumsum_name:str = "cumsum",
                      iscopy=False,
                      verbose=True,
                      ):
@@ -228,11 +229,14 @@ def node_cumsum_mean(adata,
     """
     adata = adata.copy() if iscopy else adata
 
+    if "graph_basis" in adata.uns.keys() and not evector_name:
+        evector_name = adata.uns["graph_basis"] + "_triangulation_circle_L1Norm_decomp_vector"
 
     if len(adata.uns['fate_tree'].nodes['root']['cumsum']) == 0:
             add_root_cumsum(adata, evector_name=evector_name, fate_tree='fate_tree')
-    trans_tree_node_attr(adata, from_='fate_tree', to_='stream_tree',  attr='cumsum')
-
+    ## transfer when stream has been created
+    if 'stream_tree' in adata.uns.keys():
+        trans_tree_node_attr(adata, from_='fate_tree', to_='stream_tree',  attr='cumsum')
 
     if "graph_basis" in adata.uns.keys() and not graph_name:
         graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
@@ -244,6 +248,6 @@ def node_cumsum_mean(adata,
 
     ## sort by the node order of adata
     cumsum_mean = np.array([j for i,j in sorted(d_node_cumsum.items(), key=lambda x: x[0], reverse=False)])
-    adata.obsm['cumsum_mean'] = cumsum_mean
+    adata.obsm[cumsum_name] = cumsum_mean
     return adata if iscopy else None
 #endf node_cumsum_mean

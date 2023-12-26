@@ -19,6 +19,7 @@ from ..util import bsplit, pairwise, term_frequency_cosine, find_cut_point, find
 from .hodgedecomp import knee_eigen
 from .trajectory import M_create_matrix_coordinates_trajectory_Hspace
 from .tree_utils import _edge_two_ends
+from .cumsum_utils import trans_tree_node_attr, node_cumsum_mean
 
 from ..external.stream_extra import (add_pos_to_graph,
                                      dfs_from_leaf,
@@ -34,7 +35,7 @@ from ..external.stream_extra import (add_pos_to_graph,
 def harmonic_stream_tree(adata: AnnData,
                          graph_name: str = None,
                          evector_name=None,
-                         layout_name: str = None,
+                         layout_name: str = 'cumsum',
                          cluster:str = "group",
                          eigen_n = -1,
                          min_bin_number = 5,
@@ -114,7 +115,7 @@ def harmonic_stream_tree(adata: AnnData,
     if "graph_basis" in adata.uns.keys() and not layout_name:
         layout_name = adata.uns["graph_basis"]
 
-    if layout_name not in adata.obsm:
+    if layout_name not in adata.obsm and layout_name != 'cumsum': ## will add cumsum to obsm if not existing
         raise ValueError(f"layout_name {layout_name} is not in adata.obsm")
 
     if "workdir" not in adata.uns:
@@ -151,9 +152,20 @@ def harmonic_stream_tree(adata: AnnData,
         print(datetime.now(), "tree attributes adding...")
     fate_tree = create_detail_tree(adata, htree, root, ddf, trim_end=trim_end, graph_name=graph_name, layout_name=layout_name, cluster=cluster)
     adata.uns['fate_tree'] = fate_tree
+
     if verbose:
         print(datetime.now(), "plugin to STREAM...")
 
+    if layout_name == 'cumsum': ## add cumsum to adata.obsm
+        node_cumsum_mean(adata,
+                         full_traj_matrix = full_traj_matrix,
+                         clusters = trajs_clusters,
+                         evector_name = evector_name,
+                         approximate_k = 5,
+                         cumsum_name='cumsum',
+                         iscopy = False,
+                         verbose = verbose
+                         )
     if pca_name in adata.obsm:
         add_node_pca(adata, pca_name=pca_name)
     if layout_name != adata.uns["graph_basis"]:
@@ -322,6 +334,11 @@ def create_bstream_tree(adata: AnnData,
 
     adata.uns['g_fate_tree'] = g_pos
     adata.uns['stream_tree'] = g_br
+    if layout_name == 'cumsum': ## cumsum attribute to stream tree
+        trans_tree_node_attr(adata, fate_tree, "stream_tree", "cumsum")
+        if "graph_basis" in adata.uns.keys():
+            trans_tree_node_attr(adata, fate_tree, "stream_tree", adata.uns["graph_basis"])
+
     #if adata.uns['graph_basis'] != layout_name:
         #add_node_pca(adata.uns['g_fate_tree'], layout_name=adata.uns['graph_basis'])
         #add_node_pca(adata.uns['stream_tree'], layout_name=adata.uns['graph_basis'])
@@ -530,7 +547,8 @@ def add_node_info(fate_tree, ddf, root, pos_name='X_pca_ddhodge_g'):
 
     #print(cumsum)
     nx.set_node_attributes(fate_tree, d_e_dic, 'ecount')
-    nx.set_node_attributes(fate_tree, d_pos, pos_name)
+    if pos_name != 'cumsum': ## no need anymore
+        nx.set_node_attributes(fate_tree, d_pos, pos_name)
     nx.set_node_attributes(fate_tree, d_u, 'u')
     nx.set_node_attributes(fate_tree, d_cumsum, 'cumsum')
     return fate_tree
@@ -541,6 +559,10 @@ def add_node_pca(adata, root='root', fate_tree_name="fate_tree", graph_name = No
     traverse the tree nodes, combine the set the average PCA coordinate
     """
     adata = adata.copy() if iscopy else adata
+
+    ## ignore cumsum since it has been calculated.
+    if pca_name == 'cumsum':
+        return adata if iscopy else None
 
     if "graph_basis" in adata.uns.keys() and not graph_name:
         graph_name = adata.uns["graph_basis"] + "_triangulation_circle"
@@ -577,7 +599,8 @@ def manual_root(adata, graph_name, layout_name, fate_tree, root, node_attribute=
     fate_tree.add_edge('root', root)
     ## update attribute
     fate_tree.nodes['root']['ecount'] = [(e, 1) for e in edges]
-    fate_tree.nodes['root'][pos_name]    = np.mean([_edge_mid_points(adata, graph_name, layout_name)[e] for e in edges], axis=0)
+    if pos_name !='cumsum': ## no need to add twice
+        fate_tree.nodes['root'][pos_name]    = np.mean([_edge_mid_points(adata, graph_name, layout_name)[e] for e in edges], axis=0)
     #if adata.uns['graph_basis'] != pos_name:
     #    fate_tree.nodes['root'][adata.uns['graph_basis']] = np.mean([_edge_mid_points(adata, graph_name, adata.uns['graph_basis'])[e] for e in edges], axis=0)
 

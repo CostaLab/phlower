@@ -1433,6 +1433,7 @@ def cal_stream_polygon_string(adata,dict_ann,root='S0',preference=None,dist_scal
         if(log_scale):
             df_n_cells= df_bins_ori.iloc[:-3,:].sum()
             df_n_cells = df_n_cells/df_n_cells.max()*factor_zoomin
+            df_n_cells = df_n_cells.astype('float64')
             df_bins_ori.iloc[:-3,:] = df_bins_ori.iloc[:-3,:]*np.log2(df_n_cells+1).astype('float')/(df_n_cells+1)
 
         df_bins_cumsum = df_bins_ori.copy()
