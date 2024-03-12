@@ -55,7 +55,7 @@ def edge_cumsum_median(adata,
 
     itrajs = range(len(cumsums))
     edges_cumsum_dict = defaultdict(list)
-    for itraj in tqdm(itrajs):
+    for itraj in tqdm(itrajs, desc="edges projection"):
         traj_mtx = adata.uns[full_traj_matrix][itraj]
         traj_edge_idx = [j for i in np.argmax(np.abs(traj_mtx.astype(int)), axis=0).tolist() for j in i]
         for i, edge_idx in enumerate(traj_edge_idx):
@@ -67,7 +67,7 @@ def edge_cumsum_median(adata,
     return edge_median_dict
 #endf edge_cumsum_median
 
-def node_cumsum_coor(adata, d_edge, d_e2n, approximate_k=5):
+def node_cumsum_coor(adata, d_edge, d_e2n, approximate_k=5, pca_name='X_pca'):
     """
     construct node to edges list dict to enumerate all edge connect to this node
     When a node is not visited, just find the top 5 nearest nodes has been visited and use their average of
@@ -102,7 +102,7 @@ def node_cumsum_coor(adata, d_edge, d_e2n, approximate_k=5):
         print(f"there are {len(unvisited)} nodes not visited in the tree")
         print(f"will approximate the node cumsum coordinate by {approximate_k} nearest accessible neighbors")
     ## assign the mean cumsum coordinate to the missing node.
-    X = adata.obsm['X_pca']
+    X = adata.obsm[pca_name]
     nbrs = NearestNeighbors(n_neighbors=len(unvisited)+approximate_k + 1, algorithm='ball_tree').fit(X)
     distances, indices = nbrs.kneighbors(X)
     s = set(unvisited)
@@ -184,7 +184,7 @@ def trans_tree_node_attr(adata, from_='fate_tree', to_='stream_tree', attr='cums
     if attr not in adata.uns[from_].nodes['root']:
         raise ValueError(f"attr {attr} is not an node attribute of tree {from_}")
     attrs = nx.get_node_attributes(adata.uns[from_], attr)
-    to_attrs = {k:{attr: attrs[k] } for k in adata.uns[to_].nodes()}
+    to_attrs = {k:{attr: attrs[k]} for k in adata.uns[to_].nodes() if k in attrs}
     nx.set_node_attributes(adata.uns[to_], to_attrs)
 
     return adata if iscopy else None
@@ -198,6 +198,7 @@ def node_cumsum_mean(adata,
                      evector_name:str = None,
                      approximate_k:int = 5,
                      cumsum_name:str = "cumsum",
+                     pca_name:str = "X_pca",
                      iscopy=False,
                      verbose=True,
                      ):
@@ -243,7 +244,7 @@ def node_cumsum_mean(adata,
 
     d = edge_cumsum_median(adata, full_traj_matrix, clusters, evector_name, verbose)
     d_e2n = _edge_two_ends(adata, graph_name=graph_name)
-    d_node_cumsum = node_cumsum_coor(adata, d, d_e2n, approximate_k=approximate_k)
+    d_node_cumsum = node_cumsum_coor(adata, d, d_e2n, approximate_k=approximate_k, pca_name=pca_name)
     assert(len(d_node_cumsum) == adata.n_obs)
 
     ## sort by the node order of adata

@@ -71,6 +71,10 @@ def ddhodge(
     if set(roots) != {True, False}:
         raise ValueError('Roots must be boolean and include True and False')
 
+    import warnings
+    warnings.filterwarnings("ignore", message="Changing the sparsity structure of a csr_matrix is expensive")
+    warnings.filterwarnings("ignore", message="converting matrix of class csr_array to CSC format")
+
     d = {}
     if basis:
         if isinstance(adata.obsm[basis], pd.DataFrame): ## fixed wrong type

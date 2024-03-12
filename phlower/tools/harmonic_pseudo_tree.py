@@ -126,7 +126,8 @@ def harmonic_stream_tree(adata: AnnData,
     d =  harmonic_trajs_bins(adata = adata,
                              graph_name = graph_name,
                              evector_name = evector_name,
-                             layout_name = adata.uns['graph_basis'], ## still use the default layout for visualization
+                             #layout_name = adata.uns['graph_basis'], ## still use the default layout for visualization
+                             layout_name = layout_name,
                              eigen_n = eigen_n,
                              full_traj_matrix = full_traj_matrix,
                              trajs_clusters = trajs_clusters,
@@ -163,16 +164,18 @@ def harmonic_stream_tree(adata: AnnData,
                          evector_name = evector_name,
                          approximate_k = 5,
                          cumsum_name='cumsum',
+                         pca_name = pca_name,
                          iscopy = False,
                          verbose = verbose
                          )
     if pca_name in adata.obsm:
         add_node_pca(adata, pca_name=pca_name)
     if layout_name != adata.uns["graph_basis"]:
-        add_node_pca(adata, pca_name=adata.uns["graph_basis"])
+        add_node_pca(adata, pca_name=layout_name) ## layout name for late use
     create_bstream_tree(adata, layout_name=layout_name, iscopy=False)
     if layout_name != adata.uns["graph_basis"]:
-        add_pca_to_stream(adata, attr=adata.uns["graph_basis"])
+        #add_pca_to_stream(adata, attr=adata.uns["graph_basis"]) ## should be laytout, #TODO: check
+        add_pca_to_stream(adata, attr=layout_name) ## should be laytout, #TODO: check
     if verbose:
         print(datetime.now(), "done...")
 
@@ -462,6 +465,8 @@ def create_detail_tree(adata, htree, root, ddf,
             curr_tm = tm
         root = (n0_node, 0)
     #print(fate_tree.nodes())
+    #DEBUG
+    adata.uns['ddf'] = ddf
 
     fate_tree = add_node_info(fate_tree, ddf, root, pos_name=layout_name)
     fate_tree = relabel_tree(fate_tree, root)
@@ -505,6 +510,7 @@ def add_node_info(fate_tree, ddf, root, pos_name='X_pca_ddhodge_g'):
     #print("adda_node_info, pos_name", pos_name)
 
     travel_nodes = list(nx.bfs_tree(fate_tree, root).nodes())
+    #print(ddf[1])
 
     d_e_dic = {}
     d_pos = {}
@@ -546,6 +552,7 @@ def add_node_info(fate_tree, ddf, root, pos_name='X_pca_ddhodge_g'):
         #print(node_name,d_u)
 
     #print(cumsum)
+    #print("add_node_info", d_e_dic[((4,), 4)])
     nx.set_node_attributes(fate_tree, d_e_dic, 'ecount')
     if pos_name != 'cumsum': ## no need anymore
         nx.set_node_attributes(fate_tree, d_pos, pos_name)
@@ -810,7 +817,7 @@ def harmonic_trajs_bins(adata: AnnData,
     print(retain_clusters)
 
     bins_df_dict = {}
-    for cluster in tqdm(retain_clusters):
+    for cluster in tqdm(retain_clusters, desc='traj bins'):
         itrajs = [i for i in np.where(cluster_list == cluster)[0]]
         if len(itrajs) > trajs_use:
             itrajs = np.random.choice(itrajs, trajs_use, replace=False)

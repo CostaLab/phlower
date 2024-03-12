@@ -230,7 +230,132 @@ def run_palantir_fdl(mtx,
     return positions
 
 
+def outlier_removal(adata, umap='umap', bandwidth=.75, percentile=1, verbose=True):
+    """
+    remove umap outliers using kde for triangulation.
 
+    Parameters
+    ----------
+    adata : AnnData
+        Annotated data matrix.
+    umap : str
+        umap key in adata.obsm
+    bandwidth : float
+        bandwidth for kde
+    percentile : float
+        percentile for outlier removal
+
+    """
+    import numpy as np
+# import seaborn as sns # you probably can use seaborn to get pdf-estimation values, I would use scikit-learn package for this.
+    from matplotlib import pyplot as plt
+    from sklearn.neighbors import KernelDensity
+
+    if umap not in adata.obsm.keys():
+        raise ValueError("umap key not found in adata.obsm")
+    if bandwidth <= 0:
+        raise ValueError("bandwidth must be positive")
+    if percentile < 0 or percentile > 100:
+        raise ValueError("percentile must be between 0 and 100")
+
+    data = np.array(adata.obsm[umap])
+
+    # you can use kernel='gaussian' instead
+    kde = KernelDensity(kernel='tophat', bandwidth=bandwidth).fit(data)
+
+    yvals = kde.score_samples(data)  # yvals are logs of pdf-values
+    yvals[np.isinf(yvals)] = np.nan # some values are -inf, set them to nan
+
+    # approx. 10 percent of smallest pdf-values: lets treat them as outliers
+    outlier_inds = np.where(yvals < np.percentile(yvals, percentile))[0]
+    #print(outlier_inds)
+    non_outlier_inds = np.where(yvals >= np.percentile(yvals, percentile))[0]
+
+    if verbose:
+        print(f"Removing {len(outlier_inds)} outliers")
+
+    adata = adata[non_outlier_inds, :].copy()
+    return adata
+
+def outlier_removal_clusters(adata,
+                             cluster_slot='group',
+                             umap='umap',
+                             bandwidth=.75,
+                             percentile=1,
+                             kernel='tophat',
+                             exclude_clusters=[],
+                             verbose=True):
+    """
+    remove umap outliers using kde for triangulation clusterwise.
+
+    Parameters
+    ----------
+    adata : AnnData
+        Annotated data matrix.
+    cluster_slot : str
+        Slot name for the cluster labels.
+    umap : str
+        Slot name for the umap coordinates or any 2D embeddings.
+    bandwidth : float
+        Bandwidth for the kernel density estimation.
+    percentile : float
+        Percentile for the outlier detection.
+    kernel : str
+        Kernel for the kernel density estimation.
+    verbose : bool
+        Print progress to stdout.
+    """
+    import numpy as np
+# import seaborn as sns # you probably can use seaborn to get pdf-estimation values, I would use scikit-learn package for this.
+    from matplotlib import pyplot as plt
+    from sklearn.neighbors import KernelDensity
+    from datetime import datetime
+
+
+    if cluster_slot not in adata.obs:
+        raise ValueError(f"adata.obs['{cluster_slot}'] does not exist.")
+    if set(exclude_clusters) - set(adata.obs[cluster_slot]):
+        raise ValueError(f"exclude_clusters contains unknown clusters.")
+    if umap not in adata.obsm:
+        raise ValueError(f"adata.obsm['{umap}'] does not exist.")
+    if percentile < 0 or percentile > 100:
+        raise ValueError("percentile must be between 0 and 100.")
+    if bandwidth <= 0:
+        raise ValueError("bandwidth must be positive.")
+
+
+    cell_list = []
+    for c in set(adata.obs[cluster_slot]) - set(exclude_clusters):
+
+        suba = adata[adata.obs[cluster_slot] ==c,:]
+
+        data = np.array(suba.obsm[umap])
+        kde = KernelDensity(kernel=kernel, bandwidth=bandwidth).fit(data)
+
+        yvals = kde.score_samples(data)
+        yvals[np.isinf(yvals)] = np.nan
+
+        outlier_inds = np.where(yvals < np.percentile(yvals, percentile))[0]
+        non_outlier_inds = np.where(yvals >= np.percentile(yvals, percentile))[0]
+
+        cells = list(suba[non_outlier_inds, :].obs_names)
+        cell_list.extend(cells)
+        if verbose:
+            print(datetime.now(), 'cleaned', c, len(outlier_inds),flush=True)
+    for c in exclude_clusters: ## add back all cells
+        cells = list(adata[adata.obs[cluster_slot] ==c, :].obs_names)
+        cell_list.extend(cells)
+
+    adata =  adata[cell_list, :].copy()
+    #n1 = adata.n_obs
+    #adata = outlier_removal(adata, umap=umap, bandwidth=bandwidth, percentile=percentile)
+    #n2 = adata.n_obs
+    #if verbose:
+    #    print(datetime.now(), 'last cleaned', n1-n2,flush=True)
+
+
+    return adata
+#endf outlier_removal_clusters
 
 
 def run_fdl(mtx,

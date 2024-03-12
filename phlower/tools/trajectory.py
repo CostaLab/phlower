@@ -6,6 +6,8 @@ import random
 import networkx as nx
 import numpy as np
 import pandas as pd
+import tqdm
+import itertools
 import scipy
 from datetime import datetime
 from tqdm import trange
@@ -15,6 +17,7 @@ from collections import Counter, defaultdict
 from itertools import chain
 from scipy.sparse import csr_matrix
 from typing import Union, List, Tuple
+from sklearn.neighbors import NearestNeighbors
 
 from .graphconstr import adjedges, edges_on_path
 from .dimensionreduction import run_umap, run_pca
@@ -758,6 +761,116 @@ def M_create_matrix_coordinates_trajectory_Hspace_dm(mat_coord_Hspace, reductioi
 
     return dm_mat_list
 
+
+
+def curated_paths(adata=None,
+                  graph_name='X_pca_ddhodge_g_triangulation',
+                  obs_ct = 'group',
+                  obs_time = 'u',
+                  pca='harmony_X',
+                  n_trajs=10000,
+                  start_n = 100,
+                  end_n = 300,
+                  middle=5,
+                  root = "HSPC_MPP",
+                  ends = ['cDC_2', "Monocytes", "B_cells", "Erythroid_cells", "Macrophages", 'Neutrophils', 'Proliferating_granulocytes'],
+                  edge_weight='weight',
+                  n_neighbors = 30,
+                  random_seed = 1,
+                  ):
+    """
+    specify start and ends to create trajectories
+
+    1. select middle number of middle point form the shortest path
+    2. randomly select a neighbor from the middle point to form new paths
+
+    Parameters
+    ----------
+
+    Return
+    ------
+    """
+
+    random.seed(random_seed)
+
+    ## shuffle the top start_n cells
+    start_cells = top_n_cells_celltype(adata, slot=obs_ct, val=root, time=obs_time, n=start_n, top="smallest")
+    sstart_cells = np.random.choice(start_cells, start_n, replace=True)
+
+    end_cells_all = []
+    for end in ends:
+        #print(end)
+        end_cells = list(top_n_cells_celltype(adata, slot=obs_ct, val=end, time=obs_time, n=end_n, top="largest"))
+        end_cells_all.extend(end_cells)
+
+    ##shuffle ends
+    send_cells_all = np.random.choice(end_cells_all, len(end_cells_all), replace=True)
+
+    ## create nearest neighbors matrix using PCA DR
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree').fit(np.array(adata.obsm[pca]))
+    indist, inind = nbrs.kneighbors(np.array(adata.obsm[pca]))
+
+    ## get all pairs starts and ends
+    pairs = itertools.product(sstart_cells, send_cells_all)
+    trajs = []
+    for i,j in tqdm.tqdm(pairs, total=n_trajs):
+        #print(i)
+        start = np.where(adata.obs_names == i)[0][0]
+        end = np.where(adata.obs_names == j)[0][0]
+        atraj = nx.shortest_path(adata.uns[graph_name], start, end, weight=edge_weight)
+        length=len(atraj)
+        pmiddles = [int(i) for i in np.linspace(0, length, middle+2)][1:-1]
+        pass_node = [start]
+        for pmid in pmiddles:
+            imid = atraj[pmid]
+            mids = inind[imid, :][1:]
+            rbr = np.random.choice(mids, 1, replace=True)[0]
+            pass_node.append(rbr) ## add middle random nodes
+        pass_node.append(end)
+
+        atrajn = shortest_trajectory(adata.uns[graph_name], pass_node)
+        trajs.append(atrajn)
+        if len(trajs) >= n_trajs:
+            break
+    return trajs
+
+
+def top_n_cells_celltype(adata, slot='group', val='HSPC_MPP',time='u', n=40, top='smallest'):
+    """
+    return top largest or smallest cell names of a celltype according the time
+    """
+    #print(slot, val)
+    idx = adata.obs[slot] == val
+    #print(idx)
+    #
+    if top=='smallest':
+        theta = adata.obs[time][idx][np.argsort(adata.obs[time][idx])[min(n, len(adata.obs[time][idx]))]] # min_u
+        sub_idx = np.where(adata.obs[time][idx] <= theta)[0]
+    else:
+        theta = adata.obs[time][idx][np.argsort(adata.obs[time][idx])[-min(n, len(adata.obs[time][idx]))]] # max_u
+        sub_idx = np.where(adata.obs[time][idx] >= theta)[0]
+
+    #print(np.where(adata.obs[time][idx] < theta)[0])
+    cells = adata.obs_names[idx][sub_idx]
+    return cells
+#endf top_n_cells_celltype
+
+def shortest_trajectory(graph, pass_nodes):
+    """
+    use a series of pass_nodes to find shortest paths between each pair of nodes
+
+    Return
+    ------
+    lst: list of all points in the paths
+    """
+    lst = []
+    for i, pair in enumerate(pairwise(pass_nodes)):
+        x = list(nx.shortest_path(graph, pair[0], pair[1], weight='weight'))
+        if i == len(pass_nodes)-2: ## last one
+            lst.extend(x)
+        else:
+            lst.extend(x[:-1])
+    return lst
 
 
 def detect_short_trajectory_groups(adata, trajectories='knn_trajs', cluster_name="h_trajs_clusters", min_len=10, verbose=False):

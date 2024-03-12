@@ -25,6 +25,8 @@ from .dimensionreduction import (
         run_fdl,
         run_palantir_fdl,
         run_tsne,
+        outlier_removal,
+        outlier_removal_clusters
         )
 
 from .viz import (
