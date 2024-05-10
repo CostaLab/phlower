@@ -127,7 +127,7 @@ def harmonic_stream_tree(adata: AnnData,
                              graph_name = graph_name,
                              evector_name = evector_name,
                              #layout_name = adata.uns['graph_basis'], ## still use the default layout for visualization
-                             layout_name = layout_name,
+                             #layout_name = layout_name,
                              eigen_n = eigen_n,
                              full_traj_matrix = full_traj_matrix,
                              trajs_clusters = trajs_clusters,
@@ -171,7 +171,7 @@ def harmonic_stream_tree(adata: AnnData,
     if pca_name in adata.obsm:
         add_node_pca(adata, pca_name=pca_name)
     if layout_name != adata.uns["graph_basis"]:
-        add_node_pca(adata, pca_name=layout_name) ## layout name for late use
+        add_node_pca(adata, pca_name=adata.uns["graph_basis"]) ## layout name for late use
     create_bstream_tree(adata, layout_name=layout_name, iscopy=False)
     if layout_name != adata.uns["graph_basis"]:
         #add_pca_to_stream(adata, attr=adata.uns["graph_basis"]) ## should be laytout, #TODO: check

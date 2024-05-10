@@ -423,7 +423,7 @@ def trajactory_cluster_skewness(adata, trajs_name='knn_trajs', trajs_clusters = 
     s = set()
     for cluster in clusters:
         idx = np.where(adata.uns[trajs_clusters]  == cluster)[0]
-        l = [len(adata.uns['knn_trajs'][i]) for i in idx]
+        l = [len(adata.uns[trajs_name][i]) for i in idx]
         sk = scipy.stats.skew(l)
         if np.abs(sk) > skewness:
             if verbose:

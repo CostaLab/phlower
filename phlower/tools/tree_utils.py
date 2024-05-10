@@ -285,6 +285,15 @@ def tree_original_dict(tree, leaf_name):
 
 
 
+
+def to_root_list(tree, node):
+    """
+    Given a node, return the list of nodes from the node to the root
+    """
+    return list(nx.shortest_path(tree,'root', node))
+#endf to_root_list
+
+
 def end_branch_dict(adata, branch_id_alias='branch_id_alias', fate_tree='stream_tree', from_='label', to_='original'):
     """
     for adata.obs.branch_id_alias, return a dict {branch_id_alias: original_name}
