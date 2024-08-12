@@ -149,9 +149,11 @@ def grad(g:nx.DiGraph, tol=1e-7, weight_attr='weight', lstsq_method='lstsq'):
 
 def div(g:nx.DiGraph, weight_attr='weight'):
     return divop(g) @ np.fromiter(nx.get_edge_attributes(g, weight_attr).values(), dtype=float) ##TODO please check the order of weights
+    #return divop(g) @ nx.to_scipy_sparse_matrix(g, weight=weight_attr)
 
 def curl(g, weight_attr="weight"):
     return curlop(g) @ np.fromiter(nx.get_edge_attributes(g, weight_attr).values(), dtype=float)
+    #return curlop(g) @ nx.to_scipy_sparse_matrix(g, weight=weight_attr)
 
 
 

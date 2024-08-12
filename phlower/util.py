@@ -401,6 +401,8 @@ def test_cholesky( A, beta=1e-6, verbose=False ):
     """
     #scikit-sparse
     from sksparse.cholmod import cholesky, CholmodNotPositiveDefiniteError, CholmodTooLargeError
+    if not scipy.sparse.isspmatrix_csc(A):
+        A = scipy.sparse.csc_matrix(A)
     try:
         solve = cholesky( A, beta=beta )  # A + beta I
         if verbose:
