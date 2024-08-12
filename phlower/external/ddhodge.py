@@ -52,6 +52,9 @@ def ddhodge(
         Regularization parameter for edge weights.
     layout
         Graphviz layout to use for visualization, can be one of 'dot', 'neato', 'fdp', 'sfdp', 'twopi', 'circo'.
+
+    lstsq_method
+        Diffusion psuedo time estimation method, can be one of 'lstsq', 'lsqr', 'lsmr', 'cholesky'.
     """
     if basis and basis not in adata.obsm.keys():
         raise ValueError('basis not in adata.obsm.keys()')

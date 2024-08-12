@@ -2,6 +2,7 @@ import sklearn
 import copy
 import igraph
 import scipy
+import scipy.spatial
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -159,7 +160,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   verbose: bool
     print out progress(default False)
   lstsq_method: str
-    method for least square solver,  "lstsq" or "lsqr", "lsmr" (default "lstsq")
+    method for least square solver,  "lstsq" or "lsqr", "lsmr", cholesky (default "lstsq")
 
   Return
   ---------------

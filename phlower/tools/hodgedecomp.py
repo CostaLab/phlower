@@ -138,7 +138,7 @@ def potential(g:nx.DiGraph, tol=1e-7, weight_attr='weight', method='lstsq'):
         else:
             p = scipy.sparse.linalg.spsolve(L, -div(g))
     else:
-        raise ValueError("method must be one of 'lstsq', 'lsmr', 'lsqr'")
+        raise ValueError("method must be one of 'lstsq', 'lsmr', 'lsqr', 'cholesky'")
 
     return (p - min(p))
 

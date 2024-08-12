@@ -3,6 +3,7 @@ import scipy
 import numpy as np
 import scanpy as sc
 import pandas as pd
+import scipy.spatial
 from datetime import datetime
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA, TruncatedSVD

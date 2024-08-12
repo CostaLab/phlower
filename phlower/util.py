@@ -3,6 +3,7 @@ import scipy
 import numpy as np
 import itertools
 import pandas as pd
+import scipy.spatial
 from collections import OrderedDict, Counter
 from scipy.stats import gaussian_kde
 

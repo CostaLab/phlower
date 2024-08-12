@@ -429,7 +429,7 @@ def connect_starts_ends_with_Delaunay(g,
     #pdb.set_trace()
 
 
-    values = np.fromiter(nx.get_node_attributes(g, node_attr).values(), dtype=np.float)
+    values = np.fromiter(nx.get_node_attributes(g, node_attr).values(), dtype=np.float32)
 
     n=len(g.nodes())
     o=np.sort(values)

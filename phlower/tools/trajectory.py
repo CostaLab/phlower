@@ -316,6 +316,7 @@ def harmonic_trajs_ranks(adata: AnnData,
     return a dict including more than 1 trajectory groups end with the same cluster.
     {cluster: [g1,g2,g3,g4]}
     """
+    import scipy.spatial
     from collections import Counter, defaultdict
     from scipy.stats import gaussian_kde
 
@@ -542,8 +543,8 @@ def remove_trajectory_clusters(adata,
         print("trajs_harmonic_dm")
         print("trajs_dm")
 
-    adata.uns[trajs_clusters] = np.delete(adata.uns[trajs_clusters], rm_idxs)
-    adata.uns[trajs_name] = np.delete(adata.uns[trajs_name], rm_idxs)
+    adata.uns[trajs_clusters] = np.delete(np.array(adata.uns[trajs_clusters], dtype=object), rm_idxs)
+    adata.uns[trajs_name] = np.delete(np.array(adata.uns[trajs_name], dtype=object), rm_idxs)
 
     keep_idx = np.delete(np.arange(len(adata.uns['full_traj_matrix'])), rm_idxs)
     adata.uns['full_traj_matrix'] = np.delete(np.array(adata.uns['full_traj_matrix']), rm_idxs)

@@ -2024,7 +2024,7 @@ def G_plot_density_grid(G,
         cluster_list = np.array(cluster_list)
 
     if not isinstance(traj_list, np.ndarray):
-        traj_list = np.array(traj_list)
+        traj_list = np.array(traj_list, dtype=object)
 
     r,c = get_uniform_multiplication(cluster_n)
     r = r - 1 if (r-1)*c == cluster_n else r

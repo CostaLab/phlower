@@ -5,6 +5,7 @@ import sklearn
 import itertools
 import pandas as pd
 import numpy as np
+import scipy.spatial
 from tqdm import tqdm
 import networkx as nx
 from anndata import AnnData

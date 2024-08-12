@@ -25,6 +25,7 @@ setup(
                       'umap-learn',
                       'scikit-sparse', #deb:libsuitesparse-dev, conda:suitesparse
                       'scanpy',
+                      'adjustText',
                       #'pygraphviz',
                       'magic-impute',
                       'anndata',
