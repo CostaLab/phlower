@@ -26,7 +26,7 @@ setup(
                       'scikit-sparse', #deb:libsuitesparse-dev, conda:suitesparse
                       'scanpy',
                       'adjustText',
-                      #'pygraphviz',
+                      'pygraphviz',
                       'magic-impute',
                       'anndata',
                       ],
