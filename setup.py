@@ -16,17 +16,17 @@ setup(
                       'igraph',
                       "scikit-learn",
                       "scipy",
-                      "pandas>=1.5.3",
+                      "pandas>=2.1.3",
                       "plotly",
                       "tqdm",
                       "leidenalg",
-                      "louvain",
+                      "python-louvain",
                       "colorcet",
                       'umap-learn',
-                      'scikit-sparse', #deb:libsuitesparse-dev, conda:suitesparse
+                      'scikit-sparse', #deb:libsuitesparse-dev, conda:suitesparse, macos:suite-parse
                       'scanpy',
                       'adjustText',
-                      'pygraphviz',
+                      'pygraphviz', ## deb:graphviz libgraphviz-dev, macos:graphpviz
                       'magic-impute',
                       'anndata',
                       ],
