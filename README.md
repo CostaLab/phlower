@@ -28,7 +28,7 @@ conda:
 
 #### install phlower
 ```bash
-git clone git@github.com:CostaLab/phlower.git
+git clone https://github.com/CostaLab/phlower.git
 cd phlower
 pip install .
 ```
