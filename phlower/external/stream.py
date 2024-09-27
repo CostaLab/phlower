@@ -189,7 +189,7 @@ def plot_stream_sc(adata,root='root',color=None,dist_scale=1,dist_pctl=95,prefer
         elif list(preference.keys())[0] == "label":
             preference = tree_label_convert(adata, "stream_tree", from_="label", to_='label', from_attr_list=preference["label"])
 
-    print(preference)
+    #print(preference)
     root = assign_root(adata, root=root)
     figs = []
 

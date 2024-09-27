@@ -292,7 +292,7 @@ def add_stream_sc_pos(adata,root='S0',dist_scale=1,dist_pctl=95,preference=None,
 def calculate_shift_distance(adata,root='S0',dist_pctl=95,preference=None, label_attr='label'):
     stream_tree = adata.uns['stream_tree']
     dict_label_node = {value: key for key,value in nx.get_node_attributes(stream_tree,label_attr).items()}
-    print(dict_label_node)
+    #print(dict_label_node)
     root_node = dict_label_node[root]
     ##shift distance for each branch
     dict_edge_shift_dist = dict()
