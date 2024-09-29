@@ -29,6 +29,19 @@ def fib2neuro(
     adata.var_names_make_unique()
     return adata
 
+def kidney(
+        url = 'https://costalab.ukaachen.de/open_data/PHLOWER/kidney.h5ad',
+        fname = 'kidney.h5ad',
+        folder = 'data',
+        verbose = True,
+        ):
+    fpath = _data_download(url, fname, folder=folder, verbose=verbose)
+    adata = read_h5ad(fpath)
+    adata.var_names_make_unique()
+    return adata
+
+
+
 def dla10(
         url = 'https://costalab.ukaachen.de/open_data/PHLOWER/DLA_10_TreeData.mat',
         fname = 'DLA_10_TreeData.mat',
