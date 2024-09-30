@@ -37,3 +37,5 @@ pip install .
 import phlower
 ```
 
+#### data info
+https://doi.org/10.5281/zenodo.13860460
