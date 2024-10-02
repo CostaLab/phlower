@@ -299,10 +299,10 @@ def end_branch_dict(adata, branch_id_alias='branch_id_alias', fate_tree='stream_
     for adata.obs.branch_id_alias, return a dict {branch_id_alias: original_name}
     like:
       {('S15', 'S14'): 'Stromal-4',
-       ('S10', 'S7'): 'PT/LOH',
+       ('S10', 'S7'): 'Tubular',
        ('S11', 'S8'): 'Stromal-1',
        ('S13', 'S12'): 'Stromal-2',
-       ('S9', 'S7'): 'PODO',
+       ('S9', 'S7'): 'Podocytes',
        ('S5', 'S2'): 'Neuron-3',
        ('S16', 'S14'): 'Stromal-3',
        ('S6', 'S3'): 'root',

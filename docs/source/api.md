@@ -55,6 +55,68 @@ import phlower
 ```
 
 
+### clustering
+
+```{eval-rst}
+.. autosummary::
+   :toctree: generated/
+
+   tl.leiden
+   tl.louvain
+   tl.dbscan
+   tl.gaussianmixture
+   tl.spectralclustering
+   tl.agglomerativeclustering
+```
+
+
+
+
+### dimensionality reduction
+
+```{eval-rst}
+.. autosummary::
+   :toctree: generated/
+
+   tl.run_pca
+   tl.run_umap
+   tl.run_mds
+   tl.run_kernelpca
+   tl.run_lda
+   tl.run_isomap
+   tl.run_fdl
+   tl.run_palantir_fdl
+   tl.run_tsne
+```
+
+### tree analysis
+
+```{eval-rst}
+.. autosummary::
+   :toctree: generated/
+   tl.tree_2branch_markers
+   tl.tree_mbranch_markers
+   tl.find_branch_start
+   tl.find_branch_end
+   tl.find_a_branch_all_predecessors
+   tl.helping_merged_tree
+   tl.helping_submerged_tree
+   tl.find_samelevel_daugthers
+   tl.TF_gene_correlation
+   tl.branch_TF_gene_correlation
+   tl.tree_branches_smooth_window
+   tl.branch_heatmap_matrix
+   tl.print_stream_labels
+   tl.change_stream_labels
+   tl.fate_tree_full_dataframe
+   tl.assign_graph_node_attr_to_adata
+   tl.get_tree_leaves_attr
+   tl.get_all_attr_names
+   tl.tree_label_dict
+   tl.tree_original_dict
+   tl.end_branch_dict
+```
+
 
 
 ## external: `ext`
