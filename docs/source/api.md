@@ -94,6 +94,7 @@ import phlower
 ```{eval-rst}
 .. autosummary::
    :toctree: generated/
+
    tl.tree_2branch_markers
    tl.tree_mbranch_markers
    tl.find_branch_start
@@ -121,6 +122,7 @@ import phlower
 ```{eval-rst}
 .. autosummary::
    :toctree: generated/
+
    tl.magic_adata
 ```
 
