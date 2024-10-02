@@ -2438,8 +2438,8 @@ def M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
 
     if len(retain_clusters) == 0:
         retain_clusters = set(cluster_list)
-    print(retain_clusters)
-    print(set(cluster_list))
+    #print(retain_clusters)
+    #print(set(cluster_list))
     assert(set(retain_clusters).issubset(set(cluster_list))) ## is subset
     if not isinstance(cluster_list, np.ndarray):
         cluster_list = np.array(cluster_list)
@@ -2473,6 +2473,8 @@ def M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
                        color=color_palette[i],
                        s=node_size,
                        **args)
+            ax.set_xlabel(f"t-map_{dims[0]}")
+            ax.set_ylabel(f"t-map_{dims[1]}")
 
         if label:
             if labelstyle=='text' or labelstyle == "color":
