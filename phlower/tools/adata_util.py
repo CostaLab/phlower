@@ -2,6 +2,29 @@ import pandas as pd
 import numpy as np
 from anndata import AnnData
 def magic_adata(adata:AnnData, random_state=2022, iscopy=False, verbose=True, **kwargs):
+    """
+    Run MAGIC on AnnData object
+
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object
+    random_state: int
+        seeds for random number generator
+    iscopy: bool
+        return a copy of adata if True
+    verbose: bool
+        print progress if True
+    kwargs: dict
+        additional parameters for MAGIC
+
+
+    Returns
+    -------
+    AnnData: AnnData
+        return adata with magic imputed data
+
+    """
     import magic
 
     adata = adata.copy() if iscopy else adata

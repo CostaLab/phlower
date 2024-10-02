@@ -117,6 +117,12 @@ import phlower
    tl.end_branch_dict
 ```
 
+### adata
+```{eval-rst}
+.. autosummary::
+   :toctree: generated/
+   tl.magic_adata
+```
 
 
 ## external: `ext`
