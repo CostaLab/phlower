@@ -26,7 +26,7 @@ import phlower
 ```
 
 
-### difusion map for ddhdoge
+### difusion map
 
 ```{eval-rst}
 .. autosummary::
@@ -35,6 +35,7 @@ import phlower
    tl.diffusionGraph
    tl.diffusionGraphDM
 ```
+
 
 ### hodge laplacian decomposition to infer trajectory
 
@@ -55,7 +56,21 @@ import phlower
 
 
 
-## tools: `pl`
+
+## external: `ext`
+
+```{eval-rst}
+.. autosummary::
+   :toctree: generated/
+
+   ext.ddhodge
+   ext.plot_stream_sc
+   ext.plot_stream
+```
+
+
+
+## plotting: `pl`
 
 ```{eval-rst}
 .. module:: phlower.pl
@@ -91,8 +106,6 @@ import phlower
     pl.plot_pie_fate_tree
     pl.harmonic_backbone
     pl.harmonic_backbone_3d
-
-
 ```
 
 
