@@ -34,6 +34,14 @@ import phlower
 
    tl.diffusionGraph
    tl.diffusionGraphDM
+```
+
+### hodge laplacian decomposition to infer trajectory
+
+```{eval-rst}
+.. autosummary::
+   :toctree: generated/
+
    tl.L1Norm_decomp
    tl.construct_delaunay
    tl.construct_trucated_delaunay
@@ -44,7 +52,6 @@ import phlower
    tl.trajs_clustering
    tl.harmonic_stream_tree
 ```
-
 
 
 
