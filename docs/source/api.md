@@ -184,6 +184,7 @@ import phlower
 ```{eval-rst}
 .. autosummary::
    :toctree: generated/
+
     pl.fate_velocity_plot_cumsum
     pl.fate_velocity_plot
 ```
