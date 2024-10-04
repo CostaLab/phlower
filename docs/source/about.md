@@ -93,4 +93,6 @@ The eigenvector with zero eigenvalue is the kernel of the Hodge Laplacian, which
 
 ### References
 
-A preprint of the paper is available at: https://doi.org/10.1101/2024.10.01.613179
+A preprint of the paper is available at: [https://doi.org/10.1101/2024.10.01.613179](https://doi.org/10.1101/2024.10.01.613179)
+
+
