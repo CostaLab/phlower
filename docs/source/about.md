@@ -53,7 +53,7 @@ Hodge laplacian is denfined as:
 
 From the formula we can not only capture the relationship between vertices and edges, but also the relationship between edges and triangles. The Hodge Laplacian matrix is a high-order Laplacian matrix, which can be used to infer the underlying differentiation trees.
 
-Like the laoplcian matrix, the Hodge laplacian also has the normalized version, which is defined as:
+Like the laplacian matrix, the Hodge laplacian also has the normalized version, which is defined as:
 
 .. math::
 
