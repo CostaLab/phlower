@@ -15,6 +15,7 @@ build:
     - libsuitesparse-dev
     - graphviz
     - libgraphviz-dev
+    - libjs-mathjax
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:

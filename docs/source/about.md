@@ -4,9 +4,14 @@ Multi-modal single-cell sequencing, which captures changes in chromatin and gene
 
 
 ### Incidence matrix
-Incidence matrix $\mathbf{B_1}$ records the relationship bewtween vertics and edges in a Graph $G =(\mathcal{V}, \mathcal{E})$, where $\mathcal{V}$ is the set of vertices and $\mathcal{E}$ is the set of edges.
-For vertex $v_j \in \mathcal{V}$ and edge $e_i \in \mathcal{E}$, $\mathbf{B_1}$ is defined as:
 
+```{eval-rst}
+
+Incidence matrix :math:`\mathbf{B_1}` records the relationship bewtween vertics and edges in a Graph :math:`G =(\mathcal{V}, \mathcal{E})`, where :math:`\mathcal{V}` is the set of vertices and :math:`\mathcal{E}` is the set of edges.
+For vertex :math:`v_j \in \mathcal{V}` and edge :math:`e_i \in \mathcal{E}`, :math:`\mathbf{B_1}` is defined as:
+
+.. math::
+   :nowrap:
   \begin{equation}
   \label{eqn:incidencematrix}
   B_1[i,j] = \begin{cases}
@@ -16,6 +21,7 @@ For vertex $v_j \in \mathcal{V}$ and edge $e_i \in \mathcal{E}$, $\mathbf{B_1}$ 
   \end{cases}
   \end{equation}
 
+```
 
 
 Incidence matrix $\mathbf{B_2}$ is a high-order of $\mathbf{B_1}$, which records the relationship bewtween edges and triangles in a Graph $G =(\mathcal{V}, \mathcal{E}, \mathcal{T})$, where $\mathcal{T}$ is the set of triangles. the definition of $\mathbf{B_2}$ is similar to $\mathbf{B_1}$:
