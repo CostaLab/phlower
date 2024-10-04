@@ -19,6 +19,7 @@ how to `installation` the project.
 caption: Getting started
 maxdepth: 2
 ---
+about
 usage
 ```
 
