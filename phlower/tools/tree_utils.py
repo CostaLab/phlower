@@ -171,7 +171,23 @@ def fate_tree_full_dataframe(adata, tree='fate_tree', graph_name=None):
 
 def assign_graph_node_attr_to_adata(adata, graph_name='X_pca_ddhodge_g', from_attr='pos', to_attr='pos', iscopy=False):
     """
-    xxx
+    assign the node attributes of a graph to adata.obs
+
+    Parameters
+    ----------
+    adata: AnnData
+        The AnnData object
+    graph_name: str
+        The name of the graph in adata.uns
+    from_attr: str
+        The attribute of the graph nodes
+    to_attr: str
+        The attribute of the adata.obs
+
+    Returns
+    -------
+    AnnData
+        The AnnData object with the new attribute
     """
     adata = adata.copy() if iscopy else adata
 
