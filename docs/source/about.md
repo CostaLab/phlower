@@ -87,3 +87,10 @@ where :math:`Q\in \mathbb{R}^{\|\mathcal{E}^{(t)}\|\times \|\mathcal{E}^{(t)}\|}
 
 The eigenvector with zero eigenvalue is the kernel of the Hodge Laplacian, which is the harmonic 1-forms. The harmonic 1-forms can be used to infer the underlying differentiation trees.
 ```
+
+
+
+
+### References
+
+A preprint of the paper is available at: https://doi.org/10.1101/2024.10.01.613179
