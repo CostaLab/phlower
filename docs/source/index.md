@@ -20,7 +20,7 @@ caption: Getting started
 maxdepth: 2
 ---
 about
-usage
+installation
 tutorial
 ```
 

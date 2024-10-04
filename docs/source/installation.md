@@ -1,6 +1,5 @@
-## Usage
 
-### Installation
+## Installation
 
 ##### system dependences
 ```bash
@@ -31,7 +30,7 @@ pip install .
 ```
 
 
-#### Run
+##### Run
 
   ```python
   import phlower
