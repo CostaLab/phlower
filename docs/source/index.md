@@ -21,6 +21,7 @@ maxdepth: 2
 ---
 about
 usage
+tutorial
 ```
 
 ```{toctree}
