@@ -39,3 +39,8 @@ import phlower
 
 #### data info
 https://doi.org/10.5281/zenodo.13860460
+
+
+#### reference
+
+A preprint is available at: [https://doi.org/10.1101/2024.10.01.613179](https://doi.org/10.1101/2024.10.01.613179)
