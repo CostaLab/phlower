@@ -46,10 +46,10 @@ Hodge laplacian is denfined as:
 
 .. math::
 
-`\begin{equation}
-\label{eqn:hodgeLaplacian}
-{L}_1 = \mathbf{B}_{1}^\top \mathbf{B}_{1} + \mathbf{B}_{2} \mathbf{B}_{2}^\top.
-\end{equation}`
+  \begin{equation}
+  \label{eqn:hodgeLaplacian}
+  {L}_1 = \mathbf{B}_{1}^\top \mathbf{B}_{1} + \mathbf{B}_{2} \mathbf{B}_{2}^\top.
+  \end{equation}
 
 From the formula we can not only capture the relationship between vertices and edges, but also the relationship between edges and triangles. The Hodge Laplacian matrix is a high-order Laplacian matrix, which can be used to infer the underlying differentiation trees.
 
@@ -57,10 +57,10 @@ Like the laoplcian matrix, the Hodge laplacian also has the normalized version, 
 
 .. math::
 
-\begin{equation}
-\label{eqn:normL1}
-\mathcal{L}_1 = \mathbf{D}_2 \mathbf{B}_1^\top \mathbf{D}_1^{-1} \mathbf{B}_1 + \mathbf{B}_2 \mathbf{D}_3 \mathbf{B}_2^\top \mathbf{D}_2^{-1}
-\end{equation}
+  \begin{equation}
+  \label{eqn:normL1}
+  \mathcal{L}_1 = \mathbf{D}_2 \mathbf{B}_1^\top \mathbf{D}_1^{-1} \mathbf{B}_1 + \mathbf{B}_2 \mathbf{D}_3 \mathbf{B}_2^\top \mathbf{D}_2^{-1}
+  \end{equation}
 
 where :math:`\mathbf{D}_2` is the diagonal matrix of (adjusted) degrees of each edge, i.e. :math:`\mathbf{D}_2 = \max{(\text{diag}(|\mathbf{B}_2| \mathbf{1}), \mathbf{I})}`. :math:`\mathbf{D}_1` is the diagonal matrix of weighted degrees of the vertices, and :math:`\mathbf{D}_3=\frac{1}{3}\mathbf{I}`.
 
@@ -68,19 +68,19 @@ We construct the symmetric form of :math:`\mathcal{L}_1` as following:
 
 .. math::
 
-\begin{equation}
-\mathcal{L}_1^s = \mathbf{D}_2^{-1/2} \mathcal{L}_1 \mathbf{D}_2^{1/2} = \mathbf{D}_2^{1/2} \mathbf{B}_1^\top \mathbf{D}_1^{-1} \mathbf{B}_1 \mathbf{D}_2^{1/2} + \mathbf{D}^{-1/2} \mathbf{B}_2 \mathbf{D}_3 \mathbf{B}_2^\top \mathbf{D}_2^{-1/2}.
-\end{equation}
+  \begin{equation}
+  \mathcal{L}_1^s = \mathbf{D}_2^{-1/2} \mathcal{L}_1 \mathbf{D}_2^{1/2} = \mathbf{D}_2^{1/2} \mathbf{B}_1^\top \mathbf{D}_1^{-1} \mathbf{B}_1 \mathbf{D}_2^{1/2} + \mathbf{D}^{-1/2} \mathbf{B}_2 \mathbf{D}_3 \mathbf{B}_2^\top \mathbf{D}_2^{-1/2}.
+  \end{equation}
 
 
 The eigen decomposition of :math:`\mathcal{L}_1` is:
 
 .. math::
 
-\begin{equation}
-\label{eqn:l1decomposition}
-\mathcal{L}_1 = \mathbf{D}_2^{1/2} \mathcal{L}_1^s \mathbf{D}_2^{-1/2} =  \mathbf{D}_2^{1/2} Q \Lambda Q^\top \mathbf{D}_2^{-1/2} = \mathbf{U} \Lambda \mathbf{U}^{-1}
-\end{equation}
+  \begin{equation}
+  \label{eqn:l1decomposition}
+  \mathcal{L}_1 = \mathbf{D}_2^{1/2} \mathcal{L}_1^s \mathbf{D}_2^{-1/2} =  \mathbf{D}_2^{1/2} Q \Lambda Q^\top \mathbf{D}_2^{-1/2} = \mathbf{U} \Lambda \mathbf{U}^{-1}
+  \end{equation}
 
 where :math:`Q\in \mathbb{R}^{\|\mathcal{E}^{(t)}\|\times \|\mathcal{E}^{(t)}\|}` is the eigenvector of :math:`\mathcal{L}_1^s`, :math:`\|\mathcal{E}^{(t)}\|` is the number of edges in graph :math:`G^{(t)}`, the diagonal matrix :math:`\Lambda\in \mathbb{R}^{\|\mathcal{E}^{(t)}\|}` records the corresponding eigenvalues. We can make use of the right eigenvector :math:`q_R = \mathbf{D}_2^{1/2} q` as the edges spectrum.
 
