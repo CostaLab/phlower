@@ -26,7 +26,13 @@ conda:
   2. conda install conda-forge::python-graphviz
 ```
 
-#### install phlower
+#### install from pypi
+```bash
+pip install phlowerpy
+
+```
+
+#### install newest phlower version
 ```bash
 git clone https://github.com/CostaLab/phlower.git
 cd phlower
