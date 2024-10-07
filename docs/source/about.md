@@ -144,7 +144,7 @@ The path representation does not keep the time step of a edge visit.  Thus we al
       \end{cases}
   \end{equation}
 
-where :math:`S` is the length of the flow, :math:`1\leq s\leq S` is the :math:`s`th step and :math:`\|\mathcal{E}\|` is number of edges in graph :math:`G`. As we have :math:`n` trajectories, we will have :math:`n` traversed edge flow matrices :math:`\{\hat{\mathbf{f}}_1, \hat{\mathbf{f}}_2,\cdots, \hat{\mathbf{f}}_n\}`.
+where :math:`S` is the length of the flow, :math:`1\leq s\leq S` is the :math:`s\mathrm{th}` step and :math:`\|\mathcal{E}\|` is number of edges in graph :math:`G`. As we have :math:`n` trajectories, we will have :math:`n` traversed edge flow matrices :math:`\{\hat{\mathbf{f}}_1, \hat{\mathbf{f}}_2,\cdots, \hat{\mathbf{f}}_n\}`.
 
 We make use of cumulative trajectory embedding to represent paths and for the detection of major trajectories and branching points. For a path :math:`\hat{\mathbf{f}}`, we can estimate a point associated with every step :math:`s` in this cumulative trajectory embedding space as:
 
