@@ -122,9 +122,13 @@ We next project these paths :math:`\mathbf{F}` onto harmonic space to estimate a
 where :math:`\mathbf{U}=(\mathbf{u}_1,\cdots, \mathbf{u}_{\|\mathcal{E}\|})` is the eigenvector matrix and :math:`\Lambda = \mathrm{diag}(\lambda_1,\cdots, \lambda_{\|\mathcal{E}\|})` are the eigenvectors. We assume the eigenvectors have been sorted by their corresponding increasing eigenvalues such that :math:`0\leq\lambda_1\leq\lambda_2\leq\cdots\leq\lambda_{\|\mathcal{E}\|}`.
 
 Denote :math:`\mathbf{H}:=(\mathbf{u}_1,\cdots, \mathbf{u}_{h})` to be the matrix containing all the harmonic functions associated to :math:`\mathcal{L}_1`, i.e. all of the eigenvectors corresponding to the :math:`0` eigenvalues, where :math:`h` is the number with eigenvalues being equal to 0 and :math:`\mathbf{H}\in \mathbb{R}^{\|\mathcal{E}\|\times h}`. We further project edge flow matrix :math:`\mathbf{F}` onto the harmonic space by matrix multiplication  such that
-\begin{equation}
-\mathbf{H} = \mathbf{H}^\top \mathbf{F}
-\end{equation}
+
+.. math::
+
+  \begin{equation}
+  \mathbf{H} = \mathbf{H}^\top \mathbf{F}
+  \end{equation}
+
 where :math:`\mathbf{H}\in \mathbb{R}^{h\times n}` embed each trajectory into :math:`h` dimensions. PHLOWER next performs clustering on :math:`\mathbf{H}` with DBSCAN to group the paths into major differentiation trajectories.
 ```
 
