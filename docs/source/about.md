@@ -132,7 +132,7 @@ where :math:`\mathbf{H}\in \mathbb{R}^{h\times n}` embed each trajectory into :m
 
 ```{eval-rst}
 
-The path representation presented in Eq.~\ref{eq:edgeflow} do not keep the time step of a edge visit.  Thus we also define a traversed edge flow (transversed path) matrix :math:`\hat{\mathbf{f}}\in \mathbb{R}^{{\|\mathcal{E}\|}\times S}` to record both the time step associated with every edge visit, i.e.:
+The path representation does not keep the time step of a edge visit.  Thus we also define a traversed edge flow (transversed path) matrix :math:`\hat{\mathbf{f}}\in \mathbb{R}^{{\|\mathcal{E}\|}\times S}` to record both the time step associated with every edge visit, i.e.:
 
 .. math::
 
