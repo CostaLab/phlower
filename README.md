@@ -42,11 +42,14 @@ pip install .
 ```python
 import phlower
 ```
+### Tutorial
+Tutorials exampled by a small scRNA-seq data [Fibroblast to Neuron](https://phlower.readthedocs.io/en/latest/notebooks/fib2neuron.html) and a 10X multiome data [Kidney](https://phlower.readthedocs.io/en/latest/notebooks/kidney.html).
 
-#### data info
+
+### Data info
 https://doi.org/10.5281/zenodo.13860460
 
 
-#### reference
+### Reference
 
 A preprint is available at: [https://doi.org/10.1101/2024.10.01.613179](https://doi.org/10.1101/2024.10.01.613179)
