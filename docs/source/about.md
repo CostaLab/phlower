@@ -125,7 +125,7 @@ Denote :math:`\mathbf{H}:=(\mathbf{u}_1,\cdots, \mathbf{u}_{h})` to be the matri
 \begin{equation}
 \mathbf{H} = \mathbf{H}^\top \mathbf{F}
 \end{equation}
-where :math:`\mathbf{H}\in \mathbb{R}^{htimes n}` embed each trajectory into :math:`h` dimensions. PHLOWER next performs clustering on :math:`\mathbf{H}` with DBSCAN to group the paths into major differentiation trajectories.
+where :math:`\mathbf{H}\in \mathbb{R}^{h\times n}` embed each trajectory into :math:`h` dimensions. PHLOWER next performs clustering on :math:`\mathbf{H}` with DBSCAN to group the paths into major differentiation trajectories.
 ```
 
 ### Cumulative trajectory embedding and tree inference
