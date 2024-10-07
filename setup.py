@@ -4,6 +4,7 @@ setup(
     name='phlowerpy',
     version='0.1.3',
     description='hodge decomposition trajectory',
+    long_description='Single cell trajectory inference using hodge laplacian decomposition',
     url='https://github.com/CostaLab/phlower',
     author='Mingbo Cheng',
     author_email='chengmingbo@gmail.com',
