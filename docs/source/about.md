@@ -109,9 +109,8 @@ To generate trajectories, we sample paths (or edge flows) in the graph by follow
 
 Random walk is repeated :math:`n` times. This provides us with a path matrix :math:`\mathbf{F}\in \mathbb{R}^{\|\mathcal{E}\| \times n}`, where :math:`\|\mathcal{E}\|` is number of edges in graph :math:`G`.
 
-\subsubsection{Trajectory embedding and clustering}
 
-We next project these paths :math:`\mathbf{F}` onto harmonic space to estimate a trajectory embedding. Let's recapitulate the decomposition of the normalized Hodge 1-Laplacian (Eq.\ref{eqn:l1decomposition}):
+We next project these paths :math:`\mathbf{F}` onto harmonic space to estimate a trajectory embedding. Let's recapitulate the decomposition of the normalized Hodge 1-Laplacian:
 
 .. math::
 
