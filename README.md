@@ -9,7 +9,7 @@ decom**P**osition of the **H**odge **L**aplacian for inferring traject**O**ries 
 ```bash
 macos:
   1. brew install suite-sparse
-  2. brew install graphpviz
+  2. brew install graphviz
 
   Manually install pygraphviz:
     export PATH=$(brew --prefix graphviz):$PATH
