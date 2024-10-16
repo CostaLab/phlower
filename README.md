@@ -4,7 +4,7 @@
 decom**P**osition of the **H**odge **L**aplacian for inferring traject**O**ries from flo**W**s of c**E**ll diffe**R**entiation
 
 ### System Requirements
-`PHLOWER` has been tested with following OS:
+`PHLOWER` has been tested with the following OS and virtual environment:
 
 	- macOS Sonoma 14.5
 	- Linux 4.18.0/5.15.0
@@ -12,7 +12,7 @@ decom**P**osition of the **H**odge **L**aplacian for inferring traject**O**ries 
 
 ### Installation
 
-#### system dependences
+#### system dependencies
 
 
 
