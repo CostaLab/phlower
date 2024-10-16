@@ -117,6 +117,7 @@ import phlower
    tl.tree_original_dict
    tl.end_branch_dict
    tl.branch_regulator_detect
+   tl.mbranch_regulator_detect
 ```
 
 ### adata
