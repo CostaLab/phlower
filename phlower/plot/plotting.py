@@ -291,6 +291,7 @@ def harmonic_backbone(adata: AnnData,
                       ):
     """
     plot backbone in cumsum sapce
+
     1. call plot_trajectory_harmonic_lines
     2. plot fate_tree nodes
     3. plot fate_tree edges
@@ -432,6 +433,8 @@ def plot_trajectory_harmonic_lines_3d(adata: AnnData,
                                       return_fig = False,
                                       **args):
     """
+    Plot the trajectory lines in harmonic ct-map in 3D space
+
     Parameters
     ---------
     adata: AnnData
@@ -499,6 +502,8 @@ def plot_trajectory_harmonic_lines(adata: AnnData,
                                    color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                    **args):
     """
+    Plot the trajectory lines in harmonic ct-map in 2D space
+
     Parameters
     ---------
     adata: AnnData
@@ -571,6 +576,8 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
                                        return_fig = False,
                                        **args):
     """
+    Plot the trajectory groups in harmonic t-map in 3D space
+
     Parameters
     ---------
     adata: AnnData
@@ -644,6 +651,9 @@ def plot_trajectory_harmonic_points(adata: AnnData,
                                     color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                     **args):
     """
+    Plot the trajectory groups in harmonic t-map in 2D space
+
+
     Parameters
     ---------
     adata: AnnData
@@ -722,6 +732,8 @@ def plot_fate_tree_embedding(adata: AnnData,
                              **args,
                              ):
     """
+    Plot the fate tree embedding.
+
     Parameters
     ---------
     adata: AnnData
@@ -783,6 +795,8 @@ def plot_stream_tree_embedding(adata: AnnData,
                              **args,
                              ):
     """
+    Plot stream tree embedding.
+
     Parameters
     ---------
     adata: AnnData
@@ -955,6 +969,8 @@ def plot_trajs_embedding(adata,
                          **args
                          ):
     """
+    Plot trjactories edges embeddings in umap or original t-map space
+
     Parameters
     ---------
     adata: AnnData
@@ -1352,6 +1368,8 @@ def nxdraw_score(adata: AnnData,
                  **args
     ):
     """
+    networkx plot continous values
+
     Parameters
     ----------
     adata: AnnData
@@ -1419,6 +1437,8 @@ def nxdraw_group(adata: AnnData,
                  ax = None,
                  **args):
     """
+    networkx plot groups
+
     Parameters
     ----------
     adata: AnnData
@@ -1493,6 +1513,8 @@ def plot_triangle_density(adata: AnnData,
                           colorbar = True,
                           **args):
     """
+    plot triangle density values of the trianglulated graph
+
     Parameters
     ----------
     adata: AnnData
@@ -1538,6 +1560,8 @@ def plot_pie_fate_tree(adata: AnnData,
                        ax = None,
                        ):
     """
+    Piechart show cell type proportions along Trajectory tree in 2d space
+
     Parameters
     ----------
     adata: AnnData
