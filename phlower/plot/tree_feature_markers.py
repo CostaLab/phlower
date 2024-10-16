@@ -2,8 +2,11 @@ import scanpy as sc
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from typing import Union, List
 from anndata import AnnData
+from ..tools.tree_feature_markers import branch_heatmap_matrix
+from ..tools.tree_utils import TF_to_genes
 
 def plot_rank_gene_group(adata,
                          name='markers_1_21_vs_0_17.2_21',
@@ -489,3 +492,92 @@ def marker_line_pesudo(mtx,
             if is_legend:
                 ax.legend()
 #endf marker_line_pesudo
+
+
+def regulator_dot_correlation(tfadata, branch, dot_size=14, ax=None):
+    """
+    Selected regulator shown in dot plot ordered by the correlation along a trajectory branch
+
+    Parameters
+    ----------
+    tfadata : AnnData
+        Annotated data of transcription factors
+    branch : str
+        branch name
+    dot_size : int
+        dot size
+    ax : matplotlib.axes.Axes
+        axes to plot
+
+
+    Returns
+    -------
+    None
+    """
+    from adjustText import adjust_text
+
+    if f"regulator_df_{branch}" not in tfadata.uns.keys():
+        raise ValueError(f"regulator_df_{branch} not in tfadata.uns.keys()\n please run tl.branch_regulator_detect first!")
+
+    ax = ax or plt.gca()
+
+    b_correlation_df = tfadata.uns[f"regulator_df_{branch}"]
+
+    sns.scatterplot(x=range(0, b_correlation_df.shape[0]), y = b_correlation_df.loc[:, "score"], ax=ax)
+
+    texts = []
+    for idx, (i,r) in enumerate(b_correlation_df.iterrows()):
+        texts.append(ax.text(x=list(range(0, b_correlation_df.shape[0]))[idx], y=list(b_correlation_df.loc[:, "score"])[idx],s=i, size=dot_size))
+    adjust_text(texts, arrowprops=dict(arrowstyle="-", color='k', lw=0.5))
+    ax.set_xlabel(f"{branch} TFs")
+    ax.set_ylabel(f"{branch}_correlation")
+#endf regulator_dot_correlation
+
+
+
+def regulator_heatmap(adata, tfadata, branch, figsize=(20,13), **args):
+    """
+    Plot heatmap of regulators calculated by phlower
+
+    Parameters
+    ----------
+    adata: AnnData
+        Annotated data matrix
+    tfadata: AnnData
+        Annotated data matrix of transcription factors
+    branch: str
+        branch name
+    figsize: tuple
+        figure size
+    args: dict
+        additional arguments for sns.heatmap
+
+    Returns
+    -------
+    fig, axes: tuple
+        figure and axes
+    """
+
+
+    if f"regulator_df_{branch}" not in tfadata.uns.keys() or \
+         f"regulator_tf_mat_{branch}" not in tfadata.uns.keys() or \
+         f"regulator_gene_mat_{branch}" not in tfadata.uns.keys():
+             raise Exception(f"Regulators have not been calculated for branch {branch}\n please run tl.branch_regulator_detect first!")
+
+    b_correlation_df = tfadata.uns[f"regulator_df_{branch}"]
+    d_tf2gene = TF_to_genes(list(tfadata.uns[f"regulator_tf_mat_{branch}"].index), ones=False)
+
+    mat_tf = branch_heatmap_matrix(tfadata.uns[f"regulator_tf_mat_{branch}"].loc[b_correlation_df.index, :], max_features=100, var_cutoff=0.6)
+    gene_idx = [d_tf2gene[i] for i in mat_tf.index]
+    mat_gene = branch_heatmap_matrix(tfadata.uns[f"regulator_gene_mat_{branch}"], label_markers=gene_idx)
+    fig, axes = plt.subplots(1,2, figsize=figsize)
+    sns.heatmap(mat_tf, ax=axes[0],  cbar_kws = dict(use_gridspec=False,location="bottom"), cmap=plt.cm.inferno_r, **args)
+    sns.heatmap(mat_gene, ax=axes[1],  cbar_kws = dict(use_gridspec=False,location="bottom"), cmap=plt.cm.inferno_r, **args)
+    axes[0].set_title(f"{branch} TFs")
+    axes[0].set_yticks(np.arange(mat_tf.shape[0])+ 0.5, mat_tf.index, fontsize="10", rotation=0)
+    axes[1].set_title(f"{branch} Genes")
+    axes[1].set_yticks(np.arange(mat_gene.shape[0])+ 0.5, mat_gene.index, fontsize="10", rotation=0)
+    fig.show()
+    return fig,axes
+#endf regulator_heatmap
+

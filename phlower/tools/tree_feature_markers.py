@@ -12,8 +12,79 @@ from .tree_utils import (_edge_two_ends,
                          _edgefreq_to_nodefreq,
                          tree_original_dict,
                          remove_duplicated_index,
+                         get_tree_leaves_attr,
+                         get_markers_df,
                          TF_to_genes)
 from ..util import get_quantiles
+
+
+
+def tree_branch_against(adata, tree='fate_tree', branch="27-PODO"):
+    """
+    Given a branch end leave, search for all leaves against this branch the same level.
+
+    1. get_tree_leaves_attr to get node_id to name
+    2. find branching point
+    3. find all leaves launching from the branching.
+    4. get the against end leaves
+
+    Parameters
+    ----------
+    adata: AnnData
+        AnnData object
+    tree: str
+        key in adata.uns to get the fate tree
+    branch: str
+        the branch to search against
+
+    Returns
+    -------
+    against_leaves: list
+    """
+    fate_tree = adata.uns[tree]
+    dic = get_tree_leaves_attr(fate_tree)
+    rdic = {v:k for k,v in dic.items()}
+    branch_id = rdic.get(branch, None)
+    if not branch_id:
+        raise Exception(f"branch is not in the tree")
+
+    branching = find_last_branching(fate_tree, branch_id)
+
+    compare_leaves = find_branch_leaves(fate_tree, branching)
+
+    compare_leaves = [dic[i] for i in compare_leaves]
+    compare_leaves = [i for i in compare_leaves if i != branch]
+
+
+    return compare_leaves
+
+
+
+def find_branch_leaves(fate_tree, start):
+    """
+    give a start node, find all leaves
+
+    Parameters
+    ----------
+    fate_tree: nx.DiGraph
+        fate tree
+    start: str
+        the start node
+
+    Returns
+    -------
+    leaves: list
+    """
+
+    group_dic = _divide_nodes_to_branches(fate_tree, start)
+    lst = []
+    for k,v in group_dic.items():
+        if fate_tree.out_degree(v[-1]) >0:
+            continue
+        lst.append(v[-1])
+
+    return lst
+
 
 def find_samelevel_daugthers(fate_tree:nx.DiGraph=None, start_node:str=None):
     """
@@ -380,7 +451,7 @@ def _divide_nodes_to_branches(tree:nx.DiGraph=None,
     """
     from collections import defaultdict
 
-    travesed_nodes = list(nx.dfs_tree(tree, branching_node))
+    travesed_nodes = list(nx.dfs_tree(tree, branching_node, depth_limit=1000000))
     travesed_nodes = [node for node in travesed_nodes if node != branching_node]
 
     node_groups = defaultdict(list)
@@ -1378,3 +1449,104 @@ def branch_heatmap_matrix(tf_df:pd.DataFrame,
         df = pd.DataFrame(scaled_rows, index=label_markers, columns=tf_df.columns)
         return df
 #endf branch_heatmap_matrix
+
+
+
+def branch_regulator_detect(adata:AnnData,
+                            tfadata:AnnData,
+                            branch,
+                            tree = "fate_tree",
+                            tree_attr="original",
+                            ratio=0.5,
+                            intersect_regulator=60,
+                            vs_name="auto",
+                            log2fc="auto",
+                            correlation="auto",
+        ):
+    """
+    Encapsulate the step of regulator finding
+    1. specify an end branch name, automatically decide the comparison branch/branches
+    2. perform differentation between two branches
+    3. select top markers
+
+    Parameters
+    ----------
+    adata: AnnData
+        the data object
+    tfadata: AnnData
+        the data object of transcription factors
+    branch: str
+        the end branch name
+    tree: str
+        the fate tree name
+    tree_attr: str
+        the fate tree attribute
+    ratio: float
+        the ratio of cells in the branch to be selected
+    intersect_regulator: int
+        the number of intersected regulators from differentiation or correlations
+    vs_name: str
+        the name of the comparison branch default: {tree}_level_{branch}
+    log2fc: Union[str, float]
+        the log2fc cutoff for differentiation default: "auto"
+    correlation: Union[str, float]
+        the correlation cutoff for correlation default: "auto"
+    """
+    #decide the branch_2 name
+
+    # if branch2 is a simple branch, just compare
+    # else if branch 2 is branches of branches, need to merge to a single branch.
+
+    branch_2 = tree_branch_against(tfadata, tree=tree, branch=branch)
+
+    if len(branch_2) > 1: ## need merge tree
+
+        ## get id of the  branching point
+        dic = get_tree_leaves_attr(tfadata.uns[tree])
+        rdic = {v:k for k,v in dic.items()}
+        branch_id = rdic.get(branch, None)
+        if not branch_id:
+            raise Exception(f"branch is not in the tree")
+
+        branching = find_last_branching(adata.uns[tree], branch_id)
+
+        helping_submerged_tree(adata, fate_tree=tree, start_node=branching, outname=f'{tree}_level_{branch}', iscopy=False)
+        helping_submerged_tree(tfadata, fate_tree=tree, start_node=branching, outname=f'{tree}_level_{branch}', iscopy=False)
+        tree = f'{tree}_level_{branch}'
+
+
+
+    #tree_2branch_markers(tfadata, branch_1=branch, branch_2=tuple(branch_2), tree_attr=tree_attr, ratio=ratio, vs_name=f'{branch}vs', fate_tree=tree, compare_position="end")
+    tree_mbranch_markers(tfadata, branches_1=set([branch]), branches_2=set([tuple(branch_2)]), tree_attr=tree_attr, ratio=ratio, vs_name=f'{branch}vs', fate_tree=tree,compare_position="end")
+    df = get_markers_df(tfadata, f'markers_{branch}vs').sort_values("logfoldchanges", ascending=False)
+
+    if log2fc=="auto" or log2fc=="AUTO":
+        df_top_names = df.names[:intersect_regulator] ## select 2 times of the differentiation
+    else:
+        df_top_names = df.names[(df.logfoldchanges > log2fc) & (df.pvals < 0.05)]
+
+    ## calculate the correlation
+    b_tf_traj_mat = tree_branches_smooth_window(tfadata, end_branching_node=branch, tree_attr=tree_attr)
+    b_gene_traj_mat = tree_branches_smooth_window(adata, end_branching_node=branch, tree_attr=tree_attr)
+    b_correlation = branch_TF_gene_correlation(b_tf_traj_mat, b_gene_traj_mat)
+    b_correlation_df = pd.DataFrame.from_records(b_correlation, columns =['sym', 'score'], index=[i[0] for i in b_correlation])
+    b_correlation_df.sort_values("score", ascending=False, inplace=True)
+
+    #d_tf2gene = TF_to_genes(list(b_tf_traj_mat.index), ones=False)
+
+    if correlation=="auto" or correlation=="AUTO":
+        b_top_correlation = b_correlation_df.index[:intersect_regulator] ## select 2 times of the correlation
+    else:
+        b_top_correlation = [sym for sym, corr in b_correlation if corr > correlation]
+
+    b_inter_TFs   = [i.upper() for i in list(set(b_top_correlation) & set(df_top_names))]
+    b_correlation_df = b_correlation_df.loc[b_inter_TFs,:].sort_values('score',ascending=False)
+
+
+    tfadata.uns[f"regulator_df_{branch}"] = b_correlation_df
+    tfadata.uns[f"regulator_tf_mat_{branch}"] = b_tf_traj_mat
+    tfadata.uns[f"regulator_gene_mat_{branch}"] = b_gene_traj_mat
+
+
+    #print(list(b_correlation_df.index))
+#endf branch_regulator_detect

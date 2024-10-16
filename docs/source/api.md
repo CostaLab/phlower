@@ -116,6 +116,7 @@ import phlower
    tl.tree_label_dict
    tl.tree_original_dict
    tl.end_branch_dict
+   tl.branch_regulator_detect
 ```
 
 ### adata
@@ -176,6 +177,8 @@ import phlower
     pl.plot_pie_fate_tree
     pl.harmonic_backbone
     pl.harmonic_backbone_3d
+    pl.regulator_dot_correlation
+    pl.regulator_heatmap
 ```
 
 
