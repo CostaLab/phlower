@@ -104,7 +104,9 @@ A small scRNA-seq data [Fibroblast to Neuron](https://phlower.readthedocs.io/en/
 
 
 ### Data info
-The processed data have been doposited at: [![DOI](https://doi.org/10.5281/zenodo.13860460.svg)](https://doi.org/10.5281/zenodo.13860460)
+The processed data have been doposited at: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13860460.svg)](https://doi.org/10.5281/zenodo.13860460).
+
+
 
 ### reproducibility
 https://github.com/CostaLab/phlower-reproducibility
