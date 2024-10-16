@@ -102,6 +102,8 @@ A small scRNA-seq data [Fibroblast to Neuron](https://phlower.readthedocs.io/en/
 #### Kidney in the paper
 10X multiome data [Kidney](https://phlower.readthedocs.io/en/latest/notebooks/kidney.html).
 
+Regulators detection example please check [Regulators](https://phlower.readthedocs.io/en/latest/regulators.html).
+
 
 ### Data info
 The processed data have been deposited at: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13860460.svg)](https://doi.org/10.5281/zenodo.13860460).
