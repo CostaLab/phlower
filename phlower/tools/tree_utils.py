@@ -111,6 +111,25 @@ def change_stream_labels(adata, tree='stream_tree', attr='original', from_to_dic
         adata.uns[tree].nodes[node][attr] = tuple([from_to_dict.get(i, i) for i in adata.uns[tree].nodes[node][attr]])
     return adata if iscopy else None
 
+def change_fate_labels(adata, tree='fate_tree', attr='original', from_to_dict={}, iscopy=False):
+    """
+    change not only leaves but also internal nodes
+    """
+    adata = adata.copy() if iscopy else adata
+    nodes = adata.uns[tree].nodes()
+    print("changing:", from_to_dict)
+    for node in nodes:
+        assert(isinstance(adata.uns[tree].nodes[node][attr], tuple))
+        a,b = adata.uns[tree].nodes[node][attr]
+
+        for k,v in from_to_dict.items():
+            if k in a:
+                a = [i if i!=k else v for i in a]
+        new_attr = (tuple(a),b)
+        adata.uns[tree].nodes[node][attr] = new_attr
+    return adata if iscopy else None
+
+#endf change_fate_labels
 
 
 def get_minimum_nodes(adata, tree='fate_tree', name='4_67'):

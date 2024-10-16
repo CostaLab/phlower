@@ -593,7 +593,7 @@ def tree_nodes_markers(adata: AnnData,
 
     # concat and initial a new anndata
     group = [vs1_name] * X_nodes1.shape[0]  + [vs2_name]*X_nodes2.shape[0]
-    print("shapes: ", X_nodes1.shape, X_nodes2.shape)
+    #print("shapes: ", X_nodes1.shape, X_nodes2.shape)
     X_merge = pd.DataFrame(np.concatenate((X_nodes1, X_nodes2)))
     X_merge.columns = adata.var_names
     X_merge.index = obs_name_nodes1 + obs_name_nodes2
@@ -1498,6 +1498,7 @@ def branch_regulator_detect(adata:AnnData,
     # else if branch 2 is branches of branches, need to merge to a single branch.
 
     branch_2 = tree_branch_against(tfadata, tree=tree, branch=branch)
+    print("branch_2",branch_2)
 
     if len(branch_2) > 1: ## need merge tree
 
