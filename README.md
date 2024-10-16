@@ -4,7 +4,7 @@
 decom**P**osition of the **H**odge **L**aplacian for inferring traject**O**ries from flo**W**s of c**E**ll diffe**R**entiation
 
 ### System Requirements
-`PHLOWER` has been tested with the following OS and virtual environment:
+`PHLOWER` has been tested with the following OS or virtual environment:
 
 	- macOS Sonoma 14.5
 	- Linux 4.18.0/5.15.0
@@ -104,7 +104,7 @@ A small scRNA-seq data [Fibroblast to Neuron](https://phlower.readthedocs.io/en/
 
 
 ### Data info
-The processed data have been doposited at: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13860460.svg)](https://doi.org/10.5281/zenodo.13860460).
+The processed data have been deposited at: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13860460.svg)](https://doi.org/10.5281/zenodo.13860460).
 
 
 
@@ -113,4 +113,4 @@ https://github.com/CostaLab/phlower-reproducibility
 
 ### Reference
 
-A preprint is available at: [https://doi.org/10.1101/2024.10.01.613179](https://doi.org/10.1101/2024.10.01.613179)
+A preprint is available at [https://doi.org/10.1101/2024.10.01.613179](https://doi.org/10.1101/2024.10.01.613179)
