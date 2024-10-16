@@ -356,3 +356,23 @@ def end_branch_dict(adata, branch_id_alias='branch_id_alias', fate_tree='stream_
                 dic_ret[key_tuple] = v
     return dic_ret
 
+
+
+def tree_unique_node(fate_tree, attr='fate_tree'):
+    """
+    for a fate_tree, ignore the number in each branch of the tree
+    only keep the unique branch name in the original attribute
+    """
+    all_nodes = nx.get_node_attributes(fate_tree, attr)
+    s = set()
+    for i in all_nodes.values():
+        a,b = i
+        s.add(a)
+    #print(s)
+    s.remove(('root',))
+    lst = list(s)
+    idx =  np.argmax([len(i) for i in lst])
+    #lst[3]
+    assert(all([set(i)<=set(lst[idx]) for i in lst]))
+    del lst[idx] ## remove the
+    return lst

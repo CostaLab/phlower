@@ -11,6 +11,7 @@ from typing import Union, List, Tuple, Dict, Set
 from .tree_utils import (_edge_two_ends,
                          _edgefreq_to_nodefreq,
                          tree_original_dict,
+                         tree_unique_node,
                          remove_duplicated_index,
                          get_tree_leaves_attr,
                          get_markers_df,
@@ -1015,7 +1016,7 @@ def tree_markers_dump_table(adata: AnnData,
 #endf tree_markers_dump_table
 
 def TF_gene_correlation(adata: AnnData,
-                        tfbdata: AnnData,
+                        tfadata: AnnData,
                         name:str='markers_3_97_vs_0_11_rest_0.3withParents'):
     """
     calculate the correlation between TF and genes for a comparison of markers
@@ -1026,7 +1027,7 @@ def TF_gene_correlation(adata: AnnData,
     ----------
     adata: AnnData
         AnnData object with gene expression
-    tfbdata: AnnData
+    tfadata: AnnData
         AnnData object with TF binding data
     name: str
         the name of the differentiation branches
@@ -1034,7 +1035,7 @@ def TF_gene_correlation(adata: AnnData,
     from collections import Counter, defaultdict
     from scipy.stats import pearsonr
 
-    zdata = tfbdata.uns[name].copy()
+    zdata = tfadata.uns[name].copy()
     group_obs =  zdata.obs_names
     group_obs1 = set([x[:-3] for x in zdata.obs_names if x.endswith('n1')])
     group_obs2 = set([x[:-3] for x in zdata.obs_names if x.endswith('n2')])
@@ -1082,7 +1083,7 @@ def TF_gene_correlation(adata: AnnData,
     print(len(shared_genes))
 
     expression_mtx = adata[compare_obs, shared_genes].X
-    TF_mtx = tfbdata[compare_obs, shared_tfs].X
+    TF_mtx = tfadata[compare_obs, shared_tfs].X
 
     d_corr = defaultdict(float)
     for idx, sym in enumerate(shared_tfs):
@@ -1551,3 +1552,68 @@ def branch_regulator_detect(adata:AnnData,
 
     #print(list(b_correlation_df.index))
 #endf branch_regulator_detect
+
+
+
+def mbranch_regulator_detect(adata,
+                             tfadata,
+                             branch = None,
+                             name = None,
+                             tree = "fate_tree",
+                             tree_attr="original",
+                             ratio=0.5,
+                             intersect_regulator=60,
+                             vs_name="auto",
+                             log2fc="auto",
+                             correlation="auto",
+                             ):
+
+    if not name:
+        raise Exception("Please give a meaningful name!")
+
+    helping_merged_tree(adata, outname=f'{tree}_main')
+    helping_merged_tree(tfadata, outname=f'{tree}_main')
+    branches = tree_unique_node(tfadata.uns[f'{tree}_main'], 'original')
+    branches = [set(i) for i in branches]
+    assert(set(branch) in branches)
+    branches = [i for i in branches if i != set(branch)]
+    branch_2 = [tuple(i) for i in branches]
+
+    print("against branches",branch_2)
+
+    tree_mbranch_markers(tfadata,
+                         branches_1=set([branch]),
+                         branches_2= set(branch_2),
+                         tree_attr=tree_attr,
+                         ratio=ratio, vs_name=f'{name}vs',
+                         fate_tree=f'{tree}_main',
+                         compare_position="end")
+
+    df = get_markers_df(tfadata, f'markers_{name}vs').sort_values("logfoldchanges", ascending=False)
+
+    if log2fc=="auto" or log2fc=="AUTO":
+        df_top_names = df.names[:intersect_regulator] ## select 2 times of the differentiation
+    else:
+        df_top_names = df.names[(df.logfoldchanges > log2fc) & (df.pvals < 0.05)]
+
+    ## calculate the correlation
+    b_tf_traj_mat = tree_branches_smooth_window(tfadata, end_branching_node=branch, tree_attr=tree_attr, fate_tree=f'{tree}_main')
+    b_gene_traj_mat = tree_branches_smooth_window(adata, end_branching_node=branch, tree_attr=tree_attr, fate_tree=f'{tree}_main')
+    b_correlation = branch_TF_gene_correlation(b_tf_traj_mat, b_gene_traj_mat)
+    b_correlation_df = pd.DataFrame.from_records(b_correlation, columns =['sym', 'score'], index=[i[0] for i in b_correlation])
+    b_correlation_df.sort_values("score", ascending=False, inplace=True)
+
+
+    if correlation=="auto" or correlation=="AUTO":
+        b_top_correlation = b_correlation_df.index[:intersect_regulator] ## select 2 times of the correlation
+    else:
+        b_top_correlation = [sym for sym, corr in b_correlation if corr > correlation]
+
+    b_inter_TFs   = [i.upper() for i in list(set(b_top_correlation) & set(df_top_names))]
+    b_correlation_df = b_correlation_df.loc[b_inter_TFs,:].sort_values('score',ascending=False)
+
+
+    tfadata.uns[f"regulator_df_{name}"] = b_correlation_df
+    tfadata.uns[f"regulator_tf_mat_{name}"] = b_tf_traj_mat
+    tfadata.uns[f"regulator_gene_mat_{name}"] = b_gene_traj_mat
+#endf mbranch_regulator_detect
