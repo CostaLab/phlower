@@ -1555,10 +1555,10 @@ def branch_regulator_detect(adata:AnnData,
 
 
 
-def mbranch_regulator_detect(adata,
-                             tfadata,
-                             branch = None,
-                             name = None,
+def mbranch_regulator_detect(adata:AnnData,
+                             tfadata:AnnData,
+                             branch:Tuple=None,
+                             name:str = None,
                              tree = "fate_tree",
                              tree_attr="original",
                              ratio=0.5,
@@ -1567,6 +1567,32 @@ def mbranch_regulator_detect(adata,
                              log2fc="auto",
                              correlation="auto",
                              ):
+    """
+    Merged branches to main branches regulators detection.
+
+    Parameters
+    ----------
+    adata: AnnData
+        the data object
+    tfadata: AnnData
+        the data object of transcription factors
+    branch: str
+        the end branch name tuple
+    tree: str
+        the fate tree name
+    tree_attr: str
+        the fate tree attribute
+    ratio: float
+        the ratio of cells in the branch to be selected
+    intersect_regulator: int
+        the number of intersected regulators from differentiation or correlations
+    vs_name: str
+        the name of the comparison branch default: {tree}_level_{branch}
+    log2fc: Union[str, float]
+        the log2fc cutoff for differentiation default: "auto"
+    correlation: Union[str, float]
+        the correlation cutoff for correlation default: "auto"
+    """
 
     if not name:
         raise Exception("Please give a meaningful name!")
