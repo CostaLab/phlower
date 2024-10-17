@@ -94,7 +94,7 @@ The eigenvector with zero eigenvalue is the kernel of the Hodge Laplacian, which
 
 ```{eval-rst}
 
-To generate trajectories, we sample paths (or edge flows) in the graph by following edges with positive divergence (or increasing pseudotime). We choose a random starting point from vertices (cells) with :math:`m` lowest pseudo-time values. We choose the next vertex randomly by considering the divergence values (`w^s`). Only positive divergences (increase in pseudo-time) are considered. We stop when no further positive potential is available. We define a path :math:`\mathbf{f}\in\mathbb{R}^{\|\mathcal{E}\|}` on a simplicial complex as:
+To generate trajectories, we sample paths (or edge flows) in the graph by following edges with positive divergence (or increasing pseudotime). We choose a random starting point from vertices (cells) with :math:`m` lowest pseudo-time values. We choose the next vertex randomly by considering the divergence values. Only positive divergences (increase in pseudo-time) are considered. We stop when no further positive potential is available. We define a path :math:`\mathbf{f}\in\mathbb{R}^{\|\mathcal{E}\|}` on a simplicial complex as:
 
 .. math::
 
