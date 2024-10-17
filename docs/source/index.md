@@ -8,7 +8,7 @@
     :align: right
 ```
 
-**PHLOWER** is a Python library for single cell trajectory inference using Hodge Decomposition
+**PHLOWER** is a Python library for single cell trajectory inference using Hodge Laplacian Decomposition.
 
 
 
