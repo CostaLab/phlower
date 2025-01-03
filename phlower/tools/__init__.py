@@ -13,6 +13,7 @@ from .clustering import (
         gaussianmixture,
         spectralclustering,
         agglomerativeclustering,
+        meta_cells_adata,
         )
 
 from .dimensionreduction import (

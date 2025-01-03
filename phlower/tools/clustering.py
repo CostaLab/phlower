@@ -29,9 +29,9 @@ def _get_igraph_from_adjacency(adjacency, directed=None):
         )
     return g
 
-def agglomerativeclustering(embedding, distance='euclidean', n_clusters=2, affinity='euclidean', memory=None, connectivity=None, compute_full_tree='auto', linkage='ward', distance_threshold=None):
+def agglomerativeclustering(embedding, distance='euclidean', n_clusters=2, metric='euclidean', memory=None, connectivity=None, compute_full_tree='auto', linkage='ward', distance_threshold=None):
     from sklearn.cluster import AgglomerativeClustering
-    ac = AgglomerativeClustering(n_clusters=n_clusters, affinity=affinity, memory=memory, connectivity=connectivity, compute_full_tree=compute_full_tree, linkage=linkage, distance_threshold=distance_threshold)
+    ac = AgglomerativeClustering(n_clusters=n_clusters, metric=affinity, memory=memory, connectivity=connectivity, compute_full_tree=compute_full_tree, linkage=linkage, distance_threshold=distance_threshold)
     return ac.fit_predict(embedding)
 
 def spectralclustering(embedding, distance_matrix=None, distance='euclidean', precompute=False, n_clusters=8, eigen_solver=None, n_components=None, random_state=None, n_init=10, gamma=1.0, affinity='rbf', n_neighbors=10, eigen_tol=0.0, assign_labels='kmeans', degree=3, coef0=1, kernel_params=None, n_jobs=None):
@@ -166,14 +166,14 @@ def meta_cells_adata(
 
     X_pca =adata.obsm[embedding_key][:, 0:adata.obsm[embedding_key].shape[1] if  n_comps is None else n_comps]
     if flavor == "k-means":
-        print("using k-means")
+        print("using k-means", flush=True)
         metacells = kmeans.fit_predict(X_pca)
     elif flavor == "leiden":
-        print("using leiden")
+        print("using leiden", flush=True)
         metacells = leiden(X_pca, resolution = resolution, seed_state = seed)
     elif flavor == "hier":
-        print("using hier")
-        metacells = AgglomerativeClustering(n_clusters = n_clusters, affinity = "euclidean").fit(X_pca).labels_
+        print("using hier", flush=True)
+        metacells = AgglomerativeClustering(n_clusters = n_clusters, metric= "euclidean").fit(X_pca).labels_
     else:
         raise ValueError("flavor can only be `k-means', `leiden' or `hier'")
 
