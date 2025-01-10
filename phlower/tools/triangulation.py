@@ -7,6 +7,117 @@ from scipy.sparse import linalg, csr_matrix
 from scipy.spatial import Delaunay,distance
 from ..util import tuple_increase, top_n_from, is_in_2sets, is_node_attr_existing
 from .graphconstr import adjedges
+from gudhi import SimplexTree
+import gudhi as gh
+
+def construct_delaunay_persistence(adata: AnnData,
+                                   graph_name:str=None,
+                                   layout_name:str=None,
+                                   filter_ratio:float=1.2,
+                                   min_persistence=0.1,
+                                   cluster_name:str='group',
+                                   circle_quant=0.1,
+                                   node_attr='u',
+                                   start_n=5,
+                                   end_n = 5,
+                                   random_seed = 2022,
+                                   calc_layout:bool = False,
+                                   iscopy:bool=False,
+        ):
+    """
+    reimplement the function of construct_delaunay by using persistence analysis filtering.
+    1. first delaunay triangulation on graph.
+    2. check barcode0 of different radius of from the triangulated graph
+    3. when there's only one connected component move a litte bit forward.
+    4. perform the filtering.
+    5. connect starts and the ends.
+    6. store the SimplexTree information for plotting
+    """
+    adata = adata.copy if iscopy else adata
+    if "graph_basis" in adata.uns and not graph_name:
+        graph_name = adata.uns["graph_basis"]
+
+    if "graph_basis" in adata.uns and not layout_name:
+        layout_name = adata.uns["graph_basis"]
+
+    if graph_name not in adata.uns:
+        raise ValueError(f"{graph_name} not in adata.uns")
+
+    if layout_name not in adata.obsm:
+        raise ValueError(f"{layout_name} not in adata.obsm")
+
+    if graph_name not in adata.uns:
+        raise ValueError(f"{graph_name} not in adata.uns")
+    if layout_name not in adata.obsm:
+        raise ValueError(f"{layout_name} not in adata.obsm")
+    if cluster_name not in adata.obs:
+        raise ValueError(f"{cluster_name} not in adata.obs")
+    if not is_node_attr_existing(adata.uns[graph_name], node_attr):
+        raise ValueError(f"{node_attr} not in adata.uns[{graph_name}]")
+
+    if start_n <1 or start_n >= len(adata.obs.index) :
+        raise ValueError(f"start_n:{start_n} should between (1, {len(adata.obs.index)})")
+    if end_n <1 or end_n >= len(adata.obs.index) :
+        raise ValueError(f"end_n:{end_n} should between (1, {len(adata.obs.index)})")
+
+    g = adata.uns[graph_name]
+    layouts = adata.obsm[graph_name]
+    ## 1. only generate gae edges for connecting starts and ends
+    ae_edges = connect_starts_ends_with_Delaunay_edges(g,
+                                                       layouts,
+                                                       adata.obs[cluster_name],
+                                                       quant=circle_quant,
+                                                       node_attr=node_attr,
+                                                       start_n=start_n,
+                                                       end_n = end_n,
+                                                       random_seed = random_seed)
+    ## 2. create filtration_list and simplextree
+    tri_edge_list, filtration_list, simplex_tree = simplextree(layouts)
+    tri_edge_list_ae, filtration_list_ae, simplex_tree_ae = simplextree_ae(reset_edges(g, ae_edges), layouts)
+
+
+    ## 3. persistence analysis
+    gtri = g.copy()
+    pers = simplex_tree.persistence(min_persistence=min_persistence)
+    #print(pers)
+    barcode0 = [b for b in pers if b[0] == 0]
+    if len(pers) <=1:
+        print("Warning: too large min_persistence, should decrease")
+    #print(barcode0)
+    maxx = barcode0_max(barcode0)
+    #print(maxx, flush=True)
+    filter_num = maxx*filter_ratio
+    keep_edges = persistence_tree_edges(gtri, filtration_list, tri_edge_list, filter_num)
+
+
+    adata.uns['persistence'] = {"ae_edges": ae_edges,
+                                "filter_num": filter_num,
+
+                                "delaunay_edges": tri_edge_list,
+                                "filtration_list": filtration_list,
+                                "simplextree_tri":simplex_tree,
+
+                                "delaunay_edges_ae": tri_edge_list_ae,
+                                "filtration_list_ae": filtration_list_ae,
+                                "simplextree_tri_ae":simplex_tree_ae,
+                                }
+
+
+
+
+    ## 4. create triangulated graph
+    adata.uns[f'{graph_name}_triangulation'] = reset_edges(gtri, keep_edges)
+    adata.uns[f'{graph_name}_triangulation_circle'] = reset_edges(adata.uns[f'{graph_name}_triangulation'], ae_edges, keep_old=True)
+    ## 5. calc_layout
+    if calc_layout:
+        print("calculating layout")
+        pydot_layouts = nx.nx_pydot.graphviz_layout(adata.uns[f"{graph_name}_triangulation_circle"])
+        adata.obsm[f'{graph_name}_triangulation_circle'] = np.array([pydot_layouts[i] for i in range(len(pydot_layouts))])
+
+    return adata if iscopy else None
+#endf construct_delaunay_persistence
+
+
 
 
 def construct_delaunay(adata:AnnData,
@@ -223,7 +334,7 @@ def construct_circle_delaunay(adata:AnnData,
 
     layouts = adata.obsm[layout_name]
     group = adata.obs[cluster_name]
-    adata.uns[f'{graph_name}_circle'] = connect_starts_ends_with_Delaunay(adata.uns[graph_name],
+    adata.uns[f'{graph_name}_circle'] = connect_starts_ends_with_Delaunay(np.array(adata.uns[graph_name]),
                                                                           layouts,
                                                                           group,
                                                                           quant=quant,
@@ -455,6 +566,8 @@ def connect_starts_ends_with_Delaunay(g,
     u = nx.get_node_attributes(g, node_attr)
     #print('u', u)
 
+
+
     start_cts = list(set(group[starts]))
     end_cts = list(set(group[ends]))
     print("start clusters ", start_cts)
@@ -499,6 +612,96 @@ def connect_starts_ends_with_Delaunay(g,
 
     return G_ae
 #endf connect_starts_ends_with_Delaunay
+
+def connect_starts_ends_with_Delaunay_edges(g,
+                                            layouts,
+                                            group,
+                                            quant=0.1,
+                                            node_attr='u',
+                                            start_n=5,
+                                            end_n = 5,
+                                            random_seed = 2022
+                                            ):
+    """
+    untangle the connections between starts and ends generated by delauney.
+    use the group information, keep only connnect within each group.
+    this still produce isolated points.
+
+    Parameters
+    -------
+    g: the graph generated by delaunay
+    group: groups of each cell
+    addedges: use which to extract all start celltypes and end celltyps.
+    layouts: Delaunay layouts, for reconstructing delaunay on each start and end cluster
+    start_n:
+    end_n:
+    random_seed:
+
+    Return
+    -----
+    edges: The starts ends edges exclude the same cluster edges
+    """
+    random.seed(random_seed)
+
+
+    values = np.fromiter(nx.get_node_attributes(g, node_attr).values(), dtype=np.float32)
+
+    n=len(g.nodes())
+    o=np.sort(values)
+    early=np.where(values<=o[round(n*quant)])[0]
+    later=np.where(values>=o[min(round(n*(1-quant)), n-1)])[0]
+
+    #node_attr='u'
+    #start_n = 10
+    #end_n = 10
+
+
+    if start_n <=0 or end_n <=0:
+        raise ValueError("start_n and end_n must be positive")
+    ## might be networkx.Graph layouts dict, convert to list
+    if type(layouts) == dict:
+        layouts = np.array([layouts[x] for x in range(max(layouts.keys()) + 1)])
+    if not isinstance(layouts, np.ndarray):
+        layouts = np.array(layouts)
+
+    starts = early
+    ends = later
+    u = nx.get_node_attributes(g, node_attr)
+    #print('u', u)
+
+    #print("starts:", starts)
+    #print("ends:", ends)
+    #print("len(group): ", len(group))
+
+
+    start_cts = list(set(group[starts]))
+    end_cts = list(set(group[ends]))
+    print("start clusters ", start_cts)
+    print("end clusters ", end_cts)
+    start_nodes = np.concatenate([np.where(np.array(group) == start_ct)[0] for start_ct in start_cts]).ravel()
+    n_start_nodes = top_n_from(start_nodes, u, min(start_n, len(start_nodes)), largest=False)
+
+    end_nodes_arr = []
+    for i in range(len(end_cts)):
+        end_nodes_arr.append([i for i in np.where(np.array(group) == end_cts[i])[0] if i in set(ends)])
+
+    end_nodes_sets = [set(x) for x in end_nodes_arr]
+    n_end_nodes_arr = [top_n_from(arr, u, min(end_n, len(arr)), largest=True) for arr in end_nodes_arr]
+    n_end_nodes= [y for x in end_nodes_arr for y in x]
+
+    ti = tuple_increase
+    tri_edges_list = []
+    for i in range(len(n_end_nodes_arr)):
+        selected_nodes = list(n_start_nodes) + list(n_end_nodes_arr[i])
+        tri = Delaunay(layouts[selected_nodes])
+        tri_edges =[[ti(a,b),ti(a,c),ti(b,c)] for a,b,c in tri.simplices]
+        tri_edges = list(set([item for sublist in tri_edges for item in sublist])) # flatten
+        tri_edges = [(selected_nodes[x], selected_nodes[y]) for (x,y) in tri_edges]
+        tri_edges = [(x,y) for (x,y) in tri_edges if group[x] != group[y]]
+        tri_edges_list.extend(tri_edges)
+
+    return tri_edges_list
+#endf connect_starts_ends_with_Delaunay_edges
 
 
 def connect_starts_ends_with_Delaunay_customize(g,
@@ -586,6 +789,66 @@ def connect_starts_ends_with_Delaunay_customize(g,
 
 
 
+def connect_starts_ends_with_Delaunay3d(g,
+                                        layouts,
+                                        group,
+                                        quant=0.1,
+                                        node_attr='u',
+                                        start_n=5,
+                                        end_n = 5,
+                                        random_seed = 2022
+                                        ):
+
+    ti = tuple_increase
+    values = np.fromiter(nx.get_node_attributes(g, node_attr).values(), dtype=np.float32)
+
+    n=len(g.nodes())
+    o=np.sort(values)
+    early=np.where(values<=o[round(n*quant)])[0]
+    later=np.where(values>=o[min(round(n*(1-quant)), n-1)])[0]
+
+    if start_n <=0 or end_n <=0:
+        raise ValueError("start_n and end_n must be positive")
+    ## might be networkx.Graph layouts dict, convert to list
+    if type(layouts) == dict:
+        layouts = np.array([layouts[x] for x in range(max(layouts.keys()) + 1)])
+    if not isinstance(layouts, np.ndarray):
+        layouts = np.array(layouts)
+
+    G_ae = copy.deepcopy(g)
+    starts = early
+    ends = later
+    u = nx.get_node_attributes(g, node_attr)
+    #print('u', u)
+
+    start_cts = list(set(group[starts]))
+    end_cts = list(set(group[ends]))
+    print("start clusters ", start_cts)
+    print("end clusters ", end_cts)
+    start_nodes = np.concatenate([np.where(np.array(group) == start_ct)[0] for start_ct in start_cts]).ravel()
+    n_start_nodes = top_n_from(start_nodes, u, min(start_n, len(start_nodes)), largest=False)
+
+    end_nodes_arr = []
+    for i in range(len(end_cts)):
+        end_nodes_arr.append([i for i in np.where(np.array(group) == end_cts[i])[0] if i in set(ends)])
+
+    end_nodes_sets = [set(x) for x in end_nodes_arr]
+
+    n_end_nodes_arr = [top_n_from(arr, u, min(end_n, len(arr)), largest=True) for arr in end_nodes_arr]
+    n_end_nodes= [y for x in end_nodes_arr for y in x]
+
+    for i in range(len(n_end_nodes_arr)):
+        selected_nodes = list(n_start_nodes) + list(n_end_nodes_arr[i])
+        tri = Delaunay(layouts[selected_nodes])
+        tri_edges =[[ti(a,b),ti(a,c),ti(a,d),ti(b,c), ti(b,d), ti(c,d)] for a,b,c,d in tri.simplices]
+        tri_edges = list(set([item for sublist in tri_edges for item in sublist])) # flatten
+        tri_edges = [(selected_nodes[x], selected_nodes[y]) for (x,y) in tri_edges]
+        G_ae.add_edges_from(tri_edges)
+
+    return G_ae
+#endf connect_starts_ends_with_Delaunay3d
+
+
 def reset_edges(g:nx.Graph, edges, keep_old=False) -> nx.Graph:
     """
     Replace all edges with new edges
@@ -660,10 +923,88 @@ def edges_tri(e_df, *tri):
 
     return e1, e2, e3
 
-
 def mean_tri_coor(coor, *tri):
     a,b,c = tri
     #idxs =
     x = np.mean([coor[a], coor[b], coor[c]], axis=0)
 
     return x
+
+def simplextree(layouts):
+    import gudhi as gd
+    point_coordinates = layouts
+
+
+    edge_list = []
+    filtration_list = []
+
+    # extract connecting edges <-- Something is not quite right here
+    #for edge in graph.edges:
+    #    if np.linalg.norm(point_coordinates[edge[0]]-point_coordinates[edge[1]])>500:
+    #        edge_list.append(edge)
+    #        filtration_list.append(0)
+
+    #Add triangulation edges
+    delaunay_triangulation = Delaunay(point_coordinates)
+    simplices = delaunay_triangulation.simplices
+    simplex_tree = gd.SimplexTree()
+
+    ti = tuple_increase
+    for simplex in simplices:
+        for i, j in zip(simplex, np.roll(simplex, -1)):
+            edge_list.append(ti(i,j))
+            filtration_list.append(np.linalg.norm(point_coordinates[i] - point_coordinates[j]))
+
+    #Construct simplicial complex from graph
+    simplex_tree.insert_batch(np.array(edge_list).T, np.array(filtration_list))
+    #add all possible triangles
+    simplex_tree.expansion(2)
+
+    return edge_list, filtration_list, simplex_tree
+
+
+
+def simplextree_ae(graph, layouts):
+    import gudhi as gd
+    point_coordinates = layouts
+
+
+    edge_list = []
+    filtration_list = []
+
+    # extract connecting edges <-- Something is not quite right here
+    for edge in graph.edges:
+        #if np.linalg.norm(point_coordinates[edge[0]]-point_coordinates[edge[1]])>500:
+        edge_list.append(edge)
+        filtration_list.append(0)
+
+    #Add triangulation edges
+    delaunay_triangulation = Delaunay(point_coordinates)
+    simplices = delaunay_triangulation.simplices
+    simplex_tree = gd.SimplexTree()
+
+    ti = tuple_increase
+    for simplex in simplices:
+        for i, j in zip(simplex, np.roll(simplex, -1)):
+            edge_list.append(ti(i,j))
+            filtration_list.append(np.linalg.norm(point_coordinates[i] - point_coordinates[j]))
+
+    #Construct simplicial complex from graph
+    simplex_tree.insert_batch(np.array(edge_list).T, np.array(filtration_list))
+    #add all possible triangles
+    simplex_tree.expansion(2)
+
+    return edge_list, filtration_list, simplex_tree
+
+
+def barcode0_max(barcode0):
+    barcode0 = [j for i, j in barcode0]
+    barcode0 = [j for i in barcode0 for j in i]
+    barcode0 = [i for i in barcode0 if i < 1e308]
+    return max(barcode0)
+
+
+def persistence_tree_edges(g, filtration_list, edge_list, filter_num):
+    index = np.where(np.array(filtration_list) < filter_num)[0]
+    keep_edges = np.array(edge_list)[index]
+    return keep_edges

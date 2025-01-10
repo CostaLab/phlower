@@ -26,6 +26,7 @@ setup(
                       'umap-learn',
                       'scikit-sparse', #deb:libsuitesparse-dev, conda:suitesparse, macos:suite-parse
                       'scanpy',
+                      'gudhi',
                       'adjustText',
                       'pygraphviz', ## deb:graphviz libgraphviz-dev, macos:graphpviz
                       'magic-impute',
