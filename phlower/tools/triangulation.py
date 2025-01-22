@@ -334,7 +334,7 @@ def construct_circle_delaunay(adata:AnnData,
 
     layouts = adata.obsm[layout_name]
     group = adata.obs[cluster_name]
-    adata.uns[f'{graph_name}_circle'] = connect_starts_ends_with_Delaunay(np.array(adata.uns[graph_name]),
+    adata.uns[f'{graph_name}_circle'] = connect_starts_ends_with_Delaunay(adata.uns[graph_name],
                                                                           layouts,
                                                                           group,
                                                                           quant=quant,

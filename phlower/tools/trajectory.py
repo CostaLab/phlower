@@ -95,7 +95,8 @@ def random_climb_knn(adata,
         knn_edges = adjedges(adata.uns[A], adata.uns[W], knn_edges_k)
     elif knn_type =="euclidean":
         from sklearn.neighbors import kneighbors_graph
-        A = kneighbors_graph(adata.obsm['X_tsne'], 20, mode='connectivity', include_self=False)
+        basis = adata.uns['graph_basis']
+        A = kneighbors_graph(adata.obsm[basis], 20, mode='connectivity', include_self=False)
         knn_edges = list(nx.from_numpy_matrix(A).edges())
     else:
         raise ValueError(f"{knn_type} not supported, only diffusion and euclidean are supported for now")
