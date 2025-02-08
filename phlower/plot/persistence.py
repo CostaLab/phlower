@@ -15,6 +15,7 @@ def persisitence_barcodes(adata: AnnData,
                           persistence='persistence',
                           barcodes_dim=[0],
                           min_persistence=0.01,
+                          show_threshold=True,
                           ax=None,
                           **args):
     """
@@ -42,7 +43,8 @@ def persisitence_barcodes(adata: AnnData,
     ax = gd.plot_persistence_barcode(barcode, axes=ax, **args)
     limit = max(adata.uns[persistence]['filter_num']+10, ax.get_xlim()[1])
     ax.set_xlim(0, limit)
-    ax.axvline(x=adata.uns[persistence]['filter_num'], ls='--', color='blue')
+    if show_threshdold:
+        ax.axvline(x=adata.uns[persistence]['filter_num'], ls='--', color='blue')
     return ax
 
 
@@ -50,6 +52,7 @@ def persisitence_birth_death(adata: AnnData,
                           include_holes=True,
                           persistence='persistence',
                           min_persistence=0.01,
+                          show_threshold=True,
                           ax=None,
                           **args):
     """
@@ -72,5 +75,6 @@ def persisitence_birth_death(adata: AnnData,
 
     pers = simplex_tree.persistence(min_persistence=min_persistence)
     ax = gd.plot_persistence_diagram(pers, axes=ax, **args)
-    ax.axhline(y=adata.uns[persistence]['filter_num'], ls='--', color='blue')
+    if show_threshold:
+        ax.axhline(y=adata.uns[persistence]['filter_num'], ls='--', color='blue')
     return ax

@@ -39,6 +39,22 @@ def magic_adata(adata:AnnData, random_state=2022, iscopy=False, verbose=True, **
 #endf magic_adata
 
 
+def subset_celltype(adata, slot='grouping', minn=2000, ratio=0.2):
+    np.random.seed(2024)
+    from collections import Counter
+    if ratio >=1:
+        return adata
+    idx_list = []
+    for ct in Counter(adata.obs[slot]).keys():
+        if len(np.where(adata.obs[slot]==ct)[0]) > minn:
+            aidx = np.where(adata.obs[slot] == ct)[0]
+            idx = np.random.choice(aidx, max(int(len(aidx)*ratio), 1), replace=False)
+        else:
+            idx = np.where(adata.obs[slot] == ct)[0]
+        idx_list.extend(idx)
+    return adata[idx_list, :]
+#endf subset_celltype
+
 def subset_adata_obs(adata:AnnData, obs_key:str, obs_subset:list, iscopy=False, verbose=True):
     """
     Subset AnnData object by obs key and obs subset
