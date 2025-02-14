@@ -40,7 +40,16 @@ def kidney(
     adata.var_names_make_unique()
     return adata
 
-
+def pancreas(
+        url = 'https://costalab.ukaachen.de/open_data/PHLOWER/pancreas.h5ad',
+        fname = 'pancreas.h5ad',
+        folder = 'data',
+        verbose = True,
+        ):
+    fpath = _data_download(url, fname, folder=folder, verbose=verbose)
+    adata = read_h5ad(fpath)
+    adata.var_names_make_unique()
+    return adata
 
 def dla10(
         url = 'https://costalab.ukaachen.de/open_data/PHLOWER/DLA_10_TreeData.mat',
@@ -53,6 +62,11 @@ def dla10(
     mat = loadmat(fpath)
     return mat
 #endf dla10
+
+
+
+
+
 
 
 def human_hematopoisis(

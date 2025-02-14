@@ -33,3 +33,4 @@ from .plotting import (
 from .velocity import (fate_velocity_plot, fate_velocity_plot_cumsum)
 from .tree_feature_markers import *
 from .adata import *
+from .persistence import *

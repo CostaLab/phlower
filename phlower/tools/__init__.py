@@ -39,6 +39,9 @@ from .triangulation import (
         construct_trucated_delaunay_knn,
         construct_circle_delaunay,
         construct_delaunay,
+        connect_starts_ends_with_Delaunay3d,
+        connect_starts_ends_with_Delaunay_edges,
+        construct_delaunay_persistence,
         )
 
 from .hodgedecomp import (

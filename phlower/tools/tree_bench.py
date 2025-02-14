@@ -4,6 +4,20 @@ import networkx as nx
 from anndata import AnnData
 from datetime import datetime
 from typing import Union, Optional, Tuple, Sequence, Dict, Any
+from sklearn.neighbors import NearestNeighbors
+from .cumsum_utils import node_cumsum_mean
+
+def a2b_data_index(adata, bdata, indices):
+    """
+    adata is a subset of bdata
+    given adata indices, return bdata indices
+    """
+    #indices = sorted(indices)
+    bc = adata.obs_names.take(indices)
+    #np.where(np.in1d([str(i) for i in bdata.obs_names], bc))[0]
+    bidxs = [list(bdata.obs_names).index(x) for x in bc]
+    return {aidx:bidx for aidx,bidx in zip(indices, bidxs)}
+#endf a2b_data_index
 
 
 def stream_tree_order_end_nodes(stree):
@@ -231,3 +245,58 @@ def get_milestone_percentage(adata, obsm_key='cumsum_percent'):
     df2 = df2.rename(columns={"end_milestone": "milestone_id", "end_pct": "percentage"})
 
     return pd.concat([df1, df2])
+
+
+
+def transfer_milestone(adata, bdata, cumsum_name='cumsum_mean', knn_k=100, pca='X_pca', stream_tree='stream_tree', n_jobs=100):
+    """
+    adata is the subset stream tree object
+    bdata is the full adata object
+    calculate the adata.uns['milestone_df']
+    """
+    ## 1. calculate cumsum_mean to get cumsum coordinate of each cell
+    node_cumsum_mean(adata, cumsum_name=cumsum_name)
+
+    ## 2. calculate k-nearest neighbors using bdata pca
+    print(datetime.now(), "knn...")
+    nbrs = NearestNeighbors(n_neighbors=knn_k, algorithm='ball_tree', n_jobs=n_jobs).fit(bdata.obsm[pca])
+    print(datetime.now(), "knn done.")
+    indist, inind = nbrs.kneighbors(bdata.obsm[pca])
+
+    ## 3. calculate index mapping for adata and bdata
+    ddd = a2b_data_index(adata,bdata, list(range(adata.n_obs)))
+    rddd = {v:k for k,v in ddd.items()}
+
+    ## 4. calculate new cumsum dictionary
+    cumsum_dict = {i: adata.obsm[cumsum_name][i, :] for i in range(adata.n_obs)}
+    is_neigbor_set = set()
+    ncumsum_dict = {}
+    print(datetime.now(), "cumsum calc...")
+    for i in range(bdata.n_obs):
+        if i in rddd.keys(): ## already in subset
+            ncumsum_dict[i] = cumsum_dict[rddd[i]]
+            is_neigbor_set.add(i)
+            continue
+
+        nns = inind[i, 1:(knn_k+1)]
+        u = set(nns) & set(rddd.keys())
+        length = len(u)
+        if length > 0:
+            aidxs = [rddd[i] for i in u]
+            is_neigbor_set.add(i)
+            ncumsum_dict[i] = np.mean([cumsum_dict[i] for i in aidxs], axis=0)
+        else:
+            raise Exception('two few neigbors calculated, please increase')
+    print(datetime.now(), "cumsum done.")
+
+    bdata.obsm[cumsum_name] = np.array([ncumsum_dict[i] for i in range(len(ncumsum_dict))])
+    bdata.uns[stream_tree] = adata.uns[stream_tree]
+
+    ## 5. calculate percentage of each cells of bdata to the stream_tree branches
+    df = stream_tree_order_end_nodes(bdata.uns[stream_tree])
+    tree_milestone_belonging(bdata, stream_tree,df_branches=df)
+    milestone_df = get_milestone_percentage(bdata, 'cumsum_percent')
+    bdata.uns['milestone_df'] = milestone_df
+
+    return bdata
+#endf transfer_milestone

@@ -18,7 +18,6 @@ from itertools import chain
 from scipy.sparse import csr_matrix
 from typing import Union, List, Tuple
 from sklearn.neighbors import NearestNeighbors
-
 from .graphconstr import adjedges, edges_on_path
 from .dimensionreduction import run_umap, run_pca
 from .clustering import dbscan, leiden, louvain
@@ -37,6 +36,7 @@ def random_climb_knn(adata,
                      n:int=10000,
                      iscopy=False,
                      traj_name = None,
+                     knn_type= 'diffusion',
                      seeds:int=2022):
     """
     Randomly climb the graph from the roots cells to the leaves cells using the knn_edges.
@@ -91,7 +91,15 @@ def random_climb_knn(adata,
         print(f"{n}: number of trajectories would be better when >= 100")
 
     g = adata.uns[graph_name]
-    knn_edges = adjedges(adata.uns[A], adata.uns[W], knn_edges_k)
+    if knn_type =="diffusion":
+        knn_edges = adjedges(adata.uns[A], adata.uns[W], knn_edges_k)
+    elif knn_type =="euclidean":
+        from sklearn.neighbors import kneighbors_graph
+        basis = adata.uns['graph_basis']
+        A = kneighbors_graph(adata.obsm[basis], 20, mode='connectivity', include_self=False)
+        knn_edges = list(nx.from_numpy_matrix(A).edges())
+    else:
+        raise ValueError(f"{knn_type} not supported, only diffusion and euclidean are supported for now")
     knn_edges = [tuple_increase(i,j) for (i,j) in knn_edges]
     knn_trajs = G_random_climb_knn(g, knn_edges, attr=attr, roots_ratio=roots_ratio, n=n, seeds=seeds)
     if traj_name is None:
