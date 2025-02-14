@@ -10,6 +10,30 @@ from .graphconstr import adjedges
 from gudhi import SimplexTree
 import gudhi as gh
 
+def count_features_at_radius(adata, radius, with_holes=False):
+
+    num_0D = 0  # Connected components
+
+    ## select persitence
+    if with_holes:
+        simplex_tree = adata.uns['persistence']['simplextree_tri_ae']
+        num_0D = nx.number_connected_components(adata.uns['X_pca_ddhodge_g_triangulation_circle'])
+    else:
+        simplex_tree = adata.uns['persistence']['simplextree_tri']
+        num_0D = nx.number_connected_components(adata.uns['X_pca_ddhodge_g_triangulation'])
+
+    num_1D = 0  # Loops/holes
+
+    for dim, (birth, death) in simplex_tree.persistence():
+        if birth <= radius < death or (death == float('inf') and birth <= radius):
+            if dim == 0:
+                pass
+                #num_0D += 1  # Count connected components
+            elif dim == 1:
+                num_1D += 1  # Count holes
+    return num_0D, num_1D
+#endf count_features_at_radius
+
 def construct_delaunay_persistence(adata: AnnData,
                                    graph_name:str=None,
                                    layout_name:str=None,

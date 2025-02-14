@@ -16,6 +16,7 @@ def persisitence_barcodes(adata: AnnData,
                           barcodes_dim=[0],
                           min_persistence=0.01,
                           show_threshold=True,
+                          show_legend=True,
                           ax=None,
                           **args):
     """
@@ -43,8 +44,11 @@ def persisitence_barcodes(adata: AnnData,
     ax = gd.plot_persistence_barcode(barcode, axes=ax, **args)
     limit = max(adata.uns[persistence]['filter_num']+10, ax.get_xlim()[1])
     ax.set_xlim(0, limit)
-    if show_threshdold:
+    if show_threshold:
         ax.axvline(x=adata.uns[persistence]['filter_num'], ls='--', color='blue')
+    if not show_legend:
+        ax.get_legend().remove()
+
     return ax
 
 
@@ -53,6 +57,7 @@ def persisitence_birth_death(adata: AnnData,
                           persistence='persistence',
                           min_persistence=0.01,
                           show_threshold=True,
+                          show_legend=True,
                           ax=None,
                           **args):
     """
@@ -77,4 +82,6 @@ def persisitence_birth_death(adata: AnnData,
     ax = gd.plot_persistence_diagram(pers, axes=ax, **args)
     if show_threshold:
         ax.axhline(y=adata.uns[persistence]['filter_num'], ls='--', color='blue')
+    if not show_legend:
+        ax.get_legend().remove()
     return ax
