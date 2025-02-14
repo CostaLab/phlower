@@ -40,6 +40,19 @@ def kidney(
     adata.var_names_make_unique()
     return adata
 
+
+def neurogenesis(
+        url = 'https://costalab.ukaachen.de/open_data/PHLOWER/neurogenesis.h5ad',
+        fname = 'neurogenesis.h5ad',
+        folder = 'data',
+        verbose = True,
+        ):
+    fpath = _data_download(url, fname, folder=folder, verbose=verbose)
+    adata = read_h5ad(fpath)
+    adata.var_names_make_unique()
+    return adata
+
+
 def pancreas(
         url = 'https://costalab.ukaachen.de/open_data/PHLOWER/pancreas.h5ad',
         fname = 'pancreas.h5ad',
