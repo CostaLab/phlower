@@ -45,8 +45,10 @@ import phlower
 
    tl.L1Norm_decomp
    tl.construct_delaunay
+   tl.construct_delaunay_persistence
    tl.construct_trucated_delaunay
    tl.construct_circle_delaunay
+   tl.count_features_at_radius
    tl.random_climb_knn
    tl.trajs_matrix
    tl.trajs_dm
@@ -180,6 +182,8 @@ import phlower
     pl.harmonic_backbone_3d
     pl.regulator_dot_correlation
     pl.regulator_heatmap
+    pl.persisitence_barcodes
+    pl.persisitence_birth_death
 ```
 
 

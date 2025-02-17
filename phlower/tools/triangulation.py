@@ -11,6 +11,18 @@ from gudhi import SimplexTree
 import gudhi as gh
 
 def count_features_at_radius(adata, radius, with_holes=False):
+    """
+    Count Topological data analysis, 0-dimensional and 1-dimensional features at a given radius
+
+    Parameters
+    -----------
+    adata: AnnData
+        an Annodata object
+    radius: float
+        radius threshold
+    with_holes:
+        Which to use the triangulated graph with/without holeds
+    """
 
     num_0D = 0  # Connected components
 
@@ -50,12 +62,40 @@ def construct_delaunay_persistence(adata: AnnData,
         ):
     """
     reimplement the function of construct_delaunay by using persistence analysis filtering.
+
     1. first delaunay triangulation on graph.
     2. check barcode0 of different radius of from the triangulated graph
     3. when there's only one connected component move a litte bit forward.
     4. perform the filtering.
     5. connect starts and the ends.
     6. store the SimplexTree information for plotting
+
+    Parameters
+    ------------
+    adata: AnnData
+        an Annodata object
+    graph_name: str
+        the graph name in adata.uns
+    layout_name: str
+        the layout name in adata.obsm
+    filter_ratio: float
+        the cut-off threshold for triangulation, default 1.2
+    min_persistence: float
+        minimum value for simplextree persistence calculating
+    circle_quant: float
+        quantile for connecting start and end points
+    node_attr: str
+        node attribute for connecting
+    start_n: int
+        number of start points
+    end_n: int
+        number of end points
+    random_seed: int
+        random seed for selecting start and end points
+    calc_layout: bool
+        whether to calculate layout for the delaunay graph
+    iscopy: bool
+        whether to return a copy of adata
     """
     adata = adata.copy if iscopy else adata
     if "graph_basis" in adata.uns and not graph_name:
