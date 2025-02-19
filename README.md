@@ -75,6 +75,7 @@ We have tested python version `3.9.0`, `3.10.8`, `3.10.14`, `3.11.0`, `3.11.5`, 
   - scanpy (>=1.9.3)
   - adjustText (>=0.8)
   - pygraphviz (>=1.11)
+  - gudhi (>=3.10.1)
   - magic-impute (>=3.0.0)
   - anndata (>=0.9.2)
 

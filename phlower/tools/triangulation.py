@@ -1069,6 +1069,6 @@ def barcode0_max(barcode0):
 
 
 def persistence_tree_edges(g, filtration_list, edge_list, filter_num):
-    index = np.where(np.array(filtration_list) < filter_num)[0]
+    index = np.where(np.array(filtration_list) <= filter_num)[0]
     keep_edges = np.array(edge_list)[index]
     return keep_edges

@@ -11,12 +11,13 @@ from typing import Iterable, List, Union, Optional, Set, Tuple, TypeVar
 import gudhi as gd
 
 def persisitence_barcodes(adata: AnnData,
-                          include_holes=True,
-                          persistence='persistence',
-                          barcodes_dim=[0],
-                          min_persistence=0.01,
-                          show_threshold=True,
-                          show_legend=True,
+                          include_holes:bool=True,
+                          persistence:str='persistence',
+                          barcodes_dim:List[int]=[0],
+                          min_persistence:float=0.01,
+                          show_threshold:bool=True,
+                          show_legend:bool=True,
+                          manual_threshold:Optional[List[float]] = None,
                           ax=None,
                           **args):
     """
@@ -34,6 +35,7 @@ def persisitence_barcodes(adata: AnnData,
     if not set(barcodes_dim) <= set([0, 1, 2, 3]):
         raise ValueError(f"barcodes_dim: {barcodes_dim} should be in [0, 1, 2, 3]")
 
+
     if include_holes:
         simplex_tree = adata.uns[persistence]['simplextree_tri_ae']
     else:
@@ -45,7 +47,11 @@ def persisitence_barcodes(adata: AnnData,
     limit = max(adata.uns[persistence]['filter_num']+10, ax.get_xlim()[1])
     ax.set_xlim(0, limit)
     if show_threshold:
-        ax.axvline(x=adata.uns[persistence]['filter_num'], ls='--', color='blue')
+        if not manual_threshold:
+            ax.axvline(x=adata.uns[persistence]['filter_num'], ls='--', color='blue')
+        else:
+            for th in manual_threshold:
+                ax.axvline(x=th, ls='--', color='blue')
     if not show_legend:
         ax.get_legend().remove()
 
@@ -53,13 +59,14 @@ def persisitence_barcodes(adata: AnnData,
 
 
 def persisitence_birth_death(adata: AnnData,
-                          include_holes=True,
-                          persistence='persistence',
-                          min_persistence=0.01,
-                          show_threshold=True,
-                          show_legend=True,
-                          ax=None,
-                          **args):
+                             include_holes:bool=True,
+                             persistence:str='persistence',
+                             min_persistence:float=0.01,
+                             show_threshold:bool=True,
+                             show_legend:bool=True,
+                             manual_threshold:Optional[List[float]] = None,
+                             ax=None,
+                             **args):
     """
     Plot the persistence birth death diagram
 
@@ -81,7 +88,11 @@ def persisitence_birth_death(adata: AnnData,
     pers = simplex_tree.persistence(min_persistence=min_persistence)
     ax = gd.plot_persistence_diagram(pers, axes=ax, **args)
     if show_threshold:
-        ax.axhline(y=adata.uns[persistence]['filter_num'], ls='--', color='blue')
+        if not manual_threshold:
+            ax.axhline(y=adata.uns[persistence]['filter_num'], ls='--', color='blue')
+        else:
+            for th in manual_threshold:
+                ax.axhline(y=th, ls='--', color='blue')
     if not show_legend:
         ax.get_legend().remove()
     return ax
