@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='phlowerpy',
-    version='0.1.4',
+    version='0.1.5',
     description='hodge decomposition trajectory',
     long_description='Single cell trajectory inference using hodge laplacian decomposition',
     url='https://github.com/CostaLab/phlower',

@@ -39,8 +39,8 @@ def magic_adata(adata:AnnData, random_state=2022, iscopy=False, verbose=True, **
 #endf magic_adata
 
 
-def subset_celltype(adata, slot='grouping', minn=2000, ratio=0.2):
-    np.random.seed(2024)
+def subset_celltype(adata, slot='grouping', minn=2000, ratio=0.2, seed=2024):
+    np.random.seed(seed)
     from collections import Counter
     if ratio >=1:
         return adata
