@@ -16,7 +16,7 @@ decom**P**osition of the **H**odge **L**aplacian for inferring traject**O**ries 
 
 
 
-macOS:
+macOS ((install time: 15 minutes)):
 - suite-sparse (>=7.8.2)
 - graphviz (>=12.1.2)
 
@@ -32,7 +32,7 @@ macOS:
     pip install pygraphviz
 ```
 
-debian:
+debian (install time: 15 seconds):
 - libsuitesparse-dev (>=1:5.10)
 - graphviz (>=2.42.2)
 - libgraphviz-dev (>=2.42.2)
@@ -41,7 +41,7 @@ debian:
   1. apt install libsuitesparse-dev
   2. apt install graphviz libgraphviz-dev
 ```
-conda:
+conda (install time: 1.5 minutes):
 
 - conda-forge::suitesparse(>=5.10.1)
 - graphviz (>=7.1.0)
@@ -79,7 +79,8 @@ We have tested python version `3.9.0`, `3.10.8`, `3.10.14`, `3.11.0`, `3.11.5`, 
   - magic-impute (>=3.0.0)
   - anndata (>=0.9.2)
 
-#### install from pypi (0.1.3)
+#### install from pypi (0.1.5)
+Expect install time on a normal computer(Intel i5-10400 (12) @ 4.300GHz): 2 minutes
 ```bash
 pip install phlowerpy
 
