@@ -3,6 +3,9 @@
 
 decom**P**osition of the **H**odge **L**aplacian for inferring traject**O**ries from flo**W**s of c**E**ll diffe**R**entiation
 
+### Hardware requirements
+`PHLOWER` module requires a standard computer with enough RAM to support the in-memory operations, high performance computing (HPC) cluster is recommended.
+
 ### System Requirements
 `PHLOWER` has been tested with the following OS or virtual environment:
 
