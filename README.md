@@ -98,7 +98,7 @@ import phlower
 ### Tutorial
 
 #### Demo
-A small scRNA-seq data [Fibroblast to Neuron](https://phlower.readthedocs.io/en/latest/notebooks/fib2neuron.html).
+A small scRNA-seq data [Fibroblast to Neuron](https://phlower.readthedocs.io/en/latest/notebooks/fib2neuron.html) in 5 minutes for a computer(Intel i5-10400 (12) @ 4.300GHz).
 
 #### Kidney in the paper
 10X multiome data [Kidney](https://phlower.readthedocs.io/en/latest/notebooks/kidney.html).
