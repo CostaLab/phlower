@@ -120,4 +120,17 @@ https://github.com/CostaLab/phlower-reproducibility
 
 ### Reference
 
-A preprint is available at [https://doi.org/10.1101/2024.10.01.613179](https://doi.org/10.1101/2024.10.01.613179)
+PHLOWER has been published in Nature Methods: [https://doi.org/10.1101/2024.10.01.613179](https://doi.org/10.1038/s41592-025-02870-5)
+
+
+### Citation
+```bibtex
+@article{cheng2025phlower,
+  title={PHLOWER leverages single-cell multimodal data to infer complex, multi-branching cell differentiation trajectories},
+  author={Cheng, Mingbo and Jansen, Jitske and Reimer, Katharina C and Grande, Vincent P and Nagai, James S and Li, Zhijian and Kie{\ss}ling, Paul and Grasshoff, Martin and Kuppe, Christoph and Schaub, Michael T and others},
+  journal={Nature Methods},
+  pages={1--9},
+  year={2025},
+  publisher={Nature Publishing Group US New York}
+}
+```
