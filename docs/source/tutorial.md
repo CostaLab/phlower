@@ -10,4 +10,5 @@ notebooks/kidney.ipynb
 notebooks/DLA10.ipynb
 notebooks/pancreas.ipynb
 notebooks/neurogenesis.ipynb
+notebooks/kidney_featureplot.ipynb
 ```
