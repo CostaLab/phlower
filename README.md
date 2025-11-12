@@ -3,6 +3,9 @@
 
 decom**P**osition of the **H**odge **L**aplacian for inferring traject**O**ries from flo**W**s of c**E**ll diffe**R**entiation
 
+### Hardware requirements
+`PHLOWER` module requires a standard computer with enough RAM to support the in-memory operations, high performance computing (HPC) cluster is recommended.
+
 ### System Requirements
 `PHLOWER` has been tested with the following OS or virtual environment:
 
@@ -16,7 +19,7 @@ decom**P**osition of the **H**odge **L**aplacian for inferring traject**O**ries 
 
 
 
-macOS:
+macOS ((install time: 15 minutes)):
 - suite-sparse (>=7.8.2)
 - graphviz (>=12.1.2)
 
@@ -32,7 +35,7 @@ macOS:
     pip install pygraphviz
 ```
 
-debian:
+debian (install time: 15 seconds):
 - libsuitesparse-dev (>=1:5.10)
 - graphviz (>=2.42.2)
 - libgraphviz-dev (>=2.42.2)
@@ -41,7 +44,7 @@ debian:
   1. apt install libsuitesparse-dev
   2. apt install graphviz libgraphviz-dev
 ```
-conda:
+conda (install time: 1.5 minutes):
 
 - conda-forge::suitesparse(>=5.10.1)
 - graphviz (>=7.1.0)
@@ -79,7 +82,8 @@ We have tested python version `3.9.0`, `3.10.8`, `3.10.14`, `3.11.0`, `3.11.5`, 
   - magic-impute (>=3.0.0)
   - anndata (>=0.9.2)
 
-#### install from pypi (0.1.3)
+#### install from pypi (0.1.5)
+Expect install time on a normal computer(Intel i5-10400 (12) @ 4.300GHz): 2 minutes
 ```bash
 pip install phlowerpy
 
@@ -98,7 +102,7 @@ import phlower
 ### Tutorial
 
 #### Demo
-A small scRNA-seq data [Fibroblast to Neuron](https://phlower.readthedocs.io/en/latest/notebooks/fib2neuron.html).
+A small scRNA-seq data [Fibroblast to Neuron](https://phlower.readthedocs.io/en/latest/notebooks/fib2neuron.html) in 5 minutes for a computer(Intel i5-10400 (12) @ 4.300GHz).
 
 #### Kidney in the paper
 10X multiome data [Kidney](https://phlower.readthedocs.io/en/latest/notebooks/kidney.html).
@@ -116,4 +120,17 @@ https://github.com/CostaLab/phlower-reproducibility
 
 ### Reference
 
-A preprint is available at [https://doi.org/10.1101/2024.10.01.613179](https://doi.org/10.1101/2024.10.01.613179)
+PHLOWER has been published in Nature Methods: [https://doi.org/10.1101/2024.10.01.613179](https://doi.org/10.1038/s41592-025-02870-5)
+
+
+### Citation
+```bibtex
+@article{cheng2025phlower,
+  title={PHLOWER leverages single-cell multimodal data to infer complex, multi-branching cell differentiation trajectories},
+  author={Cheng, Mingbo and Jansen, Jitske and Reimer, Katharina C and Grande, Vincent P and Nagai, James S and Li, Zhijian and Kie{\ss}ling, Paul and Grasshoff, Martin and Kuppe, Christoph and Schaub, Michael T and others},
+  journal={Nature Methods},
+  pages={1--9},
+  year={2025},
+  publisher={Nature Publishing Group US New York}
+}
+```
