@@ -338,6 +338,8 @@ def dfs_nodes_modified(tree, source, preference=None):
                     successors_nodes = list(itertools.chain.from_iterable(successors.values()))
                     weights.append(min([preference.index(s) if s in preference else len(preference) for s in successors_nodes+[x]]))
                 unvisited = [x for _,x in sorted(zip(weights,unvisited),reverse=True,key=lambda x: x[0])]
+            else:
+                unvisited = sorted(unvisited)
             stack.extend(unvisited)
     return visited
 
@@ -360,6 +362,8 @@ def bfs_edges_modified(tree, source, preference=None):
                     successors_nodes = list(itertools.chain.from_iterable(successors.values()))
                     weights.append(min([preference.index(s) if s in preference else len(preference) for s in successors_nodes+[x]]))
                 unvisited = [x for _,x in sorted(zip(weights,unvisited),reverse=True,key=lambda x: x[0])]
+            else:
+                unvisited = sorted(unvisited)
             queue.extend(unvisited)
     return edges
 
