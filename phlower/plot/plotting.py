@@ -428,6 +428,7 @@ def plot_trajectory_harmonic_lines_3d(adata: AnnData,
                                       dims = [0,1,2],
                                       show_legend=True,
                                       sample_ratio = 0.1,
+                                      seed = 2022,
                                       color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                       fig_path=None,
                                       return_fig = False,
@@ -480,6 +481,7 @@ def plot_trajectory_harmonic_lines_3d(adata: AnnData,
                                         dims = dims,
                                         show_legend = show_legend,
                                         sample_ratio = sample_ratio,
+                                        seed = seed,
                                         color_palette = color_palette,
                                         fig_path=fig_path,
                                         return_fig = return_fig,
@@ -497,10 +499,11 @@ def plot_trajectory_harmonic_lines(adata: AnnData,
                                    bbox_to_anchor=(1, 0.5),
                                    markerscale=4,
                                    ax = None,
-                                   sample_ratio = 0.1,
-                                   xylabel=True,
-                                   color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
-                                   **args):
+                                    sample_ratio = 0.1,
+                                    seed = 2022,
+                                    xylabel=True,
+                                    color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                                    **args):
     """
     Plot the trajectory lines in harmonic ct-map in 2D space
 
@@ -556,6 +559,7 @@ def plot_trajectory_harmonic_lines(adata: AnnData,
                                      markerscale = markerscale,
                                      ax = ax,
                                      sample_ratio = sample_ratio,
+                                     seed = seed,
                                      xylabel=xylabel,
                                      color_palette = color_palette,
                                      **args)
@@ -570,11 +574,12 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
                                        node_size=2,
                                        show_legend=False,
                                        figsize=(800,800),
-                                       sample_ratio = 0.1,
-                                       color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
-                                       fig_path=None,
-                                       return_fig = False,
-                                       **args):
+                                        sample_ratio = 0.1,
+                                        seed = 2022,
+                                        color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
+                                        fig_path=None,
+                                        return_fig = False,
+                                        **args):
     """
     Plot the trajectory groups in harmonic t-map in 3D space
 
@@ -625,6 +630,7 @@ def plot_trajectory_harmonic_points_3d(adata: AnnData,
                                                 show_legend = show_legend,
                                                 figsize = figsize,
                                                 sample_ratio = sample_ratio,
+                                                seed = seed,
                                                 color_palette = color_palette,
                                                 fig_path=fig_path,
                                                 return_fig = return_fig,
@@ -648,6 +654,7 @@ def plot_trajectory_harmonic_points(adata: AnnData,
                                     markerscale=4,
                                     ax = None,
                                     sample_ratio = 0.1,
+                                    seed = 2022,
                                     color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                     **args):
     """
@@ -714,6 +721,7 @@ def plot_trajectory_harmonic_points(adata: AnnData,
                                       markerscale = markerscale,
                                       ax = ax,
                                       sample_ratio = sample_ratio,
+                                      seed = seed,
                                       color_palette = color_palette,
                                       **args
                                       )
@@ -2108,6 +2116,7 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                                         figsize = (800, 800),
                                         show_legend=True,
                                         sample_ratio = 1,
+                                        seed = 2022,
                                         color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                         fig_path = None,
                                         return_fig=False,
@@ -2187,7 +2196,7 @@ def M_plot_trajectory_harmonic_lines_3d(mat_coord_Hspace,
                             **args
             )
         if sample_ratio < 1:
-            np.random.seed(2022)
+            np.random.seed(seed)
             v = np.random.choice(v, max(int(len(v)*sample_ratio), 1), replace=False)
         for idx in v[1:]:
             cumsum = cumsums[idx]
@@ -2239,6 +2248,7 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
                                    markerscale=4,
                                    ax = None,
                                    sample_ratio = 1,
+                                   seed = 2022,
                                    xylabel = True,
                                    color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                    **args):
@@ -2294,11 +2304,12 @@ def M_plot_trajectory_harmonic_lines(mat_coord_Hspace,
         sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, label=cluster, ci=None,  estimator=None,n_boot=0, **args) #
 
         if sample_ratio < 1:
-            np.random.seed(2022)
+            np.random.seed(seed)
             v = np.random.choice(v, max(int(len(v)*sample_ratio), 1), replace=False)
         for idx in v[1:]:
             cumsum = cumsums[idx]
             sns.lineplot(x=cumsum[0], y=cumsum[1], color=color_palette[i], ax=ax, sort=False, ci=None,  estimator=None, n_boot=0, **args) #
+    # end inner loop M_plot_trajectory_harmonic_lines
 
     if xylabel:
         ax.set_xlabel(f"cumsum_{dims[0]}")
@@ -2323,6 +2334,7 @@ def M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
                                          show_legend=False,
                                          figsize = (800,800),
                                          sample_ratio = 1,
+                                         seed = 2022,
                                          color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                          fig_path = None,
                                          return_fig = False,
@@ -2358,8 +2370,9 @@ def M_plot_trajectory_harmonic_points_3d(mat_coor_flatten_trajectory,
             continue
         idx = v[0] # for legend
         if sample_ratio < 1: ## need at least 1
-            np.random.seed(2022)
+            np.random.seed(seed)
             v = np.random.choice(v, max(int(len(v)*sample_ratio), 1), replace=False)
+            # then skip... (M_plot_trajectory_harmonic_points_3d inner loop)
 
         df = pd.DataFrame({'x': [mat_coor_flatten_trajectory[ii][dims[0]] for ii in v],
                            'y': [mat_coor_flatten_trajectory[ii][dims[1]] for ii in v],
@@ -2431,6 +2444,7 @@ def M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
                                     markerscale=4,
                                     ax = None,
                                     sample_ratio = 1,
+                                    seed = 2022,
                                     color_palette = sns.color_palette(cc.glasbey, n_colors=50).as_hex(),
                                     **args):
     """
@@ -2482,8 +2496,9 @@ def M_plot_trajectory_harmonic_points(mat_coor_flatten_trajectory,
             continue
         idx = v[0] # for legend
         if sample_ratio < 1: ## need at least 1
-            np.random.seed(2022)
+            np.random.seed(seed)
             v = np.random.choice(v, max(int(len(v)*sample_ratio), 1), replace=False)
+        # continue with remaining M_plot_trajectory_harmonic_points
 
         ax.scatter(mat_coor_flatten_trajectory[idx][dims[0]],
                    mat_coor_flatten_trajectory[idx][dims[1]],
