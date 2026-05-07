@@ -25,11 +25,10 @@ def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, chec
         v: eigen vectors rows
     """
     if (not check_symmetric) or scipy.linalg.issymmetric(L1.toarray(), atol=1e-08, rtol=1e-05):
-        np.random.seed(random_seed)
-        w, v = linalg.eigsh(L1, k=number_of_holes,
-                        v0=np.ones(L1.shape[0]), which='SM')
+        w_full, v_full = np.linalg.eigh(L1.toarray())
+        w = w_full[:number_of_holes]
+        v = v_full[:, :number_of_holes]
     else:
-
         np.random.seed(random_seed)
         w, v = linalg.eigs(L1, k=number_of_holes,
                         v0=np.ones(L1.shape[0]), which='SM')
