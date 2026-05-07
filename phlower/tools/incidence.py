@@ -25,9 +25,9 @@ def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, chec
         v: eigen vectors rows
     """
     if (not check_symmetric) or scipy.linalg.issymmetric(L1.toarray(), atol=1e-08, rtol=1e-05):
-        w_full, v_full = np.linalg.eigh(L1.toarray())
-        w = w_full[:number_of_holes]
-        v = v_full[:, :number_of_holes]
+        np.random.seed(random_seed)
+        w, v = linalg.eigsh(L1, k=number_of_holes,
+                        v0=np.ones(L1.shape[0]), which='SM')
     else:
         np.random.seed(random_seed)
         w, v = linalg.eigs(L1, k=number_of_holes,
@@ -38,7 +38,30 @@ def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, chec
         v = v[:, idx]
         v = np.real(v)
 
+    v = _canonicalize_degenerate_eigenvectors(w, v)
+
     return {"w":w, "v":v.T}
+
+
+def _canonicalize_degenerate_eigenvectors(w, v, tol=1e-8):
+    i = 0
+    while i < len(w):
+        j = i
+        while j + 1 < len(w) and abs(w[j] - w[j + 1]) < tol:
+            j += 1
+        if j > i:
+            V_sub = v[:, i:j+1]
+            ref = np.ones(V_sub.shape[0])
+            dots = V_sub.T @ ref
+            order = np.argsort(-np.abs(dots))
+            V_sub = V_sub[:, order]
+            dots = dots[order]
+            for kk in range(V_sub.shape[1]):
+                if dots[kk] < 0:
+                    V_sub[:, kk] *= -1
+            v[:, i:j+1] = V_sub
+        i = j + 1
+    return v
 
 def assign_eweight(G, A):
     """
