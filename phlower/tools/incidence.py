@@ -6,7 +6,7 @@ import scipy
 from ..util import lexsort_rows
 
 
-def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, check_symmetric:bool=True) -> dict:
+def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, check_symmetric:bool=True, random_seed=2022) -> dict:
     """
     Computes the harmonic projection matrix for the simplicial complex with the
     given Hodge-1 Laplacian.
@@ -15,6 +15,8 @@ def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, chec
     ----------
     L1 : csr_matrix of type float
     number_of_holes : int
+    random_seed : int
+        random seed for deterministic eigen decomposition (default 2022)
 
     Return
     ----------
@@ -23,10 +25,12 @@ def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, chec
         v: eigen vectors rows
     """
     if (not check_symmetric) or scipy.linalg.issymmetric(L1.toarray(), atol=1e-08, rtol=1e-05):
+        np.random.seed(random_seed)
         w, v = linalg.eigsh(L1, k=number_of_holes,
                         v0=np.ones(L1.shape[0]), which='SM')
     else:
 
+        np.random.seed(random_seed)
         w, v = linalg.eigs(L1, k=number_of_holes,
                         v0=np.ones(L1.shape[0]), which='SM')
         idx = w.argsort()

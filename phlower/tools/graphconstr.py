@@ -124,7 +124,7 @@ def adjedges(A:Union[csc_matrix, csr_matrix, np.ndarray], W, k=4):
 #endf adjedges
 
 #" dm cells x dimensions
-def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False, lstsq_method="lstsq"):
+def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False, lstsq_method="lstsq", random_seed=2022):
   """
   transition matrix is calculate by eigen decomposition outcome
 
@@ -161,6 +161,8 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
     print out progress(default False)
   lstsq_method: str
     method for least square solver,  "lstsq" or "lsqr", "lsmr", cholesky (default "lstsq")
+  random_seed: int
+    random seed for deterministic eigen decomposition (default 2022)
 
   Return
   ---------------
@@ -183,7 +185,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
   R = distance_matrix(dm, dm)
   if verbose:
     print(datetime.now(), "Diffusionmaps: ")
-  d = diffusionMaps(R,j,sigma, eig_k=ndc+1) #0:Psi, 1:Phi, 2:eig
+  d = diffusionMaps(R,j,sigma, eig_k=ndc+1, random_seed=random_seed) #0:Psi, 1:Phi, 2:eig
   print("done.")
   # Diffusion distance matrix
   mm = d['psi']@np.diag(np.power(d['eig'], s))[:, 1:(ndc+1)]
@@ -319,7 +321,7 @@ def diffusionGraphDM(dm, roots,k=11,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose
 
 
 ## X: column observations,row features
-def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False, lstsq_method="lstsq"):
+def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, verbose=False, lstsq_method="lstsq", random_seed=2022):
   """
   Parameters
   -------------
@@ -343,6 +345,8 @@ def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, ve
     print out progress(default False)
   lstsq_method: str
     method for least square solver,  "lstsq" or "lsqr", "lsmr" (default "lstsq")
+  random_seed: int
+    random seed for deterministic eigen decomposition (default 2022)
 
   Return
   ---------------
@@ -372,7 +376,7 @@ def diffusionGraph(X,roots,k=11,npc=None,ndc=40,s=1,j=7,lmda=1e-4,sigma=None, ve
   npc = min(100, Y.shape[0]-1, Y.shape[1]-1) if not npc else min(100, Y.shape[0]-1, Y.shape[1] -1, npc)
   pc = run_pca(Y, npc)
 
-  dic = diffusionGraphDM(pc, roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, lstsq_method="lstsq")
+  dic = diffusionGraphDM(pc, roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, lstsq_method="lstsq", random_seed=random_seed)
   return dic
 #endf diffusionGraph
 

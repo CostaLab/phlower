@@ -8,8 +8,32 @@ from datetime import datetime
 from typing import Union
 from anndata import AnnData
 import scipy
+from locale import getpreferredencoding
 from scipy.sparse import csr_matrix, issparse
 from ..tools.graphconstr import diffusionGraphDM, diffusionGraph
+
+def _graphviz_layout_with_seed(G, prog='neato', random_seed=2022):
+    import pydot
+    P = nx.nx_pydot.to_pydot(G)
+    P.set("start", str(random_seed))
+    D_bytes = P.create_dot(prog=prog)
+    D = str(D_bytes, encoding=getpreferredencoding())
+    if D == "":
+        raise ValueError(f"Graphviz layout with {prog} failed")
+    Q_list = pydot.graph_from_dot_data(D)
+    assert len(Q_list) == 1
+    Q = Q_list[0]
+    node_pos = {}
+    for n in G.nodes():
+        str_n = str(n)
+        node = Q.get_node(pydot.quote_id_if_necessary(str_n))
+        if isinstance(node, list):
+            node = node[0]
+        pos = node.get_pos()[1:-1]
+        if pos is not None:
+            xx, yy = pos.split(",")
+            node_pos[n] = (float(xx), float(yy))
+    return node_pos
 
 ##TODO: if the graph is not connected, need try to increase the k to get a connected graph
 def ddhodge(
@@ -27,6 +51,7 @@ def ddhodge(
         iscopy: bool = False,
         verbose: bool = True,
         lstsq_method: str = 'lstsq',
+        random_seed: int = 2022,
         ):
 
     """
@@ -55,6 +80,9 @@ def ddhodge(
 
     lstsq_method
         Diffusion psuedo time estimation method, can be one of 'lstsq', 'lsqr', 'lsmr', 'cholesky'.
+
+    random_seed
+        Random seed for deterministic eigen decomposition and graph layout (default 2022).
     """
     if basis and basis not in adata.obsm.keys():
         raise ValueError('basis not in adata.obsm.keys()')
@@ -83,9 +111,9 @@ def ddhodge(
         if isinstance(adata.obsm[basis], pd.DataFrame): ## fixed wrong type
             adata.obsm[basis] = adata.obsm[basis].to_numpy()
         pc = adata.obsm[basis][:, 0:npc]
-        d = diffusionGraphDM(pc,roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, lstsq_method=lstsq_method)
+        d = diffusionGraphDM(pc,roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, lstsq_method=lstsq_method, random_seed=random_seed)
     else:
-        d = diffusionGraph(adata.X.T.todense() if scipy.sparse.issparse(adata.X.T) else adata.X.T ,roots=roots,k=k,npc=npc,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, lstsq_method=lstsq_method)
+        d = diffusionGraph(adata.X.T.todense() if scipy.sparse.issparse(adata.X.T) else adata.X.T ,roots=roots,k=k,npc=npc,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, lstsq_method=lstsq_method, random_seed=random_seed)
         adata.obsm['X_pca'] = d['dm']
         basis = 'X_pca'
 
@@ -102,7 +130,7 @@ def ddhodge(
     if layout:
         if verbose:
             print(datetime.now(), 'calculate layouts')
-        layouts = nx.nx_pydot.graphviz_layout(d['g'], prog=layout)
+        layouts = _graphviz_layout_with_seed(d['g'], prog=layout, random_seed=random_seed)
         adata.obsm[f'{basis}_ddhodge_g'] = np.array([layouts[i] for i in range(len(layouts))])
     if verbose:
         print(datetime.now(), 'done')

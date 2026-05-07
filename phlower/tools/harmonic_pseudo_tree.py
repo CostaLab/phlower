@@ -144,7 +144,7 @@ def harmonic_stream_tree(adata: AnnData,
     if verbose:
         print(datetime.now(), "calculating distances between bin pairs...")
 
-    pairwise_bdict = pairwise_hbranching_dict(ddf, bottom_up=node_bottom_up, cut_threshold=cut_threshold)
+    pairwise_bdict = pairwise_hbranching_dict(ddf, bottom_up=node_bottom_up, cut_threshold=cut_threshold, random_seed=random_seed)
 
     if verbose:
         print(datetime.now(), "fate tree creating...")

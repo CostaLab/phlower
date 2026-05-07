@@ -45,7 +45,7 @@ def affinity(R, k=7, sigma=None, log=False, normalize=False):
     return np.exp(logW)
 
 
-def  diffusionMaps(R,k=7,sigma=None, verbose=False, eig_k=100):
+def  diffusionMaps(R,k=7,sigma=None, verbose=False, eig_k=100, random_seed=2022):
     """
     Diffusion map(Coifman, 2005)
     https://en.wikipedia.org/wiki/Diffusion_map
@@ -58,6 +58,8 @@ def  diffusionMaps(R,k=7,sigma=None, verbose=False, eig_k=100):
         number of neighbors in adaptive-scaling
     sigma: float
         for isotropic diffussion
+    random_seed: int
+        random seed for deterministic eigen decomposition
     Return
     ----------
     dic:
@@ -87,7 +89,9 @@ def  diffusionMaps(R,k=7,sigma=None, verbose=False, eig_k=100):
     if verbose:
         print(datetime.now(), "Eigen decomposition...")
 
-    e = linalg.eigsh(Ms, k=eig_k) ## eigen decomposition of P'
+    np.random.seed(random_seed)
+    v0 = np.random.rand(Ms.shape[0])
+    e = linalg.eigsh(Ms, k=eig_k, v0=v0) ## eigen decomposition of P'
     #e = np.linalg.eigh(Ms) ## eigen decomposition of P'
     evalue= e[0][::-1]
     evec =np.flip(e[1], axis=1)

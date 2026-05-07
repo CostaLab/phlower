@@ -51,8 +51,8 @@ def extract_branches(g_fate_tree, pos='X_pca_ddhodge_g'):
     dict_branches = dict()
     clusters_to_merge=[]
     while g_fate_tree_copy.order()>1: #the number of vertices
-        leaves=[n for n,d in g_fate_tree_copy.degree() if d==1]
-        nodes_included=list(g_fate_tree_copy.nodes())
+        leaves = sorted([n for n, d in g_fate_tree_copy.degree() if d == 1])
+        nodes_included = list(g_fate_tree_copy.nodes())
         while leaves:
             leave=leaves.pop()
             nodes_included.remove(leave)
@@ -74,8 +74,8 @@ def extract_branches(g_fate_tree, pos='X_pca_ddhodge_g'):
 
 def construct_stream_tree(dict_branches, graph, pos='X_pca_ddhodge_g'):
     stream_tree = nx.Graph()
-    stream_tree.add_nodes_from(list(set(itertools.chain.from_iterable(dict_branches.keys()))))
-    stream_tree.add_edges_from(dict_branches.keys())
+    stream_tree.add_nodes_from(sorted(set(itertools.chain.from_iterable(dict_branches.keys()))))
+    stream_tree.add_edges_from(sorted(dict_branches.keys()))
 
     for node in stream_tree.nodes():
         #stream_tree.nodes[node]['cells'] = graph.nodes[node]['cells'] -------------------====
@@ -129,7 +129,7 @@ def project_cells_to_g_fate_tree(adata, layout_name="X_dr", pos='X_pca_ddhodge_g
     #print("nodes_pos", nodes_pos)
     nodes = np.empty((0,1),dtype=object)
     #print("nodes", nodes)
-    for key in dict_nodes_pos.keys():
+    for key in sorted(dict_nodes_pos.keys()):
         #print("12", nodes_pos,dict_nodes_pos[key])
         nodes_pos = np.vstack((nodes_pos,dict_nodes_pos[key]))
         nodes = np.append(nodes,key)
@@ -146,7 +146,7 @@ def project_cells_to_g_fate_tree(adata, layout_name="X_dr", pos='X_pca_ddhodge_g
     list_x_lam = list()
     list_x_dist = list()
     for ix,xp in enumerate(input_data):
-        list_br_id = [stream_tree.edges[br_key]['id'] for br_key,br_value in dict_branches_nodes.items() if x_node[ix] in br_value]
+        list_br_id = [stream_tree.edges[br_key]['id'] for br_key,br_value in sorted(dict_branches_nodes.items()) if x_node[ix] in br_value]
         dict_br_matrix = dict()
         for br_id in list_br_id:
             #print("keys", dict_nodes_pos.keys() )
@@ -182,7 +182,7 @@ def calculate_pseudotime(adata):
     dict_edge_len = nx.get_edge_attributes(stream_tree,'len')
     adata.obs = adata.obs[adata.obs.columns.drop(list(adata.obs.filter(regex='_pseudotime')))].copy()
     # dict_nodes_pseudotime = dict()
-    for root_node in stream_tree.nodes():
+    for root_node in sorted(stream_tree.nodes()):
         df_pseudotime = pd.Series(index=adata.obs.index, dtype='float64')
         list_bfs_edges = list(nx.bfs_edges(stream_tree,source=root_node))
         dict_bfs_predecessors = dict(nx.bfs_predecessors(stream_tree,source=root_node))

@@ -400,20 +400,21 @@ def test_cholesky( A, beta=1e-6, verbose=False ):
     Also the condition number improves to ~ rho(A) / beta.
     """
     #scikit-sparse
-    from sksparse.cholmod import cholesky, CholmodNotPositiveDefiniteError, CholmodTooLargeError
+    from sksparse.cholmod import cho_factor, CholmodNotPositiveDefiniteError
     if not scipy.sparse.isspmatrix_csc(A):
         A = scipy.sparse.csc_matrix(A)
     try:
-        solve = cholesky( A, beta=beta )  # A + beta I
+        factor = cho_factor(A, beta=beta)
         if verbose:
             print( "+ %g I is positive-definite" % (beta ))
-        return solve  # x = solve( b )
+        return lambda b: factor.solve(b)
     except CholmodNotPositiveDefiniteError:
         if verbose:
             print( " + %g I is not positive-definite" % (beta ))
-    except CholmodTooLargeError:
+        return False
+    except Exception:
         if verbose:
-            print( " + %g I is too large" % (beta ))
+            print( " + %g I factorization failed" % (beta ))
         return False
 
 def has_islands(adjacency_matrix):

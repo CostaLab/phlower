@@ -166,6 +166,7 @@ def L1Norm_decomp(adata: AnnData,
                   check_symmetric: bool = True,
                   isnorm = True,
                   iscopy: bool = False,
+                  random_seed: int = 2022,
         ):
 
     """
@@ -245,7 +246,7 @@ def L1Norm_decomp(adata: AnnData,
     start = time.time()
     if L1_mode == "sym": #there's no need to check the symmetry of L1
         check_symmetric = False
-    d = harmonic_projection_matrix_with_w(L1.astype(float), eigen_num, check_symmetric = check_symmetric)
+    d = harmonic_projection_matrix_with_w(L1.astype(float), eigen_num, check_symmetric = check_symmetric, random_seed=random_seed)
     end = time.time()
 
     ## u_R = D_2^(1/2) * u
