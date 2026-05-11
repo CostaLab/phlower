@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='phlowerpy',
-    version='0.1.5',
+    version='0.1.6',
     description='hodge decomposition trajectory',
     long_description='Single cell trajectory inference using hodge laplacian decomposition',
     url='https://github.com/CostaLab/phlower',
@@ -24,7 +24,7 @@ setup(
                       "python-louvain>=0.16",
                       "colorcet>=3.0.1",
                       'umap-learn>=0.5.5',
-                      'scikit-sparse>=0.4.8', #deb:libsuitesparse-dev, conda:suitesparse, macos:suite-parse
+                      'scikit-sparse>=0.4.8', #deb:libsuitesparse-dev, conda:suitesparse, macos:suite-parse #deb:libsuitesparse-dev, conda:suitesparse, macos:suite-parse
                       'scanpy>=1.9.3',
                       'gudhi>=3.10.1',
                       'adjustText>=0.8',

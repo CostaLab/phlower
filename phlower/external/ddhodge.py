@@ -52,6 +52,7 @@ def ddhodge(
         verbose: bool = True,
         lstsq_method: str = 'lstsq',
         random_seed: int = 2022,
+        eigen_solver: str = 'eigsh',
         ):
 
     """
@@ -83,6 +84,8 @@ def ddhodge(
 
     random_seed
         Random seed for deterministic eigen decomposition and graph layout (default 2022).
+    eigen_solver
+        Eigen decomposition solver, 'eigsh' (ARPACK, default) or 'lobpcg' (more reproducible).
     """
     if basis and basis not in adata.obsm.keys():
         raise ValueError('basis not in adata.obsm.keys()')
@@ -111,9 +114,9 @@ def ddhodge(
         if isinstance(adata.obsm[basis], pd.DataFrame): ## fixed wrong type
             adata.obsm[basis] = adata.obsm[basis].to_numpy()
         pc = adata.obsm[basis][:, 0:npc]
-        d = diffusionGraphDM(pc,roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, lstsq_method=lstsq_method, random_seed=random_seed)
+        d = diffusionGraphDM(pc,roots=roots,k=k,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, lstsq_method=lstsq_method, random_seed=random_seed, eigen_solver=eigen_solver)
     else:
-        d = diffusionGraph(adata.X.T.todense() if scipy.sparse.issparse(adata.X.T) else adata.X.T ,roots=roots,k=k,npc=npc,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, lstsq_method=lstsq_method, random_seed=random_seed)
+        d = diffusionGraph(adata.X.T.todense() if scipy.sparse.issparse(adata.X.T) else adata.X.T ,roots=roots,k=k,npc=npc,ndc=ndc,s=s,j=j,lmda=lmda,sigma=sigma, verbose=verbose, lstsq_method=lstsq_method, random_seed=random_seed, eigen_solver=eigen_solver)
         adata.obsm['X_pca'] = d['dm']
         basis = 'X_pca'
 

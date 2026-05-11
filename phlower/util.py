@@ -399,15 +399,17 @@ def test_cholesky( A, beta=1e-6, verbose=False ):
     about half of these "zeros" may be negative -- tough on solvers.
     Also the condition number improves to ~ rho(A) / beta.
     """
-    #scikit-sparse
-    from sksparse.cholmod import cho_factor, CholmodNotPositiveDefiniteError
-    if not scipy.sparse.isspmatrix_csc(A):
-        A = scipy.sparse.csc_matrix(A)
     try:
-        factor = cho_factor(A, beta=beta)
+        from sksparse.cholmod import analyze, CholmodNotPositiveDefiniteError
+    except ImportError:
+        return False
+    A = scipy.sparse.csc_matrix(A, copy=True)
+    try:
+        factor = analyze(A)
+        factor.cholesky(A, beta=beta)
         if verbose:
             print( "+ %g I is positive-definite" % (beta ))
-        return lambda b: factor.solve(b)
+        return lambda b: factor.solve_A(b)
     except CholmodNotPositiveDefiniteError:
         if verbose:
             print( " + %g I is not positive-definite" % (beta ))

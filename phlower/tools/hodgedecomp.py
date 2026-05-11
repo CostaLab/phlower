@@ -159,25 +159,26 @@ def curl(g, weight_attr="weight"):
 
 
 def L1Norm_decomp(adata: AnnData,
-                  graph_name: str = None,
-                  eigen_num: int = 100,
-                  L1_mode = "sym",
-                  mysym = 'a',
-                  check_symmetric: bool = True,
-                  isnorm = True,
-                  iscopy: bool = False,
-                  random_seed: int = 2022,
-        ):
+                   graph_name: str = None,
+                   eigen_num: int = 100,
+                   L1_mode = "sym",
+                   mysym = 'a',
+                   check_symmetric: bool = True,
+                   isnorm = True,
+                   iscopy: bool = False,
+                   random_seed: int = 2022,
+                   eigen_solver: str = 'eigsh',
+         ):
 
     """
     graph hodge laplacian decomposition
     if sym:
-        call eigsh to for symmetric matrix eigen decomposition
+        call eigsh/lobpcg for symmetric matrix eigen decomposition
 
         L_1^s = D_2^{-1/2} L_1_norm D_2^{1/2}
         eigen vector of which is D_2^{-1/2} u_r
     else:
-        call eigs to for non-symmetric matrix eigen decomposition, and only keep the real part of eigen values and vectors
+        call eigs/lobpcg for non-symmetric matrix eigen decomposition, and only keep the real part of eigen values and vectors
         L1_norm = D_2 B_1^\top D_1^{-1} B_1 + B_2 D_3 B_2^\top D_2^{-1}
 
     Parameters
@@ -196,6 +197,8 @@ def L1Norm_decomp(adata: AnnData,
         normalize the graph hodge laplacian
     iscopy: bool
         copy the adata or not
+    eigen_solver: str
+        eigen decomposition solver, 'eigsh' (ARPACK, default) or 'lobpcg' (more reproducible)
     """
     if iscopy:
         adata = adata.copy()
@@ -246,7 +249,7 @@ def L1Norm_decomp(adata: AnnData,
     start = time.time()
     if L1_mode == "sym": #there's no need to check the symmetry of L1
         check_symmetric = False
-    d = harmonic_projection_matrix_with_w(L1.astype(float), eigen_num, check_symmetric = check_symmetric, random_seed=random_seed)
+    d = harmonic_projection_matrix_with_w(L1.astype(float), eigen_num, check_symmetric = check_symmetric, random_seed=random_seed, eigen_solver=eigen_solver)
     end = time.time()
 
     ## u_R = D_2^(1/2) * u

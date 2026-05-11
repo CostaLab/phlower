@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 from scipy.sparse import linalg
+from scipy.sparse.linalg import lobpcg
 
 
 def logsumexp(x):
@@ -45,7 +46,7 @@ def affinity(R, k=7, sigma=None, log=False, normalize=False):
     return np.exp(logW)
 
 
-def  diffusionMaps(R,k=7,sigma=None, verbose=False, eig_k=100, random_seed=2022):
+def  diffusionMaps(R,k=7,sigma=None, verbose=False, eig_k=100, random_seed=2022, eigen_solver='eigsh'):
     """
     Diffusion map(Coifman, 2005)
     https://en.wikipedia.org/wiki/Diffusion_map
@@ -60,6 +61,9 @@ def  diffusionMaps(R,k=7,sigma=None, verbose=False, eig_k=100, random_seed=2022)
         for isotropic diffussion
     random_seed: int
         random seed for deterministic eigen decomposition
+    eigen_solver: str
+        eigen decomposition solver, 'eigsh' (ARPACK, default) or 'lobpcg' (more reproducible)
+
     Return
     ----------
     dic:
@@ -90,9 +94,14 @@ def  diffusionMaps(R,k=7,sigma=None, verbose=False, eig_k=100, random_seed=2022)
         print(datetime.now(), "Eigen decomposition...")
 
     np.random.seed(random_seed)
-    v0 = np.random.rand(Ms.shape[0])
-    e = linalg.eigsh(Ms, k=eig_k, v0=v0) ## eigen decomposition of P'
-    #e = np.linalg.eigh(Ms) ## eigen decomposition of P'
+    if eigen_solver == 'lobpcg':
+        X = np.random.rand(Ms.shape[0], eig_k).astype(float)
+        X, _ = np.linalg.qr(X)
+        e = lobpcg(Ms, X, largest=True, maxiter=200)
+        e = (e[0][::-1], np.flip(e[1], axis=1))
+    else:
+        v0 = np.random.rand(Ms.shape[0])
+        e = linalg.eigsh(Ms, k=eig_k, v0=v0)
     evalue= e[0][::-1]
     evec =np.flip(e[1], axis=1)
     s =(np.sum(np.sqrt(rs) * evec[:,0])) # scaling

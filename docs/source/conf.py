@@ -6,8 +6,8 @@ project = 'phlower'
 copyright = '2023, Costalab'
 author = 'Mingbo Cheng'
 
-release = '0.1'
-version = '0.1.3'
+release = '0.1.6'
+version = '0.1.6'
 
 # -- General configuration
 

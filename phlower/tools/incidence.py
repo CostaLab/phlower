@@ -2,11 +2,12 @@
 import networkx as nx
 import numpy as np
 from scipy.sparse import csc_matrix, linalg, csr_matrix
+from scipy.sparse.linalg import lobpcg
 import scipy
 from ..util import lexsort_rows
 
 
-def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, check_symmetric:bool=True, random_seed=2022) -> dict:
+def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, check_symmetric:bool=True, random_seed=2022, eigen_solver='eigsh') -> dict:
     """
     Computes the harmonic projection matrix for the simplicial complex with the
     given Hodge-1 Laplacian.
@@ -17,6 +18,8 @@ def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, chec
     number_of_holes : int
     random_seed : int
         random seed for deterministic eigen decomposition (default 2022)
+    eigen_solver : str
+        eigen decomposition solver, 'eigsh' (ARPACK, default) or 'lobpcg' (more reproducible)
 
     Return
     ----------
@@ -24,19 +27,39 @@ def harmonic_projection_matrix_with_w(L1: csr_matrix, number_of_holes: int, chec
         w: eigen values
         v: eigen vectors rows
     """
+    n = L1.shape[0]
+    k = number_of_holes
     if (not check_symmetric) or scipy.linalg.issymmetric(L1.toarray(), atol=1e-08, rtol=1e-05):
         np.random.seed(random_seed)
-        w, v = linalg.eigsh(L1, k=number_of_holes,
-                        v0=np.ones(L1.shape[0]), which='SM')
+        if eigen_solver == 'lobpcg':
+            X = np.random.rand(n, k).astype(float)
+            X, _ = np.linalg.qr(X)
+            w, v = lobpcg(L1, X, largest=False, maxiter=200)
+            idx = w.argsort()
+            w = w[idx]
+            v = v[:, idx]
+        else:
+            w, v = linalg.eigsh(L1, k=k,
+                            v0=np.ones(n), which='SM')
     else:
         np.random.seed(random_seed)
-        w, v = linalg.eigs(L1, k=number_of_holes,
-                        v0=np.ones(L1.shape[0]), which='SM')
-        idx = w.argsort()
-        w = w[idx]
-        w = np.real(w)
-        v = v[:, idx]
-        v = np.real(v)
+        if eigen_solver == 'lobpcg':
+            X = np.random.rand(n, k).astype(float)
+            X, _ = np.linalg.qr(X)
+            w, v = lobpcg(L1, X, largest=False, maxiter=200)
+            idx = w.argsort()
+            w = w[idx]
+            w = np.real(w)
+            v = v[:, idx]
+            v = np.real(v)
+        else:
+            w, v = linalg.eigs(L1, k=k,
+                            v0=np.ones(n), which='SM')
+            idx = w.argsort()
+            w = w[idx]
+            w = np.real(w)
+            v = v[:, idx]
+            v = np.real(v)
 
     v = _canonicalize_degenerate_eigenvectors(w, v)
 
